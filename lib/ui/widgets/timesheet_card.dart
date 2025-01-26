@@ -9,8 +9,9 @@ class TimesheetCard extends StatefulWidget {
   final String clockIn;
   final String? clockOut;
   final String? duration;
-  final VoidCallback onClockOut;
-  final VoidCallback onExpandDetails;
+  final bool showClockOut;
+  final VoidCallback? onClockOut;
+  final VoidCallback? onExpandDetails;
 
   const TimesheetCard({
     super.key,
@@ -18,8 +19,9 @@ class TimesheetCard extends StatefulWidget {
     required this.clockIn,
     this.clockOut,
     this.duration,
-    required this.onClockOut,
-    required this.onExpandDetails,
+    this.showClockOut = false,
+    this.onClockOut,
+    this.onExpandDetails,
   });
 
   @override
@@ -29,186 +31,191 @@ class TimesheetCard extends StatefulWidget {
 class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
-  TextStyle get _visitIdStyle => AppTextStyle.semibold14;
-  TextStyle get _labelStyle => AppTextStyle.regular12;
-  TextStyle get _valueStyle => AppTextStyle.semibold12;
-  TextStyle get _buttonStyle => AppTextStyle.medium12;
-  TextStyle get _detailsStyle => AppTextStyle.medium12;
-
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.grey200),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Visit ID and Clock Out button/Duration
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '# ${widget.visitId}',
-                      style: _visitIdStyle,
+                      style: AppTextStyle.semibold16,
                     ),
-                    if (widget.clockOut == null)
-                      OutlinedButton(
-                        onPressed: widget.onClockOut,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 8.h,
+                    if (widget.showClockOut)
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 1,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: TextButton(
+                          onPressed: widget.onClockOut,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 2.h,
+                            ),
+                            minimumSize: Size(0, 24.h),
+                            textStyle: AppTextStyle.medium12,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
                           ),
+                          child: Text('Clock Out'),
                         ),
-                        child: Text(
-                          'Clock Out',
-                          style: _buttonStyle.copyWith(color: AppColors.primary),
-                        ),
-                      ),
-                  ],
-                ),
-                AppSpacing.v8(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
+                      )
+                    else if (widget.duration != null)
+                      Row(
                         children: [
                           Text(
-                            'Clock In: ',
-                            style: _labelStyle,
+                            'Duration: ',
+                            style: AppTextStyle.regular12.copyWith(
+                              color: AppColors.grey,
+                            ),
                           ),
                           Text(
-                            widget.clockIn,
-                            style: _valueStyle,
+                            widget.duration!,
+                            style: AppTextStyle.semibold12,
                           ),
                         ],
                       ),
+                  ],
+                ),
+                AppSpacing.v12(),
+                // Clock in time
+                Row(
+                  children: [
+                    Text(
+                      'Clock In: ',
+                      style: AppTextStyle.regular12.copyWith(
+                        color: AppColors.grey,
+                      ),
+                    ),
+                    Text(
+                      widget.clockIn,
+                      style: AppTextStyle.semibold12,
                     ),
                     if (widget.clockOut != null) ...[
                       Expanded(
-                        child: Row(
-                          children: [
-                            Text(
-                              'Clock Out: ',
-                              style: _labelStyle,
-                            ),
-                            Text(
-                              widget.clockOut!,
-                              style: _valueStyle,
-                            ),
-                          ],
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 8.w),
+                          height: 1,
+                          color: AppColors.grey200,
                         ),
+                      ),
+                      Text(
+                        'Clock Out: ',
+                        style: AppTextStyle.regular12.copyWith(
+                          color: AppColors.grey,
+                        ),
+                      ),
+                      Text(
+                        widget.clockOut!,
+                        style: AppTextStyle.semibold12,
                       ),
                     ],
                   ],
                 ),
-                if (widget.duration != null) ...[
-                  AppSpacing.v4(),
-                  Row(
-                    children: [
-                      Text(
-                        'Duration: ',
-                        style: _labelStyle,
-                      ),
-                      Text(
-                        widget.duration!,
-                        style: _valueStyle,
-                      ),
-                    ],
+                AppSpacing.v12(),
+                // Appointment Details dropdown
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                    widget.onExpandDetails?.call();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: AppColors.grey200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Appointment Details',
+                          style: AppTextStyle.semibold12.copyWith(
+                            color: AppColors.grey,
+                          ),
+                        ),
+                        Icon(
+                          _isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: AppColors.grey,
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          InkWell(
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-              });
-              widget.onExpandDetails();
-            },
-            child: Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Appointment Details',
-                    style: _detailsStyle.copyWith(color: AppColors.grey300),
-                  ),
-                  Icon(
-                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: AppColors.grey300,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Expanded details section
           if (_isExpanded)
             Container(
+              width: double.infinity,
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: AppColors.grey100,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
+                  bottomLeft: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
                 ),
+                border: Border.all(color: AppColors.grey200),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Appointment ID:',
-                              style: _labelStyle,
-                            ),
-                            AppSpacing.v4(),
-                            Text(
-                              '1001',
-                              style: _valueStyle,
-                            ),
-                          ],
+                      Text(
+                        'Appointment ID:',
+                        style: AppTextStyle.regular12.copyWith(
+                          color: AppColors.grey,
                         ),
                       ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date and Time:',
-                              style: _labelStyle,
-                            ),
-                            AppSpacing.v4(),
-                            Text(
-                              '2025-01-15\n10:00 - 11:00 AM',
-                              style: _valueStyle,
-                            ),
-                          ],
+                      Text(
+                        widget.visitId,
+                        style: AppTextStyle.medium12,
+                      ),
+                    ],
+                  ),
+                  AppSpacing.v12(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Date and Time:',
+                        style: AppTextStyle.regular12.copyWith(
+                          color: AppColors.grey,
                         ),
+                      ),
+                      Text(
+                        '2025-01-15\n10:00 - 11:00 AM',
+                        style: AppTextStyle.medium12,
+                        textAlign: TextAlign.end,
                       ),
                     ],
                   ),
