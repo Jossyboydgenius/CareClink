@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -28,6 +29,12 @@ class TimesheetCard extends StatefulWidget {
 class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
+  TextStyle get _visitIdStyle => AppTextStyle.semibold14;
+  TextStyle get _labelStyle => AppTextStyle.regular12;
+  TextStyle get _valueStyle => AppTextStyle.semibold12;
+  TextStyle get _buttonStyle => AppTextStyle.medium12;
+  TextStyle get _detailsStyle => AppTextStyle.medium12;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,7 +47,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -49,7 +56,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                   children: [
                     Text(
                       '# ${widget.visitId}',
-                      style: AppTextStyle.semibold14,
+                      style: _visitIdStyle,
                     ),
                     if (widget.clockOut == null)
                       OutlinedButton(
@@ -57,9 +64,9 @@ class _TimesheetCardState extends State<TimesheetCard> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primary,
                           side: BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16.w,
+                            vertical: 8.h,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -67,7 +74,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                         ),
                         child: Text(
                           'Clock Out',
-                          style: AppTextStyle.medium12,
+                          style: _buttonStyle.copyWith(color: AppColors.primary),
                         ),
                       ),
                   ],
@@ -80,11 +87,11 @@ class _TimesheetCardState extends State<TimesheetCard> {
                         children: [
                           Text(
                             'Clock In: ',
-                            style: AppTextStyle.regular12,
+                            style: _labelStyle,
                           ),
                           Text(
                             widget.clockIn,
-                            style: AppTextStyle.semibold12,
+                            style: _valueStyle,
                           ),
                         ],
                       ),
@@ -95,11 +102,11 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           children: [
                             Text(
                               'Clock Out: ',
-                              style: AppTextStyle.regular12,
+                              style: _labelStyle,
                             ),
                             Text(
                               widget.clockOut!,
-                              style: AppTextStyle.semibold12,
+                              style: _valueStyle,
                             ),
                           ],
                         ),
@@ -113,11 +120,11 @@ class _TimesheetCardState extends State<TimesheetCard> {
                     children: [
                       Text(
                         'Duration: ',
-                        style: AppTextStyle.medium12,
+                        style: _labelStyle,
                       ),
                       Text(
                         widget.duration!,
-                        style: AppTextStyle.semibold12,
+                        style: _valueStyle,
                       ),
                     ],
                   ),
@@ -133,7 +140,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
               widget.onExpandDetails();
             },
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: AppColors.grey100,
                 borderRadius: BorderRadius.only(
@@ -146,7 +153,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                 children: [
                   Text(
                     'Appointment Details',
-                    style: AppTextStyle.medium12.copyWith(color: AppColors.grey300),
+                    style: _detailsStyle.copyWith(color: AppColors.grey300),
                   ),
                   Icon(
                     _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
@@ -158,7 +165,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
           ),
           if (_isExpanded)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: AppColors.grey100,
                 borderRadius: BorderRadius.only(
@@ -177,12 +184,12 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           children: [
                             Text(
                               'Appointment ID:',
-                              style: AppTextStyle.regular12,
+                              style: _labelStyle,
                             ),
                             AppSpacing.v4(),
                             Text(
                               '1001',
-                              style: AppTextStyle.semibold12,
+                              style: _valueStyle,
                             ),
                           ],
                         ),
@@ -193,12 +200,12 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           children: [
                             Text(
                               'Date and Time:',
-                              style: AppTextStyle.regular12,
+                              style: _labelStyle,
                             ),
                             AppSpacing.v4(),
                             Text(
                               '2025-01-15\n10:00 - 11:00 AM',
-                              style: AppTextStyle.semibold12,
+                              style: _valueStyle,
                             ),
                           ],
                         ),
