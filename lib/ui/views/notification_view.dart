@@ -15,6 +15,7 @@ class NotificationView extends StatefulWidget {
 
 class _NotificationViewState extends State<NotificationView> {
   bool _showUnread = false;
+  bool _notificationsEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +76,16 @@ class _NotificationViewState extends State<NotificationView> {
                     style: AppTextStyle.semibold24,
                   ),
                   Switch(
-                    value: true,
-                    onChanged: (value) {},
-                    activeColor: AppColors.primary,
+                    value: _notificationsEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _notificationsEnabled = value;
+                      });
+                    },
+                    activeColor: AppColors.white,
+                    activeTrackColor: AppColors.primary,
+                    inactiveThumbColor: AppColors.grey300,
+                    inactiveTrackColor: AppColors.grey200,
                   ),
                 ],
               ),
@@ -94,6 +102,11 @@ class _NotificationViewState extends State<NotificationView> {
                   const Spacer(),
                   TextButton(
                     onPressed: () {},
+                    style: TextButton.styleFrom(
+                      textStyle: AppTextStyle.medium14.copyWith(
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                     child: Row(
                       children: [
                         Icon(
@@ -106,6 +119,7 @@ class _NotificationViewState extends State<NotificationView> {
                           'Mark All as Read',
                           style: AppTextStyle.medium14.copyWith(
                             color: AppColors.primary,
+                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ],
@@ -117,26 +131,35 @@ class _NotificationViewState extends State<NotificationView> {
             AppSpacing.v16(),
             // Notification List
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                children: [
-                  NotificationCard(
-                    title: "Reminder: Don't Forget to Clock In!",
-                    message: 'Hi,\nThis is a friendly reminder to clock in for your shift scheduled at [Start Time]. Please ensure you record your start time promptly.\nIf you\'ve already clocked in, kindly ignore this message',
-                    type: 'Reminder to Clock In/Out',
-                    time: '1 min ago',
-                    onMarkAsRead: () {},
-                  ),
-                  AppSpacing.v16(),
-                  NotificationCard(
-                    title: 'Complete Your Clock-Out',
-                    message: 'Hi,\nIt seems you haven\'t clocked out for your shift starting at [Start Time]. Please remember to clock out once your shift is complete.\nIf this was an oversight, you can log your clock-out time or submit a manual entry with a reason.',
-                    type: 'Reminder to Clock In/Out',
-                    time: '2 min ago',
-                    onMarkAsRead: () {},
-                  ),
-                ],
-              ),
+              child: _showUnread
+                  ? Center(
+                      child: Text(
+                        'No unread notifications',
+                        style: AppTextStyle.regular14.copyWith(
+                          color: AppColors.grey300,
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                      children: [
+                        NotificationCard(
+                          title: "Reminder: Don't Forget to Clock In!",
+                          message: 'Hi,\nThis is a friendly reminder to clock in for your shift scheduled at [Start Time]. Please ensure you record your start time promptly.\nIf you\'ve already clocked in, kindly ignore this message',
+                          type: 'Reminder to Clock In/Out',
+                          time: '1 min ago',
+                          onMarkAsRead: () {},
+                        ),
+                        AppSpacing.v16(),
+                        NotificationCard(
+                          title: 'Complete Your Clock-Out',
+                          message: 'Hi,\nIt seems you haven\'t clocked out for your shift starting at [Start Time]. Please remember to clock out once your shift is complete.\nIf this was an oversight, you can log your clock-out time or submit a manual entry with a reason.',
+                          type: 'Reminder to Clock In/Out',
+                          time: '2 min ago',
+                          onMarkAsRead: () {},
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
