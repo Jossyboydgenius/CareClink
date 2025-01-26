@@ -98,7 +98,8 @@ class _DashboardState extends State<Dashboard> {
                 // Activity cards grid
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final cardWidth = (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
+                    final cardWidth =
+                        (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
                     final cardHeight = cardWidth * 0.9;
 
                     return GridView.count(
@@ -180,4 +181,4 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-} 
+}
