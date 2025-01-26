@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
-import '../views/appointment_view.dart';
-import '../views/dashboard_view.dart';
-import '../views/notification_view.dart';
+import '../../app/routes/app_routes.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
 
@@ -14,6 +12,70 @@ class BottomNavBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
   });
+
+  @override
+  State<BottomNavBar> createState() => _BottomNavBarState();
+}
+
+class _BottomNavBarState extends State<BottomNavBar> {
+  bool _isNavigating = false;
+  DateTime? _lastTap;
+
+  Future<void> _handleNavigation(BuildContext context, int index) async {
+    if (index == widget.currentIndex) return;
+
+    // Prevent rapid taps (debounce)
+    final now = DateTime.now();
+    if (_lastTap != null && now.difference(_lastTap!) < const Duration(milliseconds: 300)) {
+      return;
+    }
+    _lastTap = now;
+
+    // Prevent multiple navigations at once
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    try {
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      String targetRoute;
+
+      switch (index) {
+        case 0:
+          targetRoute = AppRoutes.dashboardView;
+          break;
+        case 1:
+          targetRoute = AppRoutes.notificationView;
+          break;
+        case 2:
+          targetRoute = AppRoutes.appointmentView;
+          break;
+        default:
+          _isNavigating = false;
+          return;
+      }
+
+      if (currentRoute == targetRoute) {
+        _isNavigating = false;
+        return;
+      }
+
+      if (index == 0) {
+        await Navigator.of(context).pushNamedAndRemoveUntil(
+          targetRoute,
+          (route) => false,
+        );
+      } else {
+        if (currentRoute == AppRoutes.dashboardView) {
+          await Navigator.of(context).pushNamed(targetRoute);
+        } else {
+          await Navigator.of(context).pushReplacementNamed(targetRoute);
+        }
+      }
+      widget.onTap(index);
+    } finally {
+      _isNavigating = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,29 +90,8 @@ class BottomNavBar extends StatelessWidget {
         ),
       ),
       child: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (index) {
-          if (index == 2 && currentIndex != 2) {
-            // Navigate to AppointmentView only if we're not already there
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AppointmentView()),
-            );
-          } else if (index == 0 && currentIndex != 0) {
-            // Navigate to Dashboard if we're not already there
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const Dashboard()),
-              (route) => false,
-            );
-          } else if (index == 1 && currentIndex != 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationView()),
-            );
-          }
-          onTap(index);
-        },
+        currentIndex: widget.currentIndex,
+        onTap: (index) => _handleNavigation(context, index),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.grey300,
         backgroundColor: Colors.transparent,
@@ -77,7 +118,7 @@ class BottomNavBar extends StatelessWidget {
                   Icons.notifications_outlined,
                   size: 24.w,
                 ),
-                if (currentIndex != 1)
+                if (widget.currentIndex != 1)
                   Positioned(
                     right: 0,
                     top: 0,
