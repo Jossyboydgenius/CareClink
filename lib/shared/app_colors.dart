@@ -25,14 +25,14 @@ class AppColors {
   static const Color green200 = Color(0xFF48C79F);
   
   // Activity Card Colors
-  static const Color activityPurple = Color(0xFFEEF4FF);
-  static const Color activityPurpleBorder = Color(0xFFD1E0FF);
+  static const Color activityPurple = Color(0xFFF4EBFF);
+  static const Color activityPurpleBorder = Color(0xFFA259FF);
   static const Color activityGreen = Color(0xFFF0FDF4);
-  static const Color activityGreenBorder = Color(0xFFD1FADF);
+  static const Color activityGreenBorder = Color(0xFF41CF84);
   static const Color activityOrange = Color(0xFFFFF7ED);
-  static const Color activityOrangeBorder = Color(0xFFFFEDD5);
-  static const Color activityRed = Color(0xFFFEF3F2);
-  static const Color activityRedBorder = Color(0xFFFEE4E2);
+  static const Color activityOrangeBorder = Color(0xFFFE9560);
+  static const Color activityPink = Color(0xFFFDF2FA);
+  static const Color activityPinkBorder = Color(0xFFDA80B1);
   
   // Text Colors
   static const Color textPrimary = Color(0xFF404969);
