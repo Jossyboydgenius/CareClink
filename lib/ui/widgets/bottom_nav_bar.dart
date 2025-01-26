@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../views/appointment_view.dart';
-import '../views/dashboard.dart';
+import '../views/dashboard_view.dart';
+import '../views/notification_view.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -42,6 +43,11 @@ class BottomNavBar extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const Dashboard()),
               (route) => false,
             );
+          } else if (index == 1 && currentIndex != 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const NotificationView()),
+            );
           }
           onTap(index);
         },
@@ -71,30 +77,31 @@ class BottomNavBar extends StatelessWidget {
                   Icons.notifications_outlined,
                   size: 24.w,
                 ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.red,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 12.w,
-                      minHeight: 12.w,
-                    ),
-                    child: Text(
-                      '3',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.bold,
+                if (currentIndex != 1)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(2.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.red,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      textAlign: TextAlign.center,
+                      constraints: BoxConstraints(
+                        minWidth: 12.w,
+                        minHeight: 12.w,
+                      ),
+                      child: Text(
+                        '3',
+                        style: TextStyle(
+                          color: AppColors.white,
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             activeIcon: Stack(
