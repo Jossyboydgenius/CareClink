@@ -87,8 +87,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                       // Search bar
                       Container(
                         decoration: BoxDecoration(
-                          color: AppColors.grey100,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.grey200),
                         ),
                         padding: EdgeInsets.symmetric(
                           horizontal: 16.w,
