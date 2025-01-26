@@ -19,6 +19,8 @@ class AppSpacing extends StatelessWidget {
   factory AppSpacing.v10() => const AppSpacing(v: 10);
   factory AppSpacing.h16() => const AppSpacing(h: 16);
   factory AppSpacing.v16() => const AppSpacing(v: 16);
+  factory AppSpacing.v12() => const AppSpacing(v: 12);
+  factory AppSpacing.h12() => const AppSpacing(h: 12);
   factory AppSpacing.v24() => const AppSpacing(v: 24);
   factory AppSpacing.h24() => const AppSpacing(h: 24);
   factory AppSpacing.h32() => const AppSpacing(h: 32);
@@ -31,8 +33,8 @@ class AppSpacing extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       key: ValueKey<String>('$v$h'),
-      height: v.h,
-      width: h.w,
+      height: v > 0 ? v.h : 0,
+      width: h > 0 ? h.w : 0,
     );
   }
-} 
+}
