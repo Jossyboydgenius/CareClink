@@ -6,6 +6,7 @@ import '../../shared/app_spacing.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
+import '../widgets/manual_clock_entry_dialog.dart';
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -185,28 +186,13 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   void _handleClockIn() {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Simulate clock in delay
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-      // Handle clock in success
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Successfully clocked in',
-            style: AppTextStyle.regular14.copyWith(
-              color: AppColors.white,
-            ),
-          ),
-          backgroundColor: AppColors.green200,
-        ),
-      );
-    });
+    showDialog(
+      context: context,
+      builder: (context) => ManualClockEntryDialog(
+        appointmentId: '10001',
+        dateTime: '2025-01-14 10:00 - 11:00 AM',
+      ),
+    );
   }
 
   @override
