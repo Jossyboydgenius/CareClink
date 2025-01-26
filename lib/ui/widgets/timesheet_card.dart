@@ -143,21 +143,61 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       borderRadius: BorderRadius.circular(8.r),
                       border: Border.all(color: AppColors.grey200),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        Text(
-                          'Appointment Details',
-                          style: AppTextStyle.semibold12.copyWith(
-                            color: AppColors.grey,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Appointment Details',
+                              style: AppTextStyle.semibold12.copyWith(
+                                color: AppColors.grey,
+                              ),
+                            ),
+                            Icon(
+                              _isExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: AppColors.grey,
+                              size: 20.w,
+                            ),
+                          ],
+                        ),
+                        if (_isExpanded) ...[
+                          AppSpacing.v12(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Appointment ID:',
+                                style: AppTextStyle.regular12.copyWith(
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                              Text(
+                                widget.visitId,
+                                style: AppTextStyle.medium12,
+                              ),
+                            ],
                           ),
-                        ),
-                        Icon(
-                          _isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: AppColors.grey,
-                        ),
+                          AppSpacing.v12(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Date and Time:',
+                                style: AppTextStyle.regular12.copyWith(
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                              Text(
+                                '2025-01-15\n10:00 - 11:00 AM',
+                                style: AppTextStyle.medium12,
+                                textAlign: TextAlign.end,
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -165,57 +205,6 @@ class _TimesheetCardState extends State<TimesheetCard> {
               ],
             ),
           ),
-          // Expanded details section
-          if (_isExpanded)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppColors.grey100,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(12.r),
-                  bottomRight: Radius.circular(12.r),
-                ),
-                border: Border.all(color: AppColors.grey200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Appointment ID:',
-                        style: AppTextStyle.regular12.copyWith(
-                          color: AppColors.grey,
-                        ),
-                      ),
-                      Text(
-                        widget.visitId,
-                        style: AppTextStyle.medium12,
-                      ),
-                    ],
-                  ),
-                  AppSpacing.v12(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Date and Time:',
-                        style: AppTextStyle.regular12.copyWith(
-                          color: AppColors.grey,
-                        ),
-                      ),
-                      Text(
-                        '2025-01-15\n10:00 - 11:00 AM',
-                        style: AppTextStyle.medium12,
-                        textAlign: TextAlign.end,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
