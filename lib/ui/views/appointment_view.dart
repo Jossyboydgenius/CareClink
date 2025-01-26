@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
+import '../../app/routes/app_routes.dart';
+import '../../data/services/navigator_service.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
@@ -18,6 +20,7 @@ class AppointmentView extends StatefulWidget {
 class _AppointmentViewState extends State<AppointmentView> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
+  String? _selectedAppointmentId;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +91,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                       // Search bar
                       Container(
                         decoration: BoxDecoration(
-                          color: AppColors.white,
+                          color: AppColors.grey100,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: AppColors.grey200),
                         ),
@@ -127,34 +130,57 @@ class _AppointmentViewState extends State<AppointmentView> {
                         appointmentId: '10001',
                         dateTime: '2025-01-14 10:00 - 11:00 AM',
                         status: AppointmentStatus.pending,
-                        isSelected: false,
-                        onTap: () {},
+                        isSelected: _selectedAppointmentId == '10001',
+                        onTap: () {
+                          setState(() {
+                            _selectedAppointmentId = '10001';
+                          });
+                        },
                       ),
                       AppSpacing.v12(),
                       AppointmentCard(
-                        appointmentId: '10001',
+                        appointmentId: '10002',
                         dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        isSelected: true,
-                        onTap: () {},
+                        isSelected: _selectedAppointmentId == '10002',
+                        onTap: () {
+                          setState(() {
+                            _selectedAppointmentId = '10002';
+                          });
+                        },
                       ),
                       AppSpacing.v12(),
                       AppointmentCard(
-                        appointmentId: '10001',
+                        appointmentId: '10003',
                         dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        onTap: () {},
+                        isSelected: _selectedAppointmentId == '10003',
+                        onTap: () {
+                          setState(() {
+                            _selectedAppointmentId = '10003';
+                          });
+                        },
                       ),
                       AppSpacing.v12(),
                       AppointmentCard(
-                        appointmentId: '10001',
+                        appointmentId: '10004',
                         dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        onTap: () {},
+                        isSelected: _selectedAppointmentId == '10004',
+                        onTap: () {
+                          setState(() {
+                            _selectedAppointmentId = '10004';
+                          });
+                        },
                       ),
                       AppSpacing.v12(),
                       AppointmentCard(
-                        appointmentId: '10001',
+                        appointmentId: '10005',
                         dateTime: '2025-01-15 10:00 - 11:00 AM',
                         status: AppointmentStatus.reschedule,
-                        onTap: () {},
+                        isSelected: _selectedAppointmentId == '10005',
+                        onTap: () {
+                          setState(() {
+                            _selectedAppointmentId = '10005';
+                          });
+                        },
                       ),
                       AppSpacing.v24(),
                     ],
@@ -178,7 +204,7 @@ class _AppointmentViewState extends State<AppointmentView> {
         currentIndex: 2,
         onTap: (index) {
           if (index != 2) {
-            Navigator.pop(context);
+            NavigationService.pushNamed(AppRoutes.dashboardView);
           }
         },
       ),
