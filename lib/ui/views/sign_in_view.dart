@@ -5,6 +5,7 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_checkbox.dart';
+import '../../app/routes/app_routes.dart';
 import 'dashboard_view.dart';
 
 class SignInView extends StatefulWidget {
@@ -166,9 +167,7 @@ class _SignInViewState extends State<SignInView> {
 
     // Simulate login delay
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Dashboard()),
-      );
+      Navigator.of(context).pushReplacementNamed(AppRoutes.dashboardView);
     });
   }
 
