@@ -53,6 +53,28 @@ class AppointmentCard extends StatelessWidget {
                         color: isSelected ? AppColors.primary : AppColors.textPrimary,
                       ),
                     ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    if (status != AppointmentStatus.none)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          _getStatusText(),
+                          style: AppTextStyle.medium12.copyWith(
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ),
+                    AppSpacing.h8(),
                     Text(
                       appointmentId,
                       style: AppTextStyle.semibold14.copyWith(
@@ -61,23 +83,6 @@ class AppointmentCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (status != AppointmentStatus.none)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor().withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      _getStatusText(),
-                      style: AppTextStyle.medium12.copyWith(
-                        color: _getStatusColor(),
-                      ),
-                    ),
-                  ),
               ],
             ),
             AppSpacing.v8(),
