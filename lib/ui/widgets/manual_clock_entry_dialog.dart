@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
+import '../../shared/app_snackbar.dart';
+import '../../data/services/navigator_service.dart';
 import 'app_button.dart';
 
 class ManualClockEntryDialog extends StatefulWidget {
@@ -51,7 +53,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   style: AppTextStyle.semibold20,
                 ),
                 IconButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => NavigationService.goBack(),
                   icon: Icon(
                     Icons.close,
                     color: AppColors.grey300,
@@ -240,6 +242,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             AppButton(
               text: 'Save',
               onPressed: () async {
+                if (!mounted) return;
                 setState(() {
                   _isLoading = true;
                 });
@@ -247,24 +250,16 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                 // Simulate save delay
                 await Future.delayed(const Duration(seconds: 2));
 
+                if (!mounted) return;
                 setState(() {
                   _isLoading = false;
                 });
 
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Successfully saved manual clock entry',
-                        style: AppTextStyle.regular14.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                      backgroundColor: AppColors.green200,
-                    ),
-                  );
-                }
+                NavigationService.goBack();
+                AppSnackbar.showSnackBar(
+                  message: 'Successfully saved manual clock entry',
+                  color: AppColors.green200,
+                );
               },
               isLoading: _isLoading,
             ),
