@@ -73,6 +73,11 @@ class NotificationCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: onMarkAsRead,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -86,6 +91,7 @@ class NotificationCard extends StatelessWidget {
                     'Mark as Read',
                     style: AppTextStyle.medium14.copyWith(
                       color: AppColors.primary,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ],
