@@ -19,75 +19,82 @@ class ActivityCard extends StatelessWidget {
     required this.borderColor,
   });
 
-  TextStyle get _titleStyle => AppTextStyle.medium12.copyWith(
-        color: Colors.grey,
-      );
-
-  TextStyle get _hoursStyle => AppTextStyle.semibold24;
-
-  TextStyle get _completedTextStyle => AppTextStyle.medium12;
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border(
+          left: BorderSide(
+            color: borderColor,
+            width: 4.w,
+          ),
+        ),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final availableHeight = constraints.maxHeight - 24.h;
-          final contentHeight = availableHeight / 3;
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              height: 12/10,
+              color: AppColors.grey,
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${hours}hrs',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          Row(
             children: [
-              SizedBox(
-                height: contentHeight,
-                child: Text(
-                  title,
-                  style: _titleStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                width: 6.w,
+                height: 6.w,
+                decoration: BoxDecoration(
+                  color: borderColor,
+                  shape: BoxShape.circle,
                 ),
               ),
-              SizedBox(
-                height: contentHeight,
-                child: Text(
-                  '${hours}hrs',
-                  style: _hoursStyle,
-                ),
-              ),
-              SizedBox(
-                height: contentHeight,
-                child: Row(
+              SizedBox(width: 6.w),
+              RichText(
+                text: TextSpan(
                   children: [
-                    Container(
-                      width: 6.w,
-                      height: 6.w,
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        shape: BoxShape.circle,
+                    TextSpan(
+                      text: 'Completed: ',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w500,
+                        height: 12/8,
+                        color: borderColor,
                       ),
                     ),
-                    SizedBox(width: 6.w),
-                    Expanded(
-                      child: Text(
-                        'Completed: $completedText',
-                        style: _completedTextStyle.copyWith(color: cardColor),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    TextSpan(
+                      text: completedText,
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }
