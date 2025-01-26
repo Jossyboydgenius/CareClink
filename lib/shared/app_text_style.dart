@@ -6,8 +6,6 @@ abstract class AppTextStyle {
   /// Base text style
   static const TextStyle _baseTextStyle = TextStyle(
     fontFamily: 'Inter',
-    fontWeight: AppFontWeight.regular,
-    color: AppColors.textPrimary,
   );
 
   ///Inter 10
@@ -18,15 +16,23 @@ abstract class AppTextStyle {
       regular10.copyWith(fontWeight: AppFontWeight.medium);
 
   ///Inter 12
-  static TextStyle get regular12 => _baseTextStyle.copyWith(fontSize: 12);
+  static TextStyle get regular12 => _baseTextStyle.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      );
 
   ///Inter medium 12
-  static TextStyle get medium12 =>
-      regular12.copyWith(fontWeight: AppFontWeight.medium);
+  static TextStyle get medium12 => _baseTextStyle.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      );
 
   ///Inter semibold 12
-  static TextStyle get semibold12 =>
-      regular12.copyWith(fontWeight: AppFontWeight.semiBold);
+  static TextStyle get semibold12 => _baseTextStyle.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        height: 16/12, // line height 16px
+      );
 
   ///Inter medium 14
   static TextStyle get medium14 => regular10.copyWith(
