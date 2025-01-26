@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sign.dart';
+import 'package:mobo_app/ui/views/sign_in_view.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(const Duration(seconds: 2), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const Sign()),
+        MaterialPageRoute(builder: (_) => const SignInView()),
       );
     });
   }
