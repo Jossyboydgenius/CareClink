@@ -4,6 +4,7 @@ import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_checkbox.dart';
 import 'dashboard_view.dart';
 
 class SignInView extends StatefulWidget {
@@ -80,7 +81,7 @@ class _SignInViewState extends State<SignInView> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: AppColors.grey300,
+                      color: AppColors.grey400,
                     ),
                   ),
                 ),
@@ -105,7 +106,7 @@ class _SignInViewState extends State<SignInView> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: AppColors.grey300,
+                      color: AppColors.grey400,
                     ),
                   ),
                   suffixIcon: IconButton(
@@ -128,24 +129,13 @@ class _SignInViewState extends State<SignInView> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 28.w,
-                    height: 28.w,
-                    child: Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      side: BorderSide(
-                        color: AppColors.grey300,
-                        width: 1,
-                      ),
-                    ),
+                  AppCheckbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
                   ),
                   AppSpacing.h8(),
                   Text(
@@ -156,7 +146,7 @@ class _SignInViewState extends State<SignInView> {
                   ),
                 ],
               ),
-              AppSpacing.v24(),
+              AppSpacing.v32(),
               AppButton(
                 text: 'Log in',
                 onPressed: _handleLogin,
