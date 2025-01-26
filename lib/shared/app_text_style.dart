@@ -107,17 +107,18 @@ abstract class AppTextStyle {
   static TextStyle get bold20 =>
       regular20.copyWith(fontWeight: AppFontWeight.bold);
 
+  ///Inter 24
+  static TextStyle get regular24 => _baseTextStyle.copyWith(fontSize: 24);
+
   ///Inter semibold 24
-  static TextStyle get semibold24 => regular16.copyWith(
+  static TextStyle get semibold24 => regular24.copyWith(
         fontWeight: AppFontWeight.semiBold,
-        fontSize: 24.spMin,
       );
 
   ///Inter bold 24
-  static const TextStyle bold24 = TextStyle(
-    fontWeight: AppFontWeight.bold,
-    fontSize: 24,
-  );
+  static TextStyle get bold24 => regular24.copyWith(
+        fontWeight: AppFontWeight.bold,
+      );
 
   // Welcome Back text style
   static TextStyle get welcomeBack => _baseTextStyle.copyWith(
