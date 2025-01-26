@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
-import '../../shared/app_text_style.dart';
 
 class ActivityCard extends StatelessWidget {
   final String title;
@@ -65,7 +64,7 @@ class ActivityCard extends StatelessWidget {
                 height: 6.w,
                 decoration: BoxDecoration(
                   color: borderColor,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
               SizedBox(width: 6.w),
