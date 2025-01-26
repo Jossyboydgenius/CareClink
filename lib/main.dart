@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'ui/views/splash_screen_view.dart';
+import 'app/routes/app_routes.dart';
 import 'app/themes.dart';
 import 'shared/app_sizer.dart';
 
@@ -22,11 +22,12 @@ class MyApp extends StatelessWidget {
           title: 'Logo Company',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
+          initialRoute: AppRoutes.initialRoute,
+          routes: AppRoutes.routes,
           builder: (context, child) {
             AppDimension.init(context);
             return child!;
           },
-          home: const SplashScreen(),
         );
       },
     );
