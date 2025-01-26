@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'ui/views/splash_screen.dart';
+import 'ui/views/splash_screen_view.dart';
 import 'app/themes.dart';
 import 'shared/app_sizer.dart';
 
