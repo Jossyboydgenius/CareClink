@@ -151,6 +151,7 @@ class _DashboardState extends State<Dashboard> {
                 TimesheetCard(
                   visitId: 'VST 1001',
                   clockIn: '10:00',
+                  showClockOut: true,
                   onClockOut: () {},
                   onExpandDetails: () {},
                 ),
@@ -160,6 +161,7 @@ class _DashboardState extends State<Dashboard> {
                   clockIn: '10:00',
                   clockOut: '10:30',
                   duration: '30min',
+                  showClockOut: false,
                   onClockOut: () {},
                   onExpandDetails: () {},
                 ),
