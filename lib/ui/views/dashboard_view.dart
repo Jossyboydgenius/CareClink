@@ -115,6 +115,7 @@ class _DashboardState extends State<Dashboard> {
                           completedText: '3 appointment',
                           cardColor: AppColors.activityPurple,
                           borderColor: AppColors.activityPurpleBorder,
+                          svgAsset: 'assets/purple_rectangle.svg',
                         ),
                         ActivityCard(
                           title: 'Weekly',
@@ -122,6 +123,7 @@ class _DashboardState extends State<Dashboard> {
                           completedText: '21 appointment',
                           cardColor: AppColors.activityGreen,
                           borderColor: AppColors.activityGreenBorder,
+                          svgAsset: 'assets/green_rectangle.svg',
                         ),
                         ActivityCard(
                           title: 'Monthly',
@@ -129,6 +131,7 @@ class _DashboardState extends State<Dashboard> {
                           completedText: '84 appointment',
                           cardColor: AppColors.activityOrange,
                           borderColor: AppColors.activityOrangeBorder,
+                          svgAsset: 'assets/orange_rectangle.svg',
                         ),
                         ActivityCard(
                           title: 'Pending Appointment',
@@ -136,6 +139,7 @@ class _DashboardState extends State<Dashboard> {
                           completedText: '84/120',
                           cardColor: AppColors.activityPink,
                           borderColor: AppColors.activityPinkBorder,
+                          svgAsset: 'assets/pink_rectangle.svg',
                         ),
                       ],
                     );
