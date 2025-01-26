@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../shared/app_colors.dart';
+import '../../shared/app_text_style.dart';
+import '../../shared/app_spacing.dart';
+import '../widgets/app_button.dart';
 import 'dashboard.dart';
 
 class Sign extends StatefulWidget {
@@ -13,106 +18,100 @@ class _SignState extends State<Sign> {
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 32),
+              AppSpacing.v32(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'Logo',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                    style: AppTextStyle.semibold24.copyWith(
+                      color: AppColors.primary,
                     ),
                   ),
-                  const Text(
+                  Text(
                     ' Company',
-                    style: TextStyle(
-                      fontSize: 32,
-                      color: Colors.grey,
+                    style: AppTextStyle.regular24.copyWith(
+                      color: AppColors.grey300,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 48),
-              const Text(
+              AppSpacing.v32(),
+              Text(
                 'Welcome back',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyle.semibold24,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              const Text(
+              AppSpacing.v8(),
+              Text(
                 "We'll get you up and running in no time.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+                style: AppTextStyle.regular14.copyWith(
+                  color: AppColors.grey300,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
-              const Text(
+              AppSpacing.v32(),
+              Text(
                 'Email Address',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyle.medium14,
               ),
-              const SizedBox(height: 8),
+              AppSpacing.v8(),
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'johndoe@company.com',
+                  hintStyle: AppTextStyle.regular14.copyWith(
+                    color: AppColors.grey300,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.grey.shade300,
+                      color: AppColors.grey200,
                     ),
                   ),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 24),
-              const Text(
+              AppSpacing.v24(),
+              Text(
                 'Password',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyle.medium14,
               ),
-              const SizedBox(height: 8),
+              AppSpacing.v8(),
               TextField(
                 controller: _passwordController,
                 decoration: InputDecoration(
                   hintText: '••••••••',
+                  hintStyle: AppTextStyle.regular14.copyWith(
+                    color: AppColors.grey300,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Colors.grey.shade300,
+                      color: AppColors.grey200,
                     ),
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                      color: Colors.grey,
+                      color: AppColors.grey300,
                     ),
                     onPressed: () {
                       setState(() {
@@ -123,7 +122,7 @@ class _SignState extends State<Sign> {
                 ),
                 obscureText: _obscurePassword,
               ),
-              const SizedBox(height: 16),
+              AppSpacing.v16(),
               Row(
                 children: [
                   Checkbox(
@@ -137,42 +136,36 @@ class _SignState extends State<Sign> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Remember me',
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
+                    style: AppTextStyle.regular14,
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const Dashboard()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Log in',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              AppSpacing.v24(),
+              AppButton(
+                text: 'Log in',
+                onPressed: _handleLogin,
+                isLoading: _isLoading,
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _handleLogin() {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Simulate login delay
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const Dashboard()),
+      );
+    });
   }
 
   @override
