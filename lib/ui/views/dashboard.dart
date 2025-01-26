@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../widgets/activity_card.dart';
 import '../widgets/timesheet_card.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -54,20 +55,18 @@ class _DashboardState extends State<Dashboard> {
                       ],
                     ),
                     Container(
-                      width: AppDimension.getWidth(40),
-                      height: AppDimension.getWidth(40),
-                      decoration: BoxDecoration(
-                        color: AppColors.activityGreen,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'JD',
-                          style: TextStyle(
-                            fontSize: AppDimension.getFontSize(14),
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    width: 40.w,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.green200,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'JD',
+                        style: AppTextStyle.semibold14.copyWith(
+                          color: AppColors.white,
+                        ),
                         ),
                       ),
                     ),
