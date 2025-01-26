@@ -4,6 +4,7 @@ import '../widgets/timesheet_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
+import '../../shared/app_colors.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -40,14 +41,14 @@ class _DashboardState extends State<Dashboard> {
                           style: TextStyle(
                             fontSize: AppDimension.getFontSize(24),
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
+                            color: AppColors.primary,
                           ),
                         ),
                         Text(
                           ' Company',
                           style: TextStyle(
                             fontSize: AppDimension.getFontSize(24),
-                            color: Colors.grey,
+                            color: AppColors.textGrey,
                           ),
                         ),
                       ],
@@ -56,7 +57,7 @@ class _DashboardState extends State<Dashboard> {
                       width: AppDimension.getWidth(40),
                       height: AppDimension.getWidth(40),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00C48C),
+                        color: AppColors.activityGreen,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Center(
@@ -64,7 +65,7 @@ class _DashboardState extends State<Dashboard> {
                           'JD',
                           style: TextStyle(
                             fontSize: AppDimension.getFontSize(14),
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -112,29 +113,29 @@ class _DashboardState extends State<Dashboard> {
                           title: 'Daily',
                           hours: '2',
                           completedText: '3 appointment',
-                          cardColor: Color(0xFF6C63FF),
-                          borderColor: Color(0xFFE8E6FF),
+                          cardColor: AppColors.activityPurple,
+                          borderColor: AppColors.activityPurpleBorder,
                         ),
                         ActivityCard(
                           title: 'Weekly',
                           hours: '25',
                           completedText: '21 appointment',
-                          cardColor: Color(0xFF00C48C),
-                          borderColor: Color(0xFFE6FAF5),
+                          cardColor: AppColors.activityGreen,
+                          borderColor: AppColors.activityGreenBorder,
                         ),
                         ActivityCard(
                           title: 'Monthly',
                           hours: '250',
                           completedText: '84 appointment',
-                          cardColor: Color(0xFFFF9500),
-                          borderColor: Color(0xFFFFF5E5),
+                          cardColor: AppColors.activityOrange,
+                          borderColor: AppColors.activityOrangeBorder,
                         ),
                         ActivityCard(
                           title: 'Pending Appointment',
                           hours: '2',
                           completedText: '84/120',
-                          cardColor: Color(0xFFFF3B30),
-                          borderColor: Color(0xFFFFE5E5),
+                          cardColor: AppColors.activityRed,
+                          borderColor: AppColors.activityRedBorder,
                         ),
                       ],
                     );
