@@ -99,7 +99,7 @@ class _DashboardState extends State<Dashboard> {
                   builder: (context, constraints) {
                     final cardWidth =
                         (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
-                    final cardHeight = cardWidth * 0.9;
+                    final cardHeight = cardWidth * 0.7;
 
                     return GridView.count(
                       shrinkWrap: true,
@@ -134,8 +134,8 @@ class _DashboardState extends State<Dashboard> {
                           title: 'Pending Appointment',
                           hours: '2',
                           completedText: '84/120',
-                          cardColor: AppColors.activityRed,
-                          borderColor: AppColors.activityRedBorder,
+                          cardColor: AppColors.activityPink,
+                          borderColor: AppColors.activityPinkBorder,
                         ),
                       ],
                     );
