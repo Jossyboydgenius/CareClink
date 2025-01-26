@@ -5,6 +5,7 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/notification_card.dart';
+import '../../app/routes/app_routes.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -167,8 +168,19 @@ class _NotificationViewState extends State<NotificationView> {
       bottomNavigationBar: BottomNavBar(
         currentIndex: 1,
         onTap: (index) {
-          if (index != 1) {
-            Navigator.pop(context);
+          if (index == 1) return;
+          switch (index) {
+            case 0:
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.dashboardView,
+                (route) => false,
+              );
+              break;
+            case 2:
+              Navigator.of(context).pushReplacementNamed(
+                AppRoutes.appointmentView,
+              );
+              break;
           }
         },
       ),
