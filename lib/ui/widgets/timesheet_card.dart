@@ -57,28 +57,22 @@ class _TimesheetCardState extends State<TimesheetCard> {
                     ),
                     if (widget.showClockOut)
                       Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(
                             color: AppColors.primary,
                             width: 1,
                           ),
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(6.r),
                         ),
-                        child: TextButton(
-                          onPressed: widget.onClockOut,
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 2.h,
-                            ),
-                            minimumSize: Size(0, 24.h),
-                            textStyle: AppTextStyle.medium12,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
+                        child: Text(
+                          'Clock Out',
+                          style: AppTextStyle.medium12.copyWith(
+                            color: AppColors.primary,
                           ),
-                          child: Text('Clock Out'),
                         ),
                       )
                     else if (widget.duration != null)
