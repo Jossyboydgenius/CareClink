@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../shared/app_sizer.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../shared/app_colors.dart';
+import '../views/appointment_view.dart';
+import '../views/dashboard.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -15,33 +18,49 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade200,
+            color: AppColors.grey200,
             width: 1,
           ),
         ),
       ),
       child: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: onTap,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          if (index == 2 && currentIndex != 2) {
+            // Navigate to AppointmentView only if we're not already there
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AppointmentView()),
+            );
+          } else if (index == 0 && currentIndex != 0) {
+            // Navigate to Dashboard if we're not already there
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const Dashboard()),
+              (route) => false,
+            );
+          }
+          onTap(index);
+        },
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.grey300,
         backgroundColor: Colors.transparent,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        selectedFontSize: AppDimension.getFontSize(12),
-        unselectedFontSize: AppDimension.getFontSize(12),
+        selectedFontSize: 12.sp,
+        unselectedFontSize: 12.sp,
         items: [
           BottomNavigationBarItem(
             icon: Icon(
               Icons.dashboard_outlined,
-              size: AppDimension.getWidth(24),
+              size: 24.w,
             ),
             activeIcon: Icon(
               Icons.dashboard,
-              size: AppDimension.getWidth(24),
+              size: 24.w,
             ),
             label: 'Dashboard',
           ),
@@ -50,26 +69,26 @@ class BottomNavBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.notifications_outlined,
-                  size: AppDimension.getWidth(24),
+                  size: 24.w,
                 ),
                 Positioned(
                   right: 0,
                   top: 0,
                   child: Container(
-                    padding: EdgeInsets.all(AppDimension.getWidth(2)),
+                    padding: EdgeInsets.all(2.w),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: AppColors.red,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     constraints: BoxConstraints(
-                      minWidth: AppDimension.getWidth(12),
-                      minHeight: AppDimension.getWidth(12),
+                      minWidth: 12.w,
+                      minHeight: 12.w,
                     ),
                     child: Text(
                       '3',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: AppDimension.getFontSize(8),
+                        color: AppColors.white,
+                        fontSize: 8.sp,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -82,26 +101,26 @@ class BottomNavBar extends StatelessWidget {
               children: [
                 Icon(
                   Icons.notifications,
-                  size: AppDimension.getWidth(24),
+                  size: 24.w,
                 ),
                 Positioned(
                   right: 0,
                   top: 0,
                   child: Container(
-                    padding: EdgeInsets.all(AppDimension.getWidth(2)),
+                    padding: EdgeInsets.all(2.w),
                     decoration: BoxDecoration(
-                      color: Colors.red,
+                      color: AppColors.red,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     constraints: BoxConstraints(
-                      minWidth: AppDimension.getWidth(12),
-                      minHeight: AppDimension.getWidth(12),
+                      minWidth: 12.w,
+                      minHeight: 12.w,
                     ),
                     child: Text(
                       '3',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: AppDimension.getFontSize(8),
+                        color: AppColors.white,
+                        fontSize: 8.sp,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -115,11 +134,11 @@ class BottomNavBar extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(
               Icons.calendar_today_outlined,
-              size: AppDimension.getWidth(24),
+              size: 24.w,
             ),
             activeIcon: Icon(
               Icons.calendar_today,
-              size: AppDimension.getWidth(24),
+              size: 24.w,
             ),
             label: 'Appointment',
           ),
@@ -127,4 +146,4 @@ class BottomNavBar extends StatelessWidget {
       ),
     );
   }
-} 
+}
