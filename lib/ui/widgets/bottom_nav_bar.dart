@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../app/routes/app_routes.dart';
+import '../../data/services/navigator_service.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -36,44 +37,32 @@ class _BottomNavBarState extends State<BottomNavBar> {
     _isNavigating = true;
 
     try {
-      final currentRoute = ModalRoute.of(context)?.settings.name;
       String targetRoute;
-
       switch (index) {
         case 0:
           targetRoute = AppRoutes.dashboardView;
+          await NavigationService.closeAllAndPushNamed(targetRoute);
           break;
         case 1:
           targetRoute = AppRoutes.notificationView;
+          await NavigationService.pushNamed(targetRoute);
           break;
         case 2:
           targetRoute = AppRoutes.appointmentView;
+          await NavigationService.pushNamed(targetRoute);
           break;
         default:
           _isNavigating = false;
           return;
       }
-
-      if (currentRoute == targetRoute) {
-        _isNavigating = false;
-        return;
+      
+      if (mounted) {
+        widget.onTap(index);
       }
-
-      if (index == 0) {
-        await Navigator.of(context).pushNamedAndRemoveUntil(
-          targetRoute,
-          (route) => false,
-        );
-      } else {
-        if (currentRoute == AppRoutes.dashboardView) {
-          await Navigator.of(context).pushNamed(targetRoute);
-        } else {
-          await Navigator.of(context).pushReplacementNamed(targetRoute);
-        }
-      }
-      widget.onTap(index);
     } finally {
-      _isNavigating = false;
+      if (mounted) {
+        _isNavigating = false;
+      }
     }
   }
 
