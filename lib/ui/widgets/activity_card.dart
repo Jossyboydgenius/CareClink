@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
+import '../../shared/app_colors.dart';
 
 class ActivityCard extends StatelessWidget {
   final String title;
@@ -23,7 +24,7 @@ class ActivityCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(AppDimension.getWidth(12)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
       ),
