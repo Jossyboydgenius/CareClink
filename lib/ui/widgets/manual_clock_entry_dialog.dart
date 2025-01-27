@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../../shared/app_snackbar.dart';
 import '../../data/services/navigator_service.dart';
 import 'app_button.dart';
+import 'app_date_picker.dart';
+import 'app_time_picker.dart';
 
 class ManualClockEntryDialog extends StatefulWidget {
   final String appointmentId;
@@ -45,22 +46,52 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
     return '$hour:$minute';
   }
 
-  void _showTimePicker(bool isClockIn) {
-    DatePicker.showTimePicker(
-      context,
-      showTitleActions: true,
-      onConfirm: (time) {
-        setState(() {
-          if (isClockIn) {
-            _selectedClockIn = TimeOfDay.fromDateTime(time);
-          } else {
-            _selectedClockOut = TimeOfDay.fromDateTime(time);
-          }
-        });
+  void _showTimePicker(bool isClockIn) async {
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: isClockIn ? _selectedClockIn : _selectedClockOut,
+      initialEntryMode: TimePickerEntryMode.dial,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(
+                  color: AppColors.primary.withOpacity(0.2),
+                ),
+              ),
+              dayPeriodBorderSide: BorderSide(
+                color: AppColors.primary.withOpacity(0.2),
+              ),
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+          ),
+          child: child!,
+        );
       },
-      currentTime: DateTime.now(),
-      locale: LocaleType.en,
     );
+
+    if (time != null) {
+      setState(() {
+        if (isClockIn) {
+          _selectedClockIn = time;
+        } else {
+          _selectedClockOut = time;
+        }
+      });
+    }
   }
 
   @override
@@ -146,120 +177,22 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
               ],
             ),
             AppSpacing.v16(),
-            Text(
-              'Date',
-              style: AppTextStyle.regular14,
-            ),
-            AppSpacing.v8(),
-            InkWell(
-              onTap: () {
-                DatePicker.showDatePicker(
-                  context,
-                  showTitleActions: true,
-                  minTime: DateTime(2024, 1, 1),
-                  maxTime: DateTime(2025, 12, 31),
-                  onConfirm: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                    });
-                  },
-                  currentTime: _selectedDate,
-                  locale: LocaleType.en,
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.grey200),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDate(_selectedDate),
-                      style: AppTextStyle.regular14,
-                    ),
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      color: AppColors.grey300,
-                      size: 20.w,
-                    ),
-                  ],
-                ),
-              ),
+            AppDatePicker(
+              label: 'Date',
+              selectedDate: _selectedDate,
+              onDateSelected: (date) => setState(() => _selectedDate = date),
             ),
             AppSpacing.v12(),
-            Text(
-              'Clock In',
-              style: AppTextStyle.regular14,
-            ),
-            AppSpacing.v8(),
-            InkWell(
-              onTap: () => _showTimePicker(true),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.grey200),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatTime(_selectedClockIn),
-                      style: AppTextStyle.regular14,
-                    ),
-                    Icon(
-                      Icons.access_time,
-                      color: AppColors.grey300,
-                      size: 20.w,
-                    ),
-                  ],
-                ),
-              ),
+            AppTimePicker(
+              label: 'Clock In',
+              selectedTime: _selectedClockIn,
+              onTimeSelected: (time) => setState(() => _selectedClockIn = time),
             ),
             AppSpacing.v12(),
-            Text(
-              'Clock Out',
-              style: AppTextStyle.regular14,
-            ),
-            AppSpacing.v8(),
-            InkWell(
-              onTap: () => _showTimePicker(false),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.grey200),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatTime(_selectedClockOut),
-                      style: AppTextStyle.regular14,
-                    ),
-                    Icon(
-                      Icons.access_time,
-                      color: AppColors.grey300,
-                      size: 20.w,
-                    ),
-                  ],
-                ),
-              ),
+            AppTimePicker(
+              label: 'Clock Out',
+              selectedTime: _selectedClockOut,
+              onTimeSelected: (time) => setState(() => _selectedClockOut = time),
             ),
             AppSpacing.v12(),
             Text(
@@ -317,27 +250,20 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             AppSpacing.v16(),
             AppButton(
               text: 'Save',
-              onPressed: () async {
-                if (!mounted) return;
-                setState(() {
-                  _isLoading = true;
-                });
-
-                // Simulate save delay
-                await Future.delayed(const Duration(seconds: 2));
-
-                if (!mounted) return;
-                setState(() {
-                  _isLoading = false;
-                });
-
-                NavigationService.goBack();
-                AppSnackbar.showSnackBar(
-                  message: 'Successfully saved manual clock entry',
-                  color: AppColors.green200,
-                );
-              },
               isLoading: _isLoading,
+              onPressed: () {
+                if (_isLoading) return;
+                setState(() => _isLoading = true);
+                Future<void>.delayed(const Duration(seconds: 2)).then((_) {
+                  if (!mounted) return;
+                  setState(() => _isLoading = false);
+                  NavigationService.goBack();
+                  AppSnackbar.showSnackBar(
+                    message: 'Successfully saved manual clock entry',
+                    color: AppColors.green200,
+                  );
+                });
+              },
             ),
           ],
         ),
