@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -24,12 +25,43 @@ class ManualClockEntryDialog extends StatefulWidget {
 class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
   bool _isLoading = false;
   String? _selectedReason;
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedClockIn = TimeOfDay.now();
+  TimeOfDay _selectedClockOut = TimeOfDay.now();
   final List<String> _reasons = [
     'Appointment Completed',
     'Reschedule',
     'No Show',
     'Others',
   ];
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  void _showTimePicker(bool isClockIn) {
+    DatePicker.showTimePicker(
+      context,
+      showTitleActions: true,
+      onConfirm: (time) {
+        setState(() {
+          if (isClockIn) {
+            _selectedClockIn = TimeOfDay.fromDateTime(time);
+          } else {
+            _selectedClockOut = TimeOfDay.fromDateTime(time);
+          }
+        });
+      },
+      currentTime: DateTime.now(),
+      locale: LocaleType.en,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,13 +147,25 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             ),
             AppSpacing.v16(),
             Text(
-              'Clock In',
+              'Date',
               style: AppTextStyle.regular14,
             ),
             AppSpacing.v8(),
             InkWell(
               onTap: () {
-                // Show time picker
+                DatePicker.showDatePicker(
+                  context,
+                  showTitleActions: true,
+                  minTime: DateTime(2024, 1, 1),
+                  maxTime: DateTime(2025, 12, 31),
+                  onConfirm: (date) {
+                    setState(() {
+                      _selectedDate = date;
+                    });
+                  },
+                  currentTime: _selectedDate,
+                  locale: LocaleType.en,
+                );
               },
               child: Container(
                 padding: EdgeInsets.symmetric(
@@ -137,7 +181,41 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '00 : 00',
+                      _formatDate(_selectedDate),
+                      style: AppTextStyle.regular14,
+                    ),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      color: AppColors.grey300,
+                      size: 20.w,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            AppSpacing.v12(),
+            Text(
+              'Clock In',
+              style: AppTextStyle.regular14,
+            ),
+            AppSpacing.v8(),
+            InkWell(
+              onTap: () => _showTimePicker(true),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.grey200),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatTime(_selectedClockIn),
                       style: AppTextStyle.regular14,
                     ),
                     Icon(
@@ -156,9 +234,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             ),
             AppSpacing.v8(),
             InkWell(
-              onTap: () {
-                // Show time picker
-              },
+              onTap: () => _showTimePicker(false),
               child: Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: 16.w,
@@ -173,7 +249,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '00 : 00',
+                      _formatTime(_selectedClockOut),
                       style: AppTextStyle.regular14,
                     ),
                     Icon(
