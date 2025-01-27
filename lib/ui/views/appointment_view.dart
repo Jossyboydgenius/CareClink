@@ -21,6 +21,47 @@ class _AppointmentViewState extends State<AppointmentView> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
   String? _selectedAppointmentId;
+  final List<Map<String, dynamic>> _appointments = [
+    {
+      'id': '10001',
+      'dateTime': '2025-01-14 10:00AM - 11:00AM',
+      'status': AppointmentStatus.pending,
+    },
+    {
+      'id': '10002',
+      'dateTime': '2025-01-15 10:00AM - 11:00AM',
+      'status': AppointmentStatus.none,
+    },
+    {
+      'id': '10003',
+      'dateTime': '2025-01-15 10:00AM - 11:00AM',
+      'status': AppointmentStatus.none,
+    },
+    {
+      'id': '10004',
+      'dateTime': '2025-01-15 10:00AM - 11:00AM',
+      'status': AppointmentStatus.none,
+    },
+    {
+      'id': '10005',
+      'dateTime': '2025-01-15 10:00AM - 11:00AM',
+      'status': AppointmentStatus.reschedule,
+    },
+  ];
+
+  void _addNewAppointment(String appointmentId, DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) {
+    final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final formattedClockIn = '${clockIn.hourOfPeriod == 0 ? 12 : clockIn.hourOfPeriod}:${clockIn.minute.toString().padLeft(2, '0')}${clockIn.period == DayPeriod.am ? 'AM' : 'PM'}';
+    final formattedClockOut = '${clockOut.hourOfPeriod == 0 ? 12 : clockOut.hourOfPeriod}:${clockOut.minute.toString().padLeft(2, '0')}${clockOut.period == DayPeriod.am ? 'AM' : 'PM'}';
+    
+    setState(() {
+      _appointments.add({
+        'id': appointmentId,
+        'dateTime': '$formattedDate $formattedClockIn - $formattedClockOut',
+        'status': AppointmentStatus.pending,
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,75 +167,42 @@ class _AppointmentViewState extends State<AppointmentView> {
                       ),
                       AppSpacing.v16(),
                       // Appointment cards
-                      AppointmentCard(
-                        appointmentId: '10001',
-                        dateTime: '2025-01-14 10:00 - 11:00 AM',
-                        status: AppointmentStatus.pending,
-                        isSelected: _selectedAppointmentId == '10001',
-                        onTap: () {
-                          setState(() {
-                            _selectedAppointmentId = '10001';
-                          });
-                        },
-                      ),
+                      ..._appointments.map((appointment) => Column(
+                        children: [
+                          AppointmentCard(
+                            appointmentId: appointment['id'],
+                            dateTime: appointment['dateTime'],
+                            status: appointment['status'],
+                            isSelected: _selectedAppointmentId == appointment['id'],
+                            onTap: () {
+                              setState(() {
+                                _selectedAppointmentId = appointment['id'];
+                              });
+                            },
+                          ),
+                          if (appointment != _appointments.last) AppSpacing.v12(),
+                        ],
+                      )).toList(),
                       AppSpacing.v12(),
-                      AppointmentCard(
-                        appointmentId: '10002',
-                        dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        isSelected: _selectedAppointmentId == '10002',
-                        onTap: () {
-                          setState(() {
-                            _selectedAppointmentId = '10002';
-                          });
-                        },
-                      ),
-                      AppSpacing.v12(),
-                      AppointmentCard(
-                        appointmentId: '10003',
-                        dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        isSelected: _selectedAppointmentId == '10003',
-                        onTap: () {
-                          setState(() {
-                            _selectedAppointmentId = '10003';
-                          });
-                        },
-                      ),
-                      AppSpacing.v12(),
-                      AppointmentCard(
-                        appointmentId: '10004',
-                        dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        isSelected: _selectedAppointmentId == '10004',
-                        onTap: () {
-                          setState(() {
-                            _selectedAppointmentId = '10004';
-                          });
-                        },
-                      ),
-                      AppSpacing.v12(),
-                      AppointmentCard(
-                        appointmentId: '10005',
-                        dateTime: '2025-01-15 10:00 - 11:00 AM',
-                        status: AppointmentStatus.reschedule,
-                        isSelected: _selectedAppointmentId == '10005',
-                        onTap: () {
-                          setState(() {
-                            _selectedAppointmentId = '10005';
-                          });
-                        },
-                      ),
-                      AppSpacing.v24(),
                     ],
                   ),
                 ),
               ),
             ),
             // Clock In button
-            Padding(
-              padding: EdgeInsets.all(24.w),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                border: Border(
+                  top: BorderSide(color: AppColors.grey200),
+                ),
+              ),
+              padding: EdgeInsets.all(16.w),
               child: AppButton(
                 text: 'Clock In',
                 onPressed: _handleClockIn,
                 isLoading: _isLoading,
+                enabled: _selectedAppointmentId != null,
               ),
             ),
           ],
@@ -212,11 +220,15 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   void _handleClockIn() {
+    final nextId = (int.parse(_appointments.last['id']) + 1).toString();
     showDialog(
       context: context,
       builder: (context) => ManualClockEntryDialog(
-        appointmentId: '10001',
-        dateTime: '2025-01-14 10:00 - 11:00 AM',
+        appointmentId: nextId,
+        dateTime: _appointments.last['dateTime'],
+        onSave: (date, clockIn, clockOut) {
+          _addNewAppointment(nextId, date, clockIn, clockOut);
+        },
       ),
     );
   }
