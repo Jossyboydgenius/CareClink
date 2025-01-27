@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
+import '../../shared/app_icons.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
 
@@ -72,110 +72,39 @@ class _BottomNavBarState extends State<BottomNavBar> {
       decoration: BoxDecoration(
         color: AppColors.white,
         border: Border(
-          top: BorderSide(
-            color: AppColors.grey200,
-            width: 1,
-          ),
+          top: BorderSide(color: AppColors.grey200),
         ),
       ),
       child: BottomNavigationBar(
         currentIndex: widget.currentIndex,
         onTap: (index) => _handleNavigation(context, index),
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.grey300,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.grey300,
         type: BottomNavigationBarType.fixed,
-        selectedFontSize: 12.sp,
-        unselectedFontSize: 12.sp,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.dashboard_outlined,
-              size: 24.w,
-            ),
-            activeIcon: Icon(
-              Icons.dashboard,
-              size: 24.w,
+            icon: AppIcons(
+              icon: AppIconData.dashboard,
+              size: 20,
+              color: widget.currentIndex == 0 ? AppColors.primary : AppColors.grey300,
             ),
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Stack(
-              children: [
-                Icon(
-                  Icons.notifications_outlined,
-                  size: 24.w,
-                ),
-                if (widget.currentIndex != 1)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.all(2.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.red,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 12.w,
-                        minHeight: 12.w,
-                      ),
-                      child: Text(
-                        '3',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            activeIcon: Stack(
-              children: [
-                Icon(
-                  Icons.notifications,
-                  size: 24.w,
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.red,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: BoxConstraints(
-                      minWidth: 12.w,
-                      minHeight: 12.w,
-                    ),
-                    child: Text(
-                      '3',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 8.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
+            icon: AppIcons(
+              icon: AppIconData.notification,
+              color: widget.currentIndex == 1 ? AppColors.primary : AppColors.grey300,
             ),
             label: 'Notification',
           ),
           BottomNavigationBarItem(
-            icon: Icon(
-              Icons.calendar_today_outlined,
-              size: 24.w,
-            ),
-            activeIcon: Icon(
-              Icons.calendar_today,
-              size: 24.w,
+            icon: AppIcons(
+              icon: AppIconData.calendar,
+              color: widget.currentIndex == 2 ? AppColors.primary : AppColors.grey300,
             ),
             label: 'Appointment',
           ),
