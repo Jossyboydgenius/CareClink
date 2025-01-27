@@ -35,65 +35,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
     'No Show',
     'Others',
   ];
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _formatTime(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
-  void _showTimePicker(bool isClockIn) async {
-    final TimeOfDay? time = await showTimePicker(
-      context: context,
-      initialTime: isClockIn ? _selectedClockIn : _selectedClockOut,
-      initialEntryMode: TimePickerEntryMode.dial,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            timePickerTheme: TimePickerThemeData(
-              backgroundColor: Colors.white,
-              hourMinuteShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(
-                  color: AppColors.primary.withOpacity(0.2),
-                ),
-              ),
-              dayPeriodBorderSide: BorderSide(
-                color: AppColors.primary.withOpacity(0.2),
-              ),
-              dayPeriodShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (time != null) {
-      setState(() {
-        if (isClockIn) {
-          _selectedClockIn = time;
-        } else {
-          _selectedClockOut = time;
-        }
-      });
-    }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Dialog(
