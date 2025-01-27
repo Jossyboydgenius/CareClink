@@ -12,11 +12,13 @@ import 'app_time_picker.dart';
 class ManualClockEntryDialog extends StatefulWidget {
   final String appointmentId;
   final String dateTime;
+  final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) onSave;
 
   const ManualClockEntryDialog({
     super.key,
     required this.appointmentId,
     required this.dateTime,
+    required this.onSave,
   });
 
   @override
@@ -44,7 +46,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Container(
-        width: 0.95.sw,
+        width: 0.98.sw,
         padding: EdgeInsets.all(24.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -77,30 +79,36 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   'Appointment ID:',
                   style: AppTextStyle.regular14,
                 ),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.orange,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        'Pending',
-                        style: AppTextStyle.medium12.copyWith(
-                          color: AppColors.white,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.orange,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'Pending',
+                          style: AppTextStyle.medium12.copyWith(
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
-                    ),
-                    AppSpacing.h8(),
-                    Text(
-                      widget.appointmentId,
-                      style: AppTextStyle.semibold14,
-                    ),
-                  ],
+                      AppSpacing.h8(),
+                      Flexible(
+                        child: Text(
+                          widget.appointmentId,
+                          style: AppTextStyle.semibold14,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -112,9 +120,12 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   style: AppTextStyle.regular14,
                 ),
                 AppSpacing.h8(),
-                Text(
-                  widget.dateTime,
-                  style: AppTextStyle.semibold14,
+                Expanded(
+                  child: Text(
+                    widget.dateTime,
+                    style: AppTextStyle.semibold14,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -192,13 +203,12 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             AppSpacing.v16(),
             AppButton(
               text: 'Save',
-              isLoading: _isLoading,
               onPressed: () {
-                if (_isLoading) return;
                 setState(() => _isLoading = true);
                 Future<void>.delayed(const Duration(seconds: 2)).then((_) {
                   if (!mounted) return;
                   setState(() => _isLoading = false);
+                  widget.onSave(_selectedDate, _selectedClockIn, _selectedClockOut);
                   NavigationService.goBack();
                   AppSnackbar.showSnackBar(
                     message: 'Successfully saved manual clock entry',
@@ -206,6 +216,8 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   );
                 });
               },
+              isLoading: _isLoading,
+              enabled: _selectedReason != null,
             ),
           ],
         ),
