@@ -37,6 +37,7 @@ dependencies:
   flutter_bloc: ^9.0.0
   bloc: ^9.0.0
   flutter_screenutil: ^5.9.3
+  flutter_datetime_picker_plus: ^2.1.0
 
 dev_dependencies:
   flutter_test:
