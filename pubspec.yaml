@@ -37,7 +37,6 @@ dependencies:
   flutter_bloc: ^9.0.0
   bloc: ^9.0.0
   flutter_screenutil: ^5.9.3
-  flutter_svg: ^2.0.17
 
 dev_dependencies:
   flutter_test:
@@ -96,9 +95,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-  assets:
-    - assets/purple_rectangle.svg
-    - assets/green_rectangle.svg
-    - assets/orange_rectangle.svg
-    - assets/pink_rectangle.svg
