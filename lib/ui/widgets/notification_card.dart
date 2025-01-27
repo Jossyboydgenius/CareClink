@@ -3,22 +3,31 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
+import '../../shared/app_icons.dart';
+import '../../data/models/notification_model.dart';
 
 class NotificationCard extends StatelessWidget {
-  final String title;
-  final String message;
-  final String type;
-  final String time;
-  final VoidCallback onMarkAsRead;
+  final NotificationModel notification;
+  final VoidCallback? onMarkAsRead;
+  final bool showMarkAsRead;
 
   const NotificationCard({
     super.key,
-    required this.title,
-    required this.message,
-    required this.type,
-    required this.time,
-    required this.onMarkAsRead,
+    required this.notification,
+    this.onMarkAsRead,
+    this.showMarkAsRead = true,
   });
+
+  String _getTimeAgo() {
+    final difference = DateTime.now().difference(notification.timestamp);
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inDays} days ago';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,14 +50,20 @@ class NotificationCard extends StatelessWidget {
               ),
               AppSpacing.h8(),
               Text(
-                type,
+                notification.type,
                 style: AppTextStyle.regular14.copyWith(
                   color: AppColors.grey300,
                 ),
               ),
               const Spacer(),
+              Icon(
+                Icons.access_time,
+                size: 16.w,
+                color: AppColors.grey300,
+              ),
+              AppSpacing.h4(),
               Text(
-                time,
+                _getTimeAgo(),
                 style: AppTextStyle.regular14.copyWith(
                   color: AppColors.grey300,
                 ),
@@ -57,47 +72,49 @@ class NotificationCard extends StatelessWidget {
           ),
           AppSpacing.v12(),
           Text(
-            title,
+            notification.title,
             style: AppTextStyle.semibold16,
           ),
           AppSpacing.v8(),
           Text(
-            message,
+            notification.message,
             style: AppTextStyle.regular14.copyWith(
               color: AppColors.grey300,
               height: 1.5,
             ),
           ),
-          AppSpacing.v12(),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: onMarkAsRead,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    color: AppColors.primary,
-                    size: 20.w,
-                  ),
-                  AppSpacing.h4(),
-                  Text(
-                    'Mark as Read',
-                    style: AppTextStyle.medium14.copyWith(
+          if (showMarkAsRead && !notification.isRead) ...[
+            AppSpacing.v12(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onMarkAsRead,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppIcons(
+                      icon: AppIconData.check,
+                      size: 20,
                       color: AppColors.primary,
-                      decoration: TextDecoration.underline,
                     ),
-                  ),
-                ],
+                    AppSpacing.h4(),
+                    Text(
+                      'Mark as Read',
+                      style: AppTextStyle.medium14.copyWith(
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
