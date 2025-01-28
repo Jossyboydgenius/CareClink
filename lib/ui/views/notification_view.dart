@@ -20,17 +20,28 @@ class NotificationView extends StatefulWidget {
 class _NotificationViewState extends State<NotificationView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _notificationsEnabled = true;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_handleTabChange);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) {
+      setState(() {
+        _currentIndex = _tabController.index;
+      });
+    }
   }
 
   void _handleMarkAsRead(String id) {
@@ -128,34 +139,15 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                 child: Row(
                   children: [
                     InkWell(
-                      onTap: () => _tabController.index = 0,
+                      onTap: () {
+                        _tabController.animateTo(0);
+                      },
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 8.h),
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: _tabController.index == 0 ? AppColors.primary : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'All',
-                          style: AppTextStyle.medium14.copyWith(
-                            color: _tabController.index == 0 ? AppColors.primary : AppColors.grey300,
-                          ),
-                        ),
-                      ),
-                    ),
-                    AppSpacing.h16(),
-                    InkWell(
-                      onTap: () => _tabController.index = 1,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _tabController.index == 1 ? AppColors.primary : Colors.transparent,
+                              color: _currentIndex == 0 ? AppColors.primary : Colors.transparent,
                               width: 2,
                             ),
                           ),
@@ -163,13 +155,36 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                         child: Text(
                           'Unread',
                           style: AppTextStyle.medium14.copyWith(
-                            color: _tabController.index == 1 ? AppColors.primary : AppColors.grey300,
+                            color: _currentIndex == 0 ? AppColors.primary : AppColors.grey300,
+                          ),
+                        ),
+                      ),
+                    ),
+                    AppSpacing.h16(),
+                    InkWell(
+                      onTap: () {
+                        _tabController.animateTo(1);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 8.h),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: _currentIndex == 1 ? AppColors.primary : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'All',
+                          style: AppTextStyle.medium14.copyWith(
+                            color: _currentIndex == 1 ? AppColors.primary : AppColors.grey300,
                           ),
                         ),
                       ),
                     ),
                     const Spacer(),
-                    if (_tabController.index == 1 && unreadNotifications.isNotEmpty)
+                    if (_currentIndex == 0 && unreadNotifications.isNotEmpty)
                       TextButton(
                         onPressed: _handleMarkAllAsRead,
                         style: TextButton.styleFrom(
@@ -181,7 +196,7 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                           children: [
                             AppIcons(
                               icon: AppIconData.check,
-                              size: 20,
+                              size: 14,
                               color: AppColors.primary,
                             ),
                             AppSpacing.h4(),
@@ -203,6 +218,35 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                 child: TabBarView(
                   controller: _tabController,
                   children: [
+                    // Unread tab
+                    unreadNotifications.isNotEmpty
+                        ? SingleChildScrollView(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: Column(
+                              children: [
+                                ...unreadNotifications.map((notification) {
+                                  return Column(
+                                    children: [
+                                      NotificationCard(
+                                        notification: notification,
+                                        onMarkAsRead: () => _handleMarkAsRead(notification.id),
+                                      ),
+                                      if (notification != unreadNotifications.last)
+                                        AppSpacing.v16(),
+                                    ],
+                                  );
+                                }).toList(),
+                              ],
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              'No unread notifications',
+                              style: AppTextStyle.regular14.copyWith(
+                                color: AppColors.grey300,
+                              ),
+                            ),
+                          ),
                     // All tab
                     SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -223,48 +267,21 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                               );
                             }).toList()
                           else
-                            Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32.h),
-                                child: Text(
-                                  'No notifications',
-                                  style: AppTextStyle.regular14.copyWith(
-                                    color: AppColors.grey300,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Unread tab
-                    SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
-                      child: Column(
-                        children: [
-                          if (unreadNotifications.isNotEmpty)
-                            ...unreadNotifications.map((notification) {
-                              return Column(
+                            SizedBox(
+                              width: double.infinity,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  NotificationCard(
-                                    notification: notification,
-                                    onMarkAsRead: () => _handleMarkAsRead(notification.id),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 32.h),
+                                    child: Text(
+                                      'No notifications',
+                                      style: AppTextStyle.regular14.copyWith(
+                                        color: AppColors.grey300,
+                                      ),
+                                    ),
                                   ),
-                                  if (notification != unreadNotifications.last)
-                                    AppSpacing.v16(),
                                 ],
-                              );
-                            }).toList()
-                          else
-                            Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32.h),
-                                child: Text(
-                                  'No unread notifications',
-                                  style: AppTextStyle.regular14.copyWith(
-                                    color: AppColors.grey300,
-                                  ),
-                                ),
                               ),
                             ),
                         ],
@@ -315,4 +332,4 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
       ),
     );
   }
-} 
+}
