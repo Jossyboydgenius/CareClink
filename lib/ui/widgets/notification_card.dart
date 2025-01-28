@@ -99,7 +99,7 @@ class NotificationCard extends StatelessWidget {
                   children: [
                     AppIcons(
                       icon: AppIconData.check,
-                      size: 20,
+                      size: 14,
                       color: AppColors.primary,
                     ),
                     AppSpacing.h4(),
