@@ -6,6 +6,7 @@ import '../widgets/bottom_nav_bar.dart';
 import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_colors.dart';
+import '../../shared/app_images.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -37,36 +38,26 @@ class _DashboardState extends State<Dashboard> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          'Logo',
-                          style: TextStyle(
-                            fontSize: AppDimension.getFontSize(24),
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        Text(
-                          ' Company',
-                          style: TextStyle(
-                            fontSize: AppDimension.getFontSize(24),
-                            color: AppColors.textGrey,
-                          ),
+                        AppImages(
+                          imagePath: AppImageData.careclinkLogo,
+                          height: 60,
+                          width: 160,
                         ),
                       ],
                     ),
                     Container(
-                    width: 40.w,
-                    height: 40.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.green200,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'JD',
-                        style: AppTextStyle.semibold14.copyWith(
-                          color: AppColors.white,
-                        ),
+                      width: 40.w,
+                      height: 40.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          'JD',
+                          style: AppTextStyle.semibold14.copyWith(
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
                     ),
