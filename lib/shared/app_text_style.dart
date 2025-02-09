@@ -132,6 +132,7 @@ abstract class AppTextStyle {
         fontWeight: AppFontWeight.medium,
         height: 20/14, // line-height: 20px
         letterSpacing: 0.005,
+        color: Color(0xFF667085),
       );
 
   // Activities summary text style
