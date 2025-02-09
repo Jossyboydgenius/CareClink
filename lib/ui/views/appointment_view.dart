@@ -193,6 +193,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                 onPressed: _handleClockIn,
                 isLoading: _isLoading,
                 enabled: _selectedAppointmentId != null,
+                backgroundColor: AppColors.green,
               ),
             ),
           ],
