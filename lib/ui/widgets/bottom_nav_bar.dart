@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:badges/badges.dart' as badges;
 import '../../shared/app_colors.dart';
 import '../../shared/app_icons.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
+import '../../data/models/notification_model.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -68,6 +70,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount = NotificationService.getUnreadNotifications().length;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -95,9 +99,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: AppIcons(
-              icon: AppIconData.notification,
-              color: widget.currentIndex == 1 ? AppColors.primary : AppColors.grey300,
+            icon: badges.Badge(
+              showBadge: unreadCount > 0,
+              position: badges.BadgePosition.topEnd(top: -12, end: -12),
+              badgeContent: Text(
+                unreadCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+              badgeStyle: const badges.BadgeStyle(
+                badgeColor: Colors.red,
+                padding: EdgeInsets.all(4),
+              ),
+              child: AppIcons(
+                icon: AppIconData.notification,
+                color: widget.currentIndex == 1 ? AppColors.primary : AppColors.grey300,
+              ),
             ),
             label: 'Notification',
           ),
