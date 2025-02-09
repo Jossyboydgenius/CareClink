@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobo_app/ui/views/sign_in_view.dart';
+import 'package:mobo_app/shared/app_images.dart';
+import 'package:mobo_app/shared/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,9 +14,10 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const SignInView()),
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignInView()),
       );
     });
   }
@@ -22,34 +25,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: AppColors.white,
       body: Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Logo',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const Text(
-                'Company',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
+        child: AppImages(
+          imagePath: AppImageData.logo,
+          height: 120,
+          width: 120,
         ),
       ),
     );
