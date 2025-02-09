@@ -6,7 +6,7 @@ import '../../shared/app_spacing.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_checkbox.dart';
 import '../../app/routes/app_routes.dart';
-import 'dashboard_view.dart';
+import '../../shared/app_images.dart';
 
 class SignInView extends StatefulWidget {
   const SignInView({super.key});
@@ -31,36 +31,23 @@ class _SignInViewState extends State<SignInView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AppSpacing.v32(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Logo',
-                    style: AppTextStyle.semibold24.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Text(
-                    ' Company',
-                    style: AppTextStyle.regular24.copyWith(
-                      color: AppColors.grey300,
-                    ),
-                  ),
-                ],
+              AppImages(
+                imagePath: AppImageData.careclinkLogo,
+                height: 60,
+                width: 60,
               ),
               AppSpacing.v32(),
               Text(
                 'Welcome back',
-                style: AppTextStyle.semibold24,
+                style: AppTextStyle.semibold24.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 textAlign: TextAlign.center,
               ),
               AppSpacing.v8(),
               Text(
                 "We'll get you up and running in no time.",
-                style: AppTextStyle.regular14.copyWith(
-                  color: AppColors.grey300,
-                ),
+                style: AppTextStyle.regular14,
                 textAlign: TextAlign.center,
               ),
               AppSpacing.v32(),
