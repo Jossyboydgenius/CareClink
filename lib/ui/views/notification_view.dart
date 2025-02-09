@@ -9,6 +9,7 @@ import '../widgets/notification_card.dart';
 import '../../data/models/notification_model.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
+import '../../shared/app_images.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -72,27 +73,16 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Logo',
-                        style: AppTextStyle.semibold24.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      Text(
-                        ' Company',
-                        style: AppTextStyle.regular24.copyWith(
-                          color: AppColors.grey300,
-                        ),
-                      ),
-                    ],
+                  AppImages(
+                    imagePath: AppImageData.careclinkLogo,
+                    height: 60,
+                    width: 160,
                   ),
                   Container(
                     width: 40.w,
                     height: 40.w,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF48C79F),
+                      color: AppColors.blue,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
