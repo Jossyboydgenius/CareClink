@@ -31,60 +31,33 @@ class _DashboardState extends State<Dashboard> {
                 horizontal: AppDimension.getWidth(24),
                 vertical: AppDimension.getHeight(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Logo and Profile
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          AppImages(
-                            imagePath: AppImageData.careclinkLogo,
-                            height: 60,
-                            width: 160,
-                          ),
-                        ],
-                      ),
-                      Container(
-                        width: 40.w,
-                        height: 40.w,
-                        decoration: BoxDecoration(
-                          color: AppColors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            'JD',
-                            style: AppTextStyle.semibold14.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                        ),
+                      AppImages(
+                        imagePath: AppImageData.careclinkLogo,
+                        height: 60,
+                        width: 160,
                       ),
                     ],
                   ),
-                  SizedBox(height: AppDimension.getHeight(12)),
-                  // Welcome text
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Welcome Back ',
-                          style: AppTextStyle.welcomeBack,
-                        ),
-                        TextSpan(
-                          text: '👋',
-                          style: AppTextStyle.welcomeBack,
-                        ),
-                      ],
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.blue,
+                      shape: BoxShape.circle,
                     ),
-                  ),
-                  SizedBox(height: AppDimension.getHeight(2)),
-                  Text(
-                    'Check your activities summary',
-                    style: AppTextStyle.activitiesSummary,
+                    child: Center(
+                      child: Text(
+                        'JD',
+                        style: AppTextStyle.semibold14.copyWith(
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -100,6 +73,27 @@ class _DashboardState extends State<Dashboard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: AppDimension.getHeight(2)),
+                      // Welcome text
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Welcome Back ',
+                              style: AppTextStyle.welcomeBack,
+                            ),
+                            TextSpan(
+                              text: '👋',
+                              style: AppTextStyle.welcomeBack,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: AppDimension.getHeight(2)),
+                      Text(
+                        'Check your activities summary',
+                        style: AppTextStyle.activitiesSummary,
+                      ),
                       SizedBox(height: AppDimension.getHeight(16)),
                       // Activity cards grid
                       LayoutBuilder(
