@@ -32,6 +32,27 @@ class NotificationService {
       type: 'Reminder to Clock In/Out',
       timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
     ),
+    NotificationModel(
+      id: '3',
+      title: 'New Appointment Scheduled',
+      message: 'You have a new appointment scheduled with Sarah Johnson for tomorrow at 2:00 PM. Please review the details and confirm your availability.',
+      type: 'Appointment Update',
+      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    NotificationModel(
+      id: '4',
+      title: 'Schedule Change Alert',
+      message: 'Your shift on Friday has been modified. The new timing is from 9:00 AM to 5:00 PM. Please acknowledge this change.',
+      type: 'Schedule Update',
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+    ),
+    NotificationModel(
+      id: '5',
+      title: 'Timesheet Approval Required',
+      message: 'Your timesheet for last week is pending approval. Please review and submit it as soon as possible.',
+      type: 'Timesheet',
+      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
   ];
 
   static List<NotificationModel> getUnreadNotifications() {
