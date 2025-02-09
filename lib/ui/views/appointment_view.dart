@@ -9,6 +9,7 @@ import '../widgets/appointment_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
 import '../widgets/manual_clock_entry_dialog.dart';
+import '../../shared/app_images.dart';
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -75,27 +76,16 @@ class _AppointmentViewState extends State<AppointmentView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Logo',
-                        style: AppTextStyle.semibold24.copyWith(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      Text(
-                        ' Company',
-                        style: AppTextStyle.regular24.copyWith(
-                          color: AppColors.grey300,
-                        ),
-                      ),
-                    ],
+                  AppImages(
+                    imagePath: AppImageData.careclinkLogo,
+                    height: 60,
+                    width: 160,
                   ),
                   Container(
                     width: 40.w,
                     height: 40.w,
                     decoration: BoxDecoration(
-                      color: AppColors.green200,
+                      color: AppColors.blue,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
