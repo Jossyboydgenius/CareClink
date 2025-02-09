@@ -50,6 +50,27 @@ class _AppointmentViewState extends State<AppointmentView> {
     },
   ];
 
+  List<Map<String, dynamic>> _filteredAppointments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredAppointments = List.from(_appointments);
+  }
+
+  void _filterAppointments(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredAppointments = List.from(_appointments);
+      } else {
+        _filteredAppointments = _appointments
+            .where((appointment) =>
+                appointment['id'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
   void _addNewAppointment(String appointmentId, DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) {
     final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final formattedClockIn = '${clockIn.hourOfPeriod == 0 ? 12 : clockIn.hourOfPeriod}:${clockIn.minute.toString().padLeft(2, '0')}${clockIn.period == DayPeriod.am ? 'AM' : 'PM'}';
@@ -141,6 +162,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                             Expanded(
                               child: TextField(
                                 controller: _searchController,
+                                onChanged: _filterAppointments,
                                 decoration: InputDecoration(
                                   hintText: 'Search Appointment ID...',
                                   hintStyle: AppTextStyle.regular14.copyWith(
@@ -157,7 +179,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                       ),
                       AppSpacing.v16(),
                       // Appointment cards
-                      ..._appointments.map((appointment) => Column(
+                      ..._filteredAppointments.map((appointment) => Column(
                         children: [
                           AppointmentCard(
                             appointmentId: appointment['id'],
@@ -170,7 +192,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                               });
                             },
                           ),
-                          if (appointment != _appointments.last) AppSpacing.v12(),
+                          if (appointment != _filteredAppointments.last) AppSpacing.v12(),
                         ],
                       )).toList(),
                       AppSpacing.v12(),
