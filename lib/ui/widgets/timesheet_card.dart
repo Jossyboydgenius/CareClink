@@ -5,7 +5,8 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 
 class TimesheetCard extends StatefulWidget {
-  final String visitId;
+  final String name;
+  final String appointmentId;
   final String clockIn;
   final String? clockOut;
   final String? duration;
@@ -15,7 +16,8 @@ class TimesheetCard extends StatefulWidget {
 
   const TimesheetCard({
     super.key,
-    required this.visitId,
+    required this.name,
+    required this.appointmentId,
     required this.clockIn,
     this.clockOut,
     this.duration,
@@ -52,7 +54,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '# ${widget.visitId}',
+                      widget.name,
                       style: AppTextStyle.semibold16,
                     ),
                     if (widget.showClockOut)
@@ -62,16 +64,13 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color: AppColors.primary,
-                            width: 1,
-                          ),
+                          color: AppColors.pinkRed,
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
                           'Clock Out',
                           style: AppTextStyle.medium12.copyWith(
-                            color: AppColors.primary,
+                            color: AppColors.white,
                           ),
                         ),
                       )
@@ -175,7 +174,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                                 ),
                               ),
                               Text(
-                                widget.visitId,
+                                widget.appointmentId,
                                 style: AppTextStyle.medium12,
                               ),
                             ],
