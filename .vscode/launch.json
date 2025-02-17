@@ -5,20 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "mobo_app",
+            "name": "CareClink",
             "request": "launch",
             "type": "dart",
             "args": ["--verbose"]
         },
         {
-            "name": "mobo_app (profile mode)",
+            "name": "CareClink (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
             "args": ["--verbose"]
         },
         {
-            "name": "mobo_app (release mode)",
+            "name": "CareClink (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
