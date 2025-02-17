@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-          title: 'Logo Company',
+          title: 'CareClink',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           navigatorKey: NavigationService.navigatorKey,
