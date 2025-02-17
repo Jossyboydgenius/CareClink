@@ -1,4 +1,4 @@
-package com.example.mobo_app
+package com.carelink.app
 
 import io.flutter.embedding.android.FlutterActivity
 
