@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
-import '../../shared/app_colors.dart';
 
 class NotificationBadge extends StatelessWidget {
   final int count;
   final VoidCallback onTap;
 
   const NotificationBadge({
-    Key? key,
+    super.key,
     required this.count,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
