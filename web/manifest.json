@@ -1,11 +1,11 @@
 {
-    "name": "mobo_app",
-    "short_name": "mobo_app",
+    "name": "CareClink",
+    "short_name": "CareClink",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A CareClink mobile application.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
