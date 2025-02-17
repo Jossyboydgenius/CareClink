@@ -1,10 +1,10 @@
-# mobo_app
+# CareClink
 
-A new Flutter project.
+A CareClink mobile application.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is a Flutter application for CareClink.
 
 A few resources to get you started if this is your first Flutter project:
 
