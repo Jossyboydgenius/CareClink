@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "mobo_app" "\0"
+            VALUE "FileDescription", "CareClink" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "mobo_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "mobo_app.exe" "\0"
-            VALUE "ProductName", "mobo_app" "\0"
+            VALUE "InternalName", "CareClink" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.carelink.app. All rights reserved." "\0"
+            VALUE "OriginalFilename", "CareClink.exe" "\0"
+            VALUE "ProductName", "CareClink" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
