@@ -101,7 +101,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           BottomNavigationBarItem(
             icon: badges.Badge(
               showBadge: unreadCount > 0,
-              position: badges.BadgePosition.topEnd(top: -12, end: -12),
+              position: badges.BadgePosition.topEnd(top: -8, end: -6),
               badgeContent: Text(
                 unreadCount.toString(),
                 style: const TextStyle(
