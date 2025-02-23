@@ -11,11 +11,25 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
   SignInBloc() : super(const SignInState(status: SignInStatus.initial)) {
     on<SignInEmailChange>(_onEmailChanged);
     on<SignInPasswordChange>(_onPasswordChanged);
+    on<SignInRememberMeChange>(_onRememberMeChanged);
     on<SignInUser>(_onSignInUser);
+    on<SignInCheckSavedCredentials>(_onCheckSavedCredentials);
+    _init();
   }
 
   final UserService _userService = locator<UserService>();
   final LocalStorageService _localStorageService = locator<LocalStorageService>();
+
+  Future<void> _init() async {
+    final rememberMe = await _localStorageService.getRememberMe();
+    if (rememberMe) {
+      final credentials = await _localStorageService.getUserCredentials();
+      if (credentials['email'] != null) {
+        add(SignInEmailChange(credentials['email']!));
+        emit(state.copyWith(rememberMe: true));
+      }
+    }
+  }
 
   void _onEmailChanged(SignInEmailChange event, Emitter<SignInState> emit) {
     final email = event.email;
@@ -39,8 +53,19 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     ));
   }
 
-  void _saveAuthInfo(String token) {
-    _localStorageService.saveStorageValue(LocalStorageKeys.accessToken, token);
+  void _onRememberMeChanged(SignInRememberMeChange event, Emitter<SignInState> emit) async {
+    await _localStorageService.setRememberMe(event.rememberMe);
+    emit(state.copyWith(rememberMe: event.rememberMe));
+  }
+
+  Future<void> _onCheckSavedCredentials(SignInCheckSavedCredentials event, Emitter<SignInState> emit) async {
+    final credentials = await _localStorageService.getUserCredentials();
+    if (credentials['email'] != null) {
+      emit(state.copyWith(
+        email: credentials['email'],
+        rememberMe: true,
+      ));
+    }
   }
 
   Future<void> _onSignInUser(SignInUser event, Emitter<SignInState> emit) async {
@@ -62,16 +87,20 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
       if (response.isSuccessful) {
         final token = response.data['token'];
-        _saveAuthInfo(token);
+        final user = response.data['user'];
 
-        _localStorageService.saveStorageValue(
-          LocalStorageKeys.debugEmail,
-          state.email!,
+        await _localStorageService.saveUserCredentials(
+          token: token,
+          userId: user['id'],
+          email: user['email'],
+          role: user['role'],
         );
-        _localStorageService.saveStorageValue(
-          LocalStorageKeys.debugPassword,
-          state.password!,
-        );
+
+        if (state.rememberMe) {
+          await _localStorageService.setRememberMe(true);
+        } else {
+          await _localStorageService.setRememberMe(false);
+        }
 
         emit(state.copyWith(
           status: SignInStatus.success,
