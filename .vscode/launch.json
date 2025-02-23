@@ -8,21 +8,48 @@
             "name": "CareClink",
             "request": "launch",
             "type": "dart",
-            "args": ["--verbose"]
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define-from-file",
+                ".env"
+            ],
+            "args": [
+                "--target",
+                "lib/main.dart",
+                "--verbose"
+            ]
         },
         {
             "name": "CareClink (profile mode)",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define-from-file",
+                ".env"
+            ],
             "flutterMode": "profile",
-            "args": ["--verbose"]
+            "args": [
+                "--target",
+                "lib/main.dart",
+                "--verbose"
+            ]
         },
         {
             "name": "CareClink (release mode)",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define-from-file",
+                ".env"
+            ],
             "flutterMode": "release",
-            "args": ["--verbose"]
+            "args": [
+                "--target",
+                "lib/main.dart",
+                "--verbose"
+            ]
         }
     ]
 }
