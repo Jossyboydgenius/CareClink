@@ -3,8 +3,7 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/macos/Flutter/**"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "macFrameworkPath": [
