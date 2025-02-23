@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AppDimension {
-  static late MediaQueryData mediaQuery;
-  static late double screenHeight;
+  static late MediaQueryData _mediaQueryData;
   static late double screenWidth;
+  static late double screenHeight;
   static late double defaultSize;
   static late Orientation orientation;
   static late bool isSmall;
@@ -16,24 +16,24 @@ class AppDimension {
   static late double safeBlockVertical;
   
   static void init(BuildContext context) {
-    mediaQuery = MediaQuery.of(context);
-    screenHeight = mediaQuery.size.height;
-    screenWidth = mediaQuery.size.width;
-    orientation = mediaQuery.orientation;
+    _mediaQueryData = MediaQuery.of(context);
+    screenWidth = _mediaQueryData.size.width;
+    screenHeight = _mediaQueryData.size.height;
+    orientation = _mediaQueryData.orientation;
     
     // Block sizes for responsive grid calculations
     blockSizeHorizontal = screenWidth / 100;
     blockSizeVertical = screenHeight / 100;
     
     // Safe area paddings for notches and system UI
-    _safeAreaHorizontal = mediaQuery.padding.left + mediaQuery.padding.right;
-    _safeAreaVertical = mediaQuery.padding.top + mediaQuery.padding.bottom;
+    _safeAreaHorizontal = _mediaQueryData.padding.left + _mediaQueryData.padding.right;
+    _safeAreaVertical = _mediaQueryData.padding.top + _mediaQueryData.padding.bottom;
     
     // Safe area block sizes
     safeBlockHorizontal = (screenWidth - _safeAreaHorizontal) / 100;
     safeBlockVertical = (screenHeight - _safeAreaVertical) / 100;
     
-    // Default size for scaling (based on iPhone 12/13)
+    // Initialize defaultSize based on orientation
     defaultSize = orientation == Orientation.landscape 
         ? screenHeight * 0.024
         : screenWidth * 0.024;
@@ -47,16 +47,22 @@ class AppDimension {
     return size * defaultSize;
   }
 
-  static double getHeight(double height) {
-    double screenHeight = mediaQuery.size.height;
-    // Scale height proportionally to screen height
-    return (height / 812.0) * screenHeight;
+  // Original method names for backward compatibility
+  static double getWidth(double width) {
+    return getProportionateScreenWidth(width);
   }
 
-  static double getWidth(double width) {
-    double screenWidth = mediaQuery.size.width;
-    // Scale width proportionally to screen width
-    return (width / 375.0) * screenWidth;
+  static double getHeight(double height) {
+    return getProportionateScreenHeight(height);
+  }
+
+  // New method names
+  static double getProportionateScreenHeight(double inputHeight) {
+    return (inputHeight / 812.0) * screenHeight;
+  }
+
+  static double getProportionateScreenWidth(double inputWidth) {
+    return (inputWidth / 375.0) * screenWidth;
   }
 
   static double getFontSize(double size) {
@@ -71,7 +77,7 @@ class AppDimension {
   }
 
   static EdgeInsets getSafeAreaPadding() {
-    return mediaQuery.padding;
+    return _mediaQueryData.padding;
   }
 
   static double getResponsiveValue({
