@@ -13,7 +13,6 @@ Future<void> setUpLocator() async {
     name: dotenv.env['APP_NAME'] ?? 'development',
     apiBaseUrl: dotenv.env['API_BASE_URL'] ?? '',
     webUrl: dotenv.env['WEB_URL'] ?? '',
-    sentryDsn: dotenv.env['SENTRY_DSN'] ?? '',
     mixpanelToken: dotenv.env['MIXPANEL_TOKEN'] ?? '',
   );
   
