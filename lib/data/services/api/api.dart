@@ -8,7 +8,6 @@ import 'package:http/http.dart';
 import '../../../app/flavor_config.dart';
 import '../../../app/locator.dart';
 import '../local_storage_service.dart';
-import '../sentry_reporter.dart';
 
 import 'api_response.dart';
 
@@ -16,43 +15,30 @@ class Api {
   final AppFlavorConfig _config = locator<AppFlavorConfig>();
   static const bool useStaging = false;
   String get baseUrl => _config.apiBaseUrl;
-  String get _baseUrl => '$baseUrl/api';
   Map<String, String> headers = {
     HttpHeaders.acceptHeader: 'application/json',
     'Content-Type': 'application/json; charset=UTF-8',
   };
-  final SentryReporter _sentryReporter = locator<SentryReporter>();
   final LocalStorageService localStorageService = locator<LocalStorageService>();
 
   Future<ApiResponse> postData(
     String url,
-    body, {
+    dynamic body, {
     bool hasHeader = false,
     bool isMultiPart = false,
     File? fileList,
     String? customBaseUrl,
   }) async {
     try {
-      dynamic request;
-      final fullUrl = customBaseUrl != null ? '$customBaseUrl$url' : '$_baseUrl$url';
-
-      if (isMultiPart) {
-        request = MultipartRequest('POST', Uri.parse(fullUrl));
-        if (fileList != null) {
-          await _addFiles(fileList, body, request);
-        }
-      } else {
-        request = Request('POST', Uri.parse(fullUrl));
-      }
+      final fullUrl = customBaseUrl ?? _config.apiBaseUrl + url;
+      final request = Request('POST', Uri.parse(fullUrl));
 
       return await _sendRequest(
         request,
         hasHeader,
         body: body,
-        isMultiPart: isMultiPart,
       );
     } on SocketException catch (e) {
-      debugPrint('$e');
       debugPrint('SocketException: $e');
       return ApiResponse(
         data: null,
@@ -62,60 +48,14 @@ class Api {
     } on TimeoutException catch (e) {
       debugPrint('TimeoutException: $e');
       return ApiResponse.timeout();
-    } on ClientException catch (e) {
-      debugPrint('Error: $e');
-      await _sentryReporter.reportError(e, StackTrace.current);
-      return ApiResponse(
-        data: null,
-        isSuccessful: false,
-        message: 'There was a problem connecting to the server',
-      );
     } on Exception catch (e) {
       debugPrint('Error: $e');
-      await _sentryReporter.reportError(e, StackTrace.current);
       return ApiResponse(
         data: null,
         isSuccessful: false,
-        message: 'Something went wrong',
-      );
-    } catch (e) {
-      debugPrint('$e');
-      await _sentryReporter.reportError(e, StackTrace.current);
-      return ApiResponse(
-        data: null,
-        isSuccessful: false,
-        message: 'Something went wrong',
+        message: e.toString(),
       );
     }
-  }
-
-  Future<void> _addFiles(File fileList, body, request) async {
-    final file = fileList;
-    final filename = file.path.split('/').last;
-    var fileStream = ByteStream(file.openRead());
-    var fileLength = await file.length();
-    MultipartFile multipartFile;
-
-    if (body != null) {
-      multipartFile = MultipartFile(
-        'file_attachments[$file]file',
-        fileStream,
-        fileLength,
-        filename: filename,
-      );
-      request.fields.addAll(
-        {'file_attachments[$file]attachment_type': 'png'},
-      );
-      request.fields.addAll(body);
-    } else {
-      multipartFile = MultipartFile(
-        'file',
-        fileStream,
-        fileLength,
-        filename: filename,
-      );
-    }
-    request.files.add(multipartFile);
   }
 
   Future<ApiResponse> patchData(
@@ -124,9 +64,9 @@ class Api {
     bool hasHeader = false,
   }) async {
     try {
-      Request request = Request('PATCH', Uri.parse(_baseUrl + url));
+      Request request = Request('PATCH', Uri.parse(_config.apiBaseUrl + url));
 
-      debugPrint('PATCH request to ${_baseUrl + url} with body: $body');
+      debugPrint('PATCH request to ${_config.apiBaseUrl + url} with body: $body');
       return await _sendRequest(
         request,
         hasHeader,
@@ -145,14 +85,6 @@ class Api {
       return ApiResponse.timeout();
     } on Exception catch (e) {
       debugPrint('Error: $e');
-      await _sentryReporter.reportError(e, StackTrace.current);
-      return ApiResponse(
-        data: null,
-        isSuccessful: false,
-        message: e.toString(),
-      );
-    } catch (e) {
-      debugPrint('$e');
       return ApiResponse(
         data: null,
         isSuccessful: false,
@@ -172,7 +104,7 @@ class Api {
     try {
       request = Request(
         'GET',
-        Uri.parse(_baseUrl + url),
+        Uri.parse(_config.apiBaseUrl + url),
       );
 
       debugPrint('GET request to ${request.url}  ');
@@ -193,7 +125,6 @@ class Api {
       return ApiResponse.timeout();
     } on Exception catch (e) {
       debugPrint('Error signing in with: $e');
-      await _sentryReporter.reportError(e, StackTrace.current);
       return ApiResponse(
         data: null,
         isSuccessful: false,
@@ -208,7 +139,7 @@ class Api {
     try {
       request = Request(
         'DELETE',
-        Uri.parse(_baseUrl + url),
+        Uri.parse(_config.apiBaseUrl + url),
       );
 
       debugPrint('DELETE request to ${request.url}  ');
@@ -229,7 +160,6 @@ class Api {
       return ApiResponse.timeout();
     } on Exception catch (e) {
       debugPrint('Error signing in with: $e');
-      await _sentryReporter.reportError(e, StackTrace.current);
       return ApiResponse(
         data: null,
         isSuccessful: false,
