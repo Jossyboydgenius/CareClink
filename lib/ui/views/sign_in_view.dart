@@ -8,6 +8,8 @@ import '../widgets/app_button.dart';
 import '../widgets/app_checkbox.dart';
 import '../../app/routes/app_routes.dart';
 import '../../shared/app_images.dart';
+import '../../data/services/user_service.dart';
+import '../../app/locator.dart';
 
 class SignInView extends StatefulWidget {
   const SignInView({super.key});
@@ -20,6 +22,7 @@ class _SignInViewState extends State<SignInView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _userService = locator<UserService>();
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -42,6 +45,15 @@ class _SignInViewState extends State<SignInView> {
     setState(() {
       _passwordError = FormValidators.validatePassword(_passwordController.text);
     });
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -181,17 +193,38 @@ class _SignInViewState extends State<SignInView> {
     );
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!_isFormValid) return;
 
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate login delay
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.dashboardView);
-    });
+    try {
+      final response = await _userService.login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response.isSuccessful) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.dashboardView);
+        } else {
+          _showErrorSnackBar(response.message ?? 'Login failed. Please try again.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar('An error occurred. Please try again.');
+      }
+    }
   }
 
   @override
