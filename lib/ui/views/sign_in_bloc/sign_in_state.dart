@@ -10,6 +10,7 @@ class SignInState extends Equatable {
   final SignInStatus status;
   final dynamic data;
   final bool isFormValid;
+  final bool rememberMe;
 
   const SignInState({
     required this.status,
@@ -18,6 +19,7 @@ class SignInState extends Equatable {
     this.errorMessage,
     this.data,
     this.isFormValid = false,
+    this.rememberMe = false,
   });
 
   bool get isButtonEnabled =>
@@ -33,6 +35,7 @@ class SignInState extends Equatable {
         password,
         isFormValid,
         errorMessage,
+        rememberMe,
       ];
 
   SignInState copyWith({
@@ -42,6 +45,7 @@ class SignInState extends Equatable {
     SignInStatus? status,
     dynamic data,
     bool? isFormValid,
+    bool? rememberMe,
   }) {
     return SignInState(
       email: email ?? this.email,
@@ -50,6 +54,7 @@ class SignInState extends Equatable {
       errorMessage: errorMessage ?? this.errorMessage,
       data: data ?? this.data,
       isFormValid: isFormValid ?? this.isFormValid,
+      rememberMe: rememberMe ?? this.rememberMe,
     );
   }
 } 
