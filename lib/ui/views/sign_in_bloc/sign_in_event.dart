@@ -25,6 +25,22 @@ class SignInPasswordChange extends SignInEvent {
   List<Object> get props => [password];
 }
 
+class SignInRememberMeChange extends SignInEvent {
+  const SignInRememberMeChange(this.rememberMe);
+
+  final bool rememberMe;
+
+  @override
+  List<Object> get props => [rememberMe];
+}
+
+class SignInCheckSavedCredentials extends SignInEvent {
+  const SignInCheckSavedCredentials();
+
+  @override
+  List<Object> get props => [];
+}
+
 class SignInUser extends SignInEvent {
   const SignInUser();
 
