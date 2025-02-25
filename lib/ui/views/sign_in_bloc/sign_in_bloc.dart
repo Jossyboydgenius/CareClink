@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/locator.dart';
 import '../../../data/services/local_storage_service.dart';
 import '../../../data/services/user_service.dart';
-import '../../../shared/form_validator.dart';
 import 'sign_in_event.dart';
 import 'sign_in_state.dart';
 
@@ -14,6 +13,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInRememberMeChange>(_onRememberMeChanged);
     on<SignInUser>(_onSignInUser);
     on<SignInCheckSavedCredentials>(_onCheckSavedCredentials);
+    on<SignInTogglePasswordVisibility>(_onTogglePasswordVisibility);
     _init();
   }
 
@@ -21,62 +21,65 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
   final LocalStorageService _localStorageService = locator<LocalStorageService>();
 
   Future<void> _init() async {
-    final rememberMe = await _localStorageService.getRememberMe();
-    if (rememberMe) {
-      final credentials = await _localStorageService.getUserCredentials();
-      if (credentials['email'] != null) {
-        add(SignInEmailChange(credentials['email']!));
-        emit(state.copyWith(rememberMe: true));
+    try {
+      final rememberMe = await _localStorageService.getRememberMe();
+      if (rememberMe) {
+        final savedEmail = await _localStorageService.getStorageValue(LocalStorageKeys.debugEmail);
+        final savedPassword = await _localStorageService.getStorageValue(LocalStorageKeys.debugPassword);
+        
+        if (savedEmail != null && savedPassword != null) {
+          emit(state.copyWith(
+            email: savedEmail,
+            password: savedPassword,
+            rememberMe: true,
+          ));
+        }
       }
+    } catch (e) {
+      debugPrint('Error loading saved credentials: $e');
     }
   }
 
   void _onEmailChanged(SignInEmailChange event, Emitter<SignInState> emit) {
-    final email = event.email;
-    final isEmailValid = FormValidators.validateEmail(email) == null;
-    final isPasswordValid = FormValidators.validatePassword(state.password) == null;
-    
     emit(state.copyWith(
-      email: email,
-      isFormValid: isEmailValid && isPasswordValid,
+      email: event.email,
     ));
   }
 
   void _onPasswordChanged(SignInPasswordChange event, Emitter<SignInState> emit) {
-    final password = event.password;
-    final isPasswordValid = FormValidators.validatePassword(password) == null;
-    final isEmailValid = FormValidators.validateEmail(state.email) == null;
-    
     emit(state.copyWith(
-      password: password,
-      isFormValid: isEmailValid && isPasswordValid,
+      password: event.password,
     ));
+  }
+
+  void _onTogglePasswordVisibility(SignInTogglePasswordVisibility event, Emitter<SignInState> emit) {
+    emit(state.copyWith(obscurePassword: !state.obscurePassword));
   }
 
   void _onRememberMeChanged(SignInRememberMeChange event, Emitter<SignInState> emit) async {
     await _localStorageService.setRememberMe(event.rememberMe);
+    if (!event.rememberMe) {
+      await _localStorageService.clearAuthAll();
+      await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'false');
+    }
     emit(state.copyWith(rememberMe: event.rememberMe));
   }
 
   Future<void> _onCheckSavedCredentials(SignInCheckSavedCredentials event, Emitter<SignInState> emit) async {
-    final credentials = await _localStorageService.getUserCredentials();
-    if (credentials['email'] != null) {
+    final savedEmail = await _localStorageService.getStorageValue(LocalStorageKeys.debugEmail);
+    final savedPassword = await _localStorageService.getStorageValue(LocalStorageKeys.debugPassword);
+    final rememberMe = await _localStorageService.getRememberMe();
+    
+    if (savedEmail != null && savedPassword != null && rememberMe) {
       emit(state.copyWith(
-        email: credentials['email'],
+        email: savedEmail,
+        password: savedPassword,
         rememberMe: true,
       ));
     }
   }
 
   Future<void> _onSignInUser(SignInUser event, Emitter<SignInState> emit) async {
-    if (!state.isFormValid) {
-      emit(state.copyWith(
-        status: SignInStatus.failure,
-        errorMessage: 'Please fix the errors in the form',
-      ));
-      return;
-    }
-
     emit(state.copyWith(status: SignInStatus.loading));
 
     try {
@@ -89,6 +92,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         final token = response.data['token'];
         final user = response.data['user'];
 
+        // Save auth credentials
         await _localStorageService.saveUserCredentials(
           token: token,
           userId: user['id'],
@@ -96,10 +100,16 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
           role: user['role'],
         );
 
+        // Handle remember me
         if (state.rememberMe) {
           await _localStorageService.setRememberMe(true);
+          await _localStorageService.saveStorageValue(LocalStorageKeys.debugEmail, state.email!);
+          await _localStorageService.saveStorageValue(LocalStorageKeys.debugPassword, state.password!);
+          await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'true');
         } else {
           await _localStorageService.setRememberMe(false);
+          await _localStorageService.clearAuthAll();
+          await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'false');
         }
 
         emit(state.copyWith(
@@ -110,7 +120,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         debugPrint('Error ${response.message}');
         emit(state.copyWith(
           status: SignInStatus.failure,
-          errorMessage: response.message,
+          errorMessage: response.message ?? 'Login failed',
         ));
       }
     } on Exception catch (e) {
