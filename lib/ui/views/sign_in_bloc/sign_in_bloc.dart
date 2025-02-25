@@ -28,11 +28,9 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         final savedPassword = await _localStorageService.getStorageValue(LocalStorageKeys.debugPassword);
         
         if (savedEmail != null && savedPassword != null) {
-          emit(state.copyWith(
-            email: savedEmail,
-            password: savedPassword,
-            rememberMe: true,
-          ));
+          add(SignInEmailChange(savedEmail));
+          add(SignInPasswordChange(savedPassword));
+          add(const SignInRememberMeChange(true));
         }
       }
     } catch (e) {
