@@ -3,30 +3,33 @@ import '../../../shared/form_validator.dart';
 
 enum SignInStatus { initial, loading, success, failure }
 
-class SignInState extends Equatable {
-  final String? email;
-  final String? password;
-  final String? errorMessage;
-  final SignInStatus status;
-  final dynamic data;
-  final bool isFormValid;
-  final bool rememberMe;
-
+class SignInState {
   const SignInState({
-    required this.status,
+    this.status = SignInStatus.initial,
     this.email,
     this.password,
+    this.emailError,
+    this.passwordError,
+    this.rememberMe = false,
+    this.obscurePassword = true,
+    this.isFormValid = false,
     this.errorMessage,
     this.data,
-    this.isFormValid = false,
-    this.rememberMe = false,
   });
+
+  final SignInStatus status;
+  final String? email;
+  final String? password;
+  final String? emailError;
+  final String? passwordError;
+  final bool rememberMe;
+  final bool obscurePassword;
+  final bool isFormValid;
+  final String? errorMessage;
+  final Map<String, dynamic>? data;
 
   bool get isButtonEnabled =>
       isFormValid && status != SignInStatus.loading && email != null && password != null;
-
-  String? get emailError => email != null ? FormValidators.validateEmail(email) : null;
-  String? get passwordError => password != null ? FormValidators.validatePassword(password) : null;
 
   @override
   List<Object?> get props => [
@@ -39,22 +42,28 @@ class SignInState extends Equatable {
       ];
 
   SignInState copyWith({
+    SignInStatus? status,
     String? email,
     String? password,
-    String? errorMessage,
-    SignInStatus? status,
-    dynamic data,
-    bool? isFormValid,
+    String? emailError,
+    String? passwordError,
     bool? rememberMe,
+    bool? obscurePassword,
+    bool? isFormValid,
+    String? errorMessage,
+    Map<String, dynamic>? data,
   }) {
     return SignInState(
-      email: email ?? this.email,
       status: status ?? this.status,
+      email: email ?? this.email,
       password: password ?? this.password,
+      emailError: emailError ?? this.emailError,
+      passwordError: passwordError ?? this.passwordError,
+      rememberMe: rememberMe ?? this.rememberMe,
+      obscurePassword: obscurePassword ?? this.obscurePassword,
+      isFormValid: isFormValid ?? this.isFormValid,
       errorMessage: errorMessage ?? this.errorMessage,
       data: data ?? this.data,
-      isFormValid: isFormValid ?? this.isFormValid,
-      rememberMe: rememberMe ?? this.rememberMe,
     );
   }
 } 
