@@ -1,6 +1,3 @@
-import 'package:equatable/equatable.dart';
-import '../../../shared/form_validator.dart';
-
 enum SignInStatus { initial, loading, success, failure }
 
 class SignInState {
@@ -30,16 +27,6 @@ class SignInState {
 
   bool get isButtonEnabled =>
       isFormValid && status != SignInStatus.loading && email != null && password != null;
-
-  @override
-  List<Object?> get props => [
-        email,
-        status,
-        password,
-        isFormValid,
-        errorMessage,
-        rememberMe,
-      ];
 
   SignInState copyWith({
     SignInStatus? status,
