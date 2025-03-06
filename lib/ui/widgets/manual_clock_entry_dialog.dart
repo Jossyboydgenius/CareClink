@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
-import '../../shared/app_snackbar.dart';
+import '../../shared/app_toast.dart';
 import '../../data/services/navigator_service.dart';
 import 'app_button.dart';
 import 'app_date_picker.dart';
@@ -208,12 +208,17 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                 Future<void>.delayed(const Duration(seconds: 2)).then((_) {
                   if (!mounted) return;
                   setState(() => _isLoading = false);
-                  widget.onSave(_selectedDate, _selectedClockIn, _selectedClockOut);
+                  
+                  // Validate times
+                  if (_selectedClockIn == null || _selectedClockOut == null) {
+                    AppToast.showError(context, 'Please select both clock in and clock out times');
+                    return;
+                  }
+                  
+                  // Save and show success message
+                  widget.onSave(_selectedDate, _selectedClockIn!, _selectedClockOut!);
                   NavigationService.goBack();
-                  AppSnackbar.showSnackBar(
-                    message: 'Successfully saved manual clock entry',
-                    color: AppColors.green200,
-                  );
+                  AppToast.showSuccess(context, 'Successfully saved manual clock entry');
                 });
               },
               isLoading: _isLoading,
