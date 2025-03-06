@@ -67,4 +67,10 @@ class AppColors {
   static const Color grey2000 = Color(0xFFBAC2C7);
   static const Color grey2100 = Color(0xFF656A76);
   static const Color black = Color(0xFF454545);
+
+  // Toast Colors
+  static Color toastSuccessBackground = const Color(0xFFE8F5E9);  // Light green background
+  static Color toastSuccessBorder = activityGreenBorder;  // Reuse activity green border
+  static Color toastErrorBackground = const Color(0xFFFFEBEE);  // Light red background
+  static Color toastErrorBorder = const Color(0xFFEF5350);  // Red border
 } 
