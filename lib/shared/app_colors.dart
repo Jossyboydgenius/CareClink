@@ -73,4 +73,8 @@ class AppColors {
   static Color toastSuccessBorder = activityGreenBorder;  // Reuse activity green border
   static Color toastErrorBackground = const Color(0xFFFFEBEE);  // Light red background
   static Color toastErrorBorder = const Color(0xFFEF5350);  // Red border
+
+  // Connection Banner Colors
+  static const Color lightRed = Color(0xFFFFE5E5);  // Light red for border
+  static const Color bgRed = Color(0xFFFFF5F5);     // Very light red for background
 } 
