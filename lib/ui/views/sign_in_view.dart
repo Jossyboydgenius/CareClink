@@ -13,6 +13,7 @@ import '../../data/services/navigator_service.dart';
 import 'sign_in_bloc/sign_in_bloc.dart';
 import 'sign_in_bloc/sign_in_event.dart';
 import 'sign_in_bloc/sign_in_state.dart';
+import '../../shared/app_toast.dart';
 
 class SignInView extends StatefulWidget {
   const SignInView({super.key});
@@ -49,14 +50,10 @@ class _SignInViewState extends State<SignInView> {
             listenWhen: (previous, current) => previous.status != current.status,
             listener: (context, state) {
               if (state.status == SignInStatus.success) {
+                // AppToast.showSuccess(context, 'Sign in successful!');
                 NavigationService.pushReplacementNamed(AppRoutes.dashboardView);
               } else if (state.status == SignInStatus.failure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.errorMessage ?? 'Something went wrong'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                AppToast.showError(context, state.errorMessage ?? 'Something went wrong');
               }
             },
             child: BlocBuilder<SignInBloc, SignInState>(
