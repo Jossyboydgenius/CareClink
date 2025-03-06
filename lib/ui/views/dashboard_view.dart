@@ -5,6 +5,7 @@ import 'dashboard/dashboard_bloc/dashboard_bloc.dart';
 import 'dashboard/dashboard_bloc/dashboard_event.dart';
 import 'dashboard/dashboard_bloc/dashboard_state.dart';
 import '../widgets/activity_card.dart';
+import '../widgets/skeleton_activity_card.dart';
 import '../widgets/timesheet_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../../shared/app_sizer.dart';
@@ -21,6 +22,83 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _currentIndex = 0;
+
+  Widget _buildActivityCards(BuildContext context, DashboardState state) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
+        final cardHeight = cardWidth * 0.7;
+
+        if (state.isLoading) {
+          return GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: AppDimension.isTablet ? 4 : 2,
+            mainAxisSpacing: AppDimension.getHeight(16),
+            crossAxisSpacing: AppDimension.getWidth(16),
+            childAspectRatio: cardWidth / cardHeight,
+            children: [
+              SkeletonActivityCard(
+                cardColor: AppColors.activityPurple,
+                borderColor: AppColors.activityPurpleBorder,
+              ),
+              SkeletonActivityCard(
+                cardColor: AppColors.activityGreen,
+                borderColor: AppColors.activityGreenBorder,
+              ),
+              SkeletonActivityCard(
+                cardColor: AppColors.activityOrange,
+                borderColor: AppColors.activityOrangeBorder,
+              ),
+              SkeletonActivityCard(
+                cardColor: AppColors.activityPink,
+                borderColor: AppColors.activityPinkBorder,
+              ),
+            ],
+          );
+        }
+
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: AppDimension.isTablet ? 4 : 2,
+          mainAxisSpacing: AppDimension.getHeight(16),
+          crossAxisSpacing: AppDimension.getWidth(16),
+          childAspectRatio: cardWidth / cardHeight,
+          children: [
+            ActivityCard(
+              title: 'Daily',
+              hours: state.dailySummary?.hours ?? '0 hr',
+              completedText: state.dailySummary?.completed ?? '0 appointments',
+              cardColor: AppColors.activityPurple,
+              borderColor: AppColors.activityPurpleBorder,
+            ),
+            ActivityCard(
+              title: 'Weekly',
+              hours: state.weeklySummary?.hours ?? '0 hr',
+              completedText: state.weeklySummary?.completed ?? '0 appointments',
+              cardColor: AppColors.activityGreen,
+              borderColor: AppColors.activityGreenBorder,
+            ),
+            ActivityCard(
+              title: 'Monthly',
+              hours: state.monthlySummary?.hours ?? '0 hr',
+              completedText: state.monthlySummary?.completed ?? '0 appointments',
+              cardColor: AppColors.activityOrange,
+              borderColor: AppColors.activityOrangeBorder,
+            ),
+            ActivityCard(
+              title: 'Pending Appointment',
+              hours: '${state.statusSummary?.pending ?? 0} ${(state.statusSummary?.pending ?? 0) <= 1 ? 'hr' : 'hrs'}',
+              completedText: state.statusSummary?.completed ?? '0 / 0',
+              cardColor: AppColors.activityPink,
+              borderColor: AppColors.activityPinkBorder,
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +150,6 @@ class _DashboardState extends State<Dashboard> {
               Expanded(
                 child: BlocBuilder<DashboardBloc, DashboardState>(
                   builder: (context, state) {
-                    if (state.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
                     if (state.error != null) {
                       return Center(child: Text(state.error!));
                     }
@@ -111,60 +185,8 @@ class _DashboardState extends State<Dashboard> {
                               style: AppTextStyle.activitiesSummary,
                             ),
                             SizedBox(height: AppDimension.getHeight(16)),
-                            // Activity cards grid
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final cardWidth = (constraints.maxWidth -
-                                        AppDimension.getWidth(16)) /
-                                    2;
-                                final cardHeight = cardWidth * 0.7;
-
-                                return GridView.count(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  crossAxisCount: AppDimension.isTablet ? 4 : 2,
-                                  mainAxisSpacing: AppDimension.getHeight(16),
-                                  crossAxisSpacing: AppDimension.getWidth(16),
-                                  childAspectRatio: cardWidth / cardHeight,
-                                  children: [
-                                    ActivityCard(
-                                      title: 'Daily',
-                                      hours: state.dailySummary?.hours ?? '0 hr',
-                                      completedText:
-                                          state.dailySummary?.completed ??
-                                              '0 appointments',
-                                      cardColor: AppColors.activityPurple,
-                                      borderColor: AppColors.activityPurpleBorder,
-                                    ),
-                                    ActivityCard(
-                                      title: 'Weekly',
-                                      hours: state.weeklySummary?.hours ?? '0 hr',
-                                      completedText:
-                                          state.weeklySummary?.completed ??
-                                              '0 appointments',
-                                      cardColor: AppColors.activityGreen,
-                                      borderColor: AppColors.activityGreenBorder,
-                                    ),
-                                    ActivityCard(
-                                      title: 'Monthly',
-                                      hours: state.monthlySummary?.hours ?? '0 hr',
-                                      completedText:
-                                          state.monthlySummary?.completed ??
-                                              '0 appointments',
-                                      cardColor: AppColors.activityOrange,
-                                      borderColor: AppColors.activityOrangeBorder,
-                                    ),
-                                    ActivityCard(
-                                      title: 'Pending Appointment',
-                                      hours: '${state.statusSummary?.pending ?? 0} ${(state.statusSummary?.pending ?? 0) <= 1 ? 'hr' : 'hrs'}',
-                                      completedText: state.statusSummary?.completed ?? '0 / 0',
-                                      cardColor: AppColors.activityPink,
-                                      borderColor: AppColors.activityPinkBorder,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
+                            // Activity cards with skeleton loading
+                            _buildActivityCards(context, state),
                             SizedBox(height: AppDimension.getHeight(32)),
                             // Timesheet section
                             Text(
