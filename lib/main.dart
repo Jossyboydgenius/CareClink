@@ -10,6 +10,7 @@ import 'app/locator.dart';
 import 'app/flavor_config.dart';
 import 'ui/views/sign_in_bloc/sign_in_bloc.dart';
 import 'shared/app_sizer.dart';
+import 'shared/connection_status.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (BuildContext context, Widget? child) {
+      builder: (context, child) {
         return MultiBlocProvider(
           providers: [
             BlocProvider(create: (context) => SignInBloc()),
@@ -50,13 +51,18 @@ class MyApp extends StatelessWidget {
             navigatorKey: NavigationService.navigatorKey,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
-            initialRoute: AppRoutes.signInView,
+            initialRoute: AppRoutes.initialRoute,
             routes: AppRoutes.routes,
             builder: (context, child) {
               ScreenUtil.init(context);
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                child: child!,
+                child: ConnectionWidget(
+                  dismissOfflineBanner: false,
+                  builder: (context, isOnline) {
+                    return child!;
+                  },
+                ),
               );
             },
           ),
