@@ -48,7 +48,7 @@ class ActivityCard extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${hours}hrs',
+                hours,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
