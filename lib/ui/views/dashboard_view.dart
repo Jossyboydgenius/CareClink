@@ -74,7 +74,7 @@ class _DashboardState extends State<Dashboard> {
               borderColor: AppColors.activityPurpleBorder,
             ),
             ActivityCard(
-              title: 'Weekly',
+              title: 'Bi-Weekly',
               hours: state.weeklySummary?.hours ?? '0 hr',
               completedText: state.weeklySummary?.completed ?? '0 appointments',
               cardColor: AppColors.activityGreen,
