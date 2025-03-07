@@ -1,7 +1,10 @@
-import 'package:careclink/shared/app_colors.dart';
-import 'package:careclink/shared/app_images.dart';
-import 'package:careclink/ui/views/sign_in_view.dart';
 import 'package:flutter/material.dart';
+import '../../app/locator.dart';
+import '../../app/routes/app_routes.dart';
+import '../../data/services/user_service.dart';
+import '../../shared/app_colors.dart';
+import '../../shared/app_images.dart';
+import '../../data/services/navigator_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,15 +14,25 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final _userService = locator<UserService>();
+
+  Future<void> _checkLoginStatus() async {
+    await Future.delayed(const Duration(seconds: 2));
+    
+    if (!mounted) return;
+
+    final isLoggedIn = await _userService.isUserLoggedIn();
+    if (isLoggedIn) {
+      NavigationService.pushReplacementNamed(AppRoutes.dashboardView);
+    } else {
+      NavigationService.pushReplacementNamed(AppRoutes.signInView);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const SignInView()),
-      );
-    });
+    _checkLoginStatus();
   }
 
   @override
