@@ -5,6 +5,7 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../../shared/app_toast.dart';
 import '../../data/services/navigator_service.dart';
+import '../widgets/appointment_card.dart';
 import 'app_button.dart';
 import 'app_date_picker.dart';
 import 'app_time_picker.dart';
@@ -13,6 +14,7 @@ class ManualClockEntryDialog extends StatefulWidget {
   final String appointmentId;
   final String clientName;
   final String dateTime;
+  final AppointmentStatus status;
   final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) onSave;
 
   const ManualClockEntryDialog({
@@ -20,6 +22,7 @@ class ManualClockEntryDialog extends StatefulWidget {
     required this.appointmentId,
     required this.clientName,
     required this.dateTime,
+    required this.status,
     required this.onSave,
   });
 
@@ -40,6 +43,36 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
     'Others',
   ];
   
+  Color _getStatusColor() {
+    switch (widget.status) {
+      case AppointmentStatus.scheduled:
+        return AppColors.orange;
+      case AppointmentStatus.completed:
+        return AppColors.green;
+      case AppointmentStatus.pending:
+        return AppColors.orange;
+      case AppointmentStatus.reschedule:
+        return AppColors.red;
+      default:
+        return AppColors.textPrimary;
+    }
+  }
+
+  String _getStatusText() {
+    switch (widget.status) {
+      case AppointmentStatus.scheduled:
+        return 'Scheduled';
+      case AppointmentStatus.completed:
+        return 'Completed';
+      case AppointmentStatus.pending:
+        return 'Pending';
+      case AppointmentStatus.reschedule:
+        return 'Reschedule';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -91,11 +124,11 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.orange,
+                          color: _getStatusColor(),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          'Pending',
+                          _getStatusText(),
                           style: AppTextStyle.medium12.copyWith(
                             color: AppColors.white,
                           ),
