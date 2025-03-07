@@ -195,8 +195,8 @@ class _DashboardState extends State<Dashboard> {
                             ),
                             SizedBox(height: AppDimension.getHeight(16)),
                             TimesheetCard(
-                              appointmentId: '1001',
-                              name: 'Jane Cooper',
+                              staffName: 'Jane Cooper',
+                              clientName: 'Wade Warren',
                               clockIn: '10:00',
                               showClockOut: true,
                               onClockOut: () {},
@@ -204,8 +204,8 @@ class _DashboardState extends State<Dashboard> {
                             ),
                             SizedBox(height: AppDimension.getHeight(16)),
                             TimesheetCard(
-                              appointmentId: '1002',
-                              name: 'Wade Warren',
+                              staffName: 'Jane Cooper',
+                              clientName: 'Wade Warren',
                               clockIn: '10:00',
                               clockOut: '10:30',
                               duration: '30min',
