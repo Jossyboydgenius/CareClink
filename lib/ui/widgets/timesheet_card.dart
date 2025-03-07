@@ -5,8 +5,8 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 
 class TimesheetCard extends StatefulWidget {
-  final String name;
-  final String appointmentId;
+  final String staffName;
+  final String clientName;
   final String clockIn;
   final String? clockOut;
   final String? duration;
@@ -16,8 +16,8 @@ class TimesheetCard extends StatefulWidget {
 
   const TimesheetCard({
     super.key,
-    required this.name,
-    required this.appointmentId,
+    required this.staffName,
+    required this.clientName,
     required this.clockIn,
     this.clockOut,
     this.duration,
@@ -54,7 +54,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.name,
+                      widget.staffName,
                       style: AppTextStyle.semibold16,
                     ),
                     if (widget.showClockOut)
@@ -174,7 +174,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                                 ),
                               ),
                               Text(
-                                widget.appointmentId,
+                                widget.clientName,
                                 style: AppTextStyle.medium12,
                               ),
                             ],
