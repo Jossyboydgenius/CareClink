@@ -25,27 +25,32 @@ class _AppointmentViewState extends State<AppointmentView> {
   final List<Map<String, dynamic>> _appointments = [
     {
       'id': '10001',
-      'dateTime': '2025-01-14 10:00AM - 11:00AM',
-      'status': AppointmentStatus.pending,
+      'clientName': 'Jane Cooper',
+      'dateTime': '2025-01-14 10:00 - 11:00 AM',
+      'status': AppointmentStatus.scheduled,
     },
     {
       'id': '10002',
-      'dateTime': '2025-01-15 10:00AM - 11:00AM',
-      'status': AppointmentStatus.none,
+      'clientName': 'Wade Warren',
+      'dateTime': '2025-01-15 10:00 - 11:00 AM',
+      'status': AppointmentStatus.completed,
     },
     {
       'id': '10003',
-      'dateTime': '2025-01-15 10:00AM - 11:00AM',
-      'status': AppointmentStatus.none,
+      'clientName': 'Wade Warren',
+      'dateTime': '2025-01-15 10:00 - 11:00 AM',
+      'status': AppointmentStatus.completed,
     },
     {
       'id': '10004',
-      'dateTime': '2025-01-15 10:00AM - 11:00AM',
-      'status': AppointmentStatus.none,
+      'clientName': 'Robert Johnson',
+      'dateTime': '2025-01-15 10:00 - 11:00 AM',
+      'status': AppointmentStatus.completed,
     },
     {
       'id': '10005',
-      'dateTime': '2025-01-15 10:00AM - 11:00AM',
+      'clientName': 'Emily Thompson',
+      'dateTime': '2025-01-15 10:00 - 11:00 AM',
       'status': AppointmentStatus.reschedule,
     },
   ];
@@ -65,7 +70,7 @@ class _AppointmentViewState extends State<AppointmentView> {
       } else {
         _filteredAppointments = _appointments
             .where((appointment) =>
-                appointment['id'].toLowerCase().contains(query.toLowerCase()))
+                appointment['clientName'].toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -79,9 +84,11 @@ class _AppointmentViewState extends State<AppointmentView> {
     setState(() {
       _appointments.add({
         'id': appointmentId,
+        'clientName': 'New Client',
         'dateTime': '$formattedDate $formattedClockIn - $formattedClockOut',
         'status': AppointmentStatus.pending,
       });
+      _filteredAppointments = List.from(_appointments);
     });
   }
 
@@ -164,7 +171,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                                 controller: _searchController,
                                 onChanged: _filterAppointments,
                                 decoration: InputDecoration(
-                                  hintText: 'Search Appointment ID...',
+                                  hintText: 'Search Client Name...',
                                   hintStyle: AppTextStyle.regular14.copyWith(
                                     color: AppColors.grey300,
                                   ),
@@ -182,7 +189,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                       ..._filteredAppointments.map((appointment) => Column(
                         children: [
                           AppointmentCard(
-                            appointmentId: appointment['id'],
+                            clientName: appointment['clientName'],
                             dateTime: appointment['dateTime'],
                             status: appointment['status'],
                             isSelected: _selectedAppointmentId == appointment['id'],
@@ -233,7 +240,10 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   void _handleClockIn() {
-    final nextId = (int.parse(_appointments.last['id']) + 1).toString();
+    // Generate a new ID by incrementing the last ID
+    final lastId = int.parse(_appointments.last['id']);
+    final nextId = (lastId + 1).toString();
+    
     showDialog(
       context: context,
       builder: (context) => ManualClockEntryDialog(
