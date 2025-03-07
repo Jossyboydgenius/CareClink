@@ -4,13 +4,20 @@ import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 
+enum DurationStatus {
+  none,
+  clockIn,
+  clockOut,
+  completed,
+}
+
 class TimesheetCard extends StatefulWidget {
   final String staffName;
   final String clientName;
   final String clockIn;
   final String? clockOut;
   final String? duration;
-  final bool showClockOut;
+  final DurationStatus status;
   final VoidCallback? onClockOut;
   final VoidCallback? onExpandDetails;
 
@@ -21,7 +28,7 @@ class TimesheetCard extends StatefulWidget {
     required this.clockIn,
     this.clockOut,
     this.duration,
-    this.showClockOut = false,
+    this.status = DurationStatus.none,
     this.onClockOut,
     this.onExpandDetails,
   });
@@ -33,8 +40,38 @@ class TimesheetCard extends StatefulWidget {
 class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
+  Color _getStatusColor() {
+    switch (widget.status) {
+      case DurationStatus.clockIn:
+        return AppColors.green;
+      case DurationStatus.clockOut:
+        return AppColors.red;
+      case DurationStatus.completed:
+        return AppColors.green;
+      default:
+        return AppColors.textPrimary;
+    }
+  }
+
+  String _getStatusText() {
+    switch (widget.status) {
+      case DurationStatus.clockIn:
+        return 'Clock In';
+      case DurationStatus.clockOut:
+        return 'Clock Out';
+      case DurationStatus.completed:
+        return 'Completed';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Determine if we should show the status badge or duration
+    final bool showDuration = widget.duration != null && widget.duration != '0min';
+    final bool showStatus = widget.status != DurationStatus.none && !showDuration;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -49,7 +86,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Visit ID and Clock Out button/Duration
+                // Staff name and status/duration
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -57,24 +94,24 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       widget.staffName,
                       style: AppTextStyle.semibold16,
                     ),
-                    if (widget.showClockOut)
+                    if (showStatus)
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 12.w,
                           vertical: 4.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.pinkRed,
+                          color: _getStatusColor(),
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
-                          'Clock Out',
+                          _getStatusText(),
                           style: AppTextStyle.medium12.copyWith(
                             color: AppColors.white,
                           ),
                         ),
                       )
-                    else if (widget.duration != null)
+                    else if (showDuration)
                       Row(
                         children: [
                           Text(
