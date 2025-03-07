@@ -253,11 +253,32 @@ class _AppointmentViewState extends State<AppointmentView> {
     showDialog(
       context: context,
       builder: (context) => ManualClockEntryDialog(
-        appointmentId: nextId,
+        appointmentId: selectedAppointment['id'],
         clientName: selectedAppointment['clientName'],
         dateTime: selectedAppointment['dateTime'],
+        status: selectedAppointment['status'],
         onSave: (date, clockIn, clockOut) {
-          _addNewAppointment(nextId, date, clockIn, clockOut);
+          // Format the date and times
+          final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+          final formattedClockIn = '${clockIn.hourOfPeriod == 0 ? 12 : clockIn.hourOfPeriod}:${clockIn.minute.toString().padLeft(2, '0')}${clockIn.period == DayPeriod.am ? 'AM' : 'PM'}';
+          final formattedClockOut = '${clockOut.hourOfPeriod == 0 ? 12 : clockOut.hourOfPeriod}:${clockOut.minute.toString().padLeft(2, '0')}${clockOut.period == DayPeriod.am ? 'AM' : 'PM'}';
+          
+          // Update the selected appointment
+          setState(() {
+            // Find the index of the selected appointment
+            final index = _appointments.indexWhere((appointment) => appointment['id'] == selectedAppointment['id']);
+            if (index != -1) {
+              // Update the appointment
+              _appointments[index] = {
+                'id': selectedAppointment['id'],
+                'clientName': selectedAppointment['clientName'],
+                'dateTime': '$formattedDate $formattedClockIn - $formattedClockOut',
+                'status': AppointmentStatus.pending,
+              };
+              // Update filtered appointments
+              _filteredAppointments = List.from(_appointments);
+            }
+          });
         },
       ),
     );
