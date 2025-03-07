@@ -7,11 +7,13 @@ import '../../shared/app_spacing.dart';
 enum AppointmentStatus {
   none,
   pending,
+  scheduled,
+  completed,
   reschedule,
 }
 
 class AppointmentCard extends StatelessWidget {
-  final String appointmentId;
+  final String clientName;
   final String dateTime;
   final AppointmentStatus status;
   final bool isSelected;
@@ -19,7 +21,7 @@ class AppointmentCard extends StatelessWidget {
 
   const AppointmentCard({
     super.key,
-    required this.appointmentId,
+    required this.clientName,
     required this.dateTime,
     this.status = AppointmentStatus.none,
     this.isSelected = false,
@@ -45,43 +47,46 @@ class AppointmentCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'Appointment ID: ',
-                      style: AppTextStyle.regular14.copyWith(
-                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Appointment ID: ',
+                  style: AppTextStyle.regular14.copyWith(
+                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                  ),
                 ),
-                Row(
-                  children: [
-                    if (status != AppointmentStatus.none)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _getStatusText(),
-                          style: AppTextStyle.medium12.copyWith(
-                            color: AppColors.white,
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (status != AppointmentStatus.none)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _getStatusText(),
+                            style: AppTextStyle.medium12.copyWith(
+                              color: AppColors.white,
+                            ),
                           ),
                         ),
+                      AppSpacing.h8(),
+                      Flexible(
+                        child: Text(
+                          clientName,
+                          style: AppTextStyle.semibold14.copyWith(
+                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
-                    AppSpacing.h8(),
-                    Text(
-                      appointmentId,
-                      style: AppTextStyle.semibold14.copyWith(
-                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -94,10 +99,13 @@ class AppointmentCard extends StatelessWidget {
                     color: isSelected ? AppColors.primary : AppColors.textPrimary,
                   ),
                 ),
-                Text(
-                  dateTime,
-                  style: AppTextStyle.semibold14.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    dateTime,
+                    style: AppTextStyle.semibold14.copyWith(
+                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -110,6 +118,10 @@ class AppointmentCard extends StatelessWidget {
 
   Color _getStatusColor() {
     switch (status) {
+      case AppointmentStatus.scheduled:
+        return AppColors.orange;
+      case AppointmentStatus.completed:
+        return AppColors.green;
       case AppointmentStatus.pending:
         return AppColors.orange;
       case AppointmentStatus.reschedule:
@@ -121,6 +133,10 @@ class AppointmentCard extends StatelessWidget {
 
   String _getStatusText() {
     switch (status) {
+      case AppointmentStatus.scheduled:
+        return 'Scheduled';
+      case AppointmentStatus.completed:
+        return 'Completed';
       case AppointmentStatus.pending:
         return 'Pending';
       case AppointmentStatus.reschedule:
