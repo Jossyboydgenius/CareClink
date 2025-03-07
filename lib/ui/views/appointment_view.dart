@@ -240,6 +240,12 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   void _handleClockIn() {
+    // Find the selected appointment
+    final selectedAppointment = _appointments.firstWhere(
+      (appointment) => appointment['id'] == _selectedAppointmentId,
+      orElse: () => _appointments.last,
+    );
+    
     // Generate a new ID by incrementing the last ID
     final lastId = int.parse(_appointments.last['id']);
     final nextId = (lastId + 1).toString();
@@ -248,7 +254,8 @@ class _AppointmentViewState extends State<AppointmentView> {
       context: context,
       builder: (context) => ManualClockEntryDialog(
         appointmentId: nextId,
-        dateTime: _appointments.last['dateTime'],
+        clientName: selectedAppointment['clientName'],
+        dateTime: selectedAppointment['dateTime'],
         onSave: (date, clockIn, clockOut) {
           _addNewAppointment(nextId, date, clockIn, clockOut);
         },
