@@ -11,12 +11,14 @@ import 'app_time_picker.dart';
 
 class ManualClockEntryDialog extends StatefulWidget {
   final String appointmentId;
+  final String clientName;
   final String dateTime;
   final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) onSave;
 
   const ManualClockEntryDialog({
     super.key,
     required this.appointmentId,
+    required this.clientName,
     required this.dateTime,
     required this.onSave,
   });
@@ -102,7 +104,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                       AppSpacing.h8(),
                       Flexible(
                         child: Text(
-                          widget.appointmentId,
+                          widget.clientName,
                           style: AppTextStyle.semibold14,
                           overflow: TextOverflow.ellipsis,
                         ),
