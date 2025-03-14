@@ -97,8 +97,8 @@ class _TimesheetCardState extends State<TimesheetCard> {
                     if (showStatus)
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 4.h,
+                          horizontal: 22.w,
+                          vertical: 6.h,
                         ),
                         decoration: BoxDecoration(
                           color: _getStatusColor(),
@@ -106,7 +106,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                         ),
                         child: Text(
                           _getStatusText(),
-                          style: AppTextStyle.medium12.copyWith(
+                          style: AppTextStyle.medium14.copyWith(
                             color: AppColors.white,
                           ),
                         ),
