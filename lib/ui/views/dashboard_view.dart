@@ -176,7 +176,7 @@ class _DashboardState extends State<Dashboard> {
                             SizedBox(height: AppDimension.getHeight(32)),
                             // Timesheet section
                             Text(
-                              'Monthly Timesheet',
+                              'Recent Timesheet',
                               style: AppTextStyle.activitiesSummary,
                             ),
                             SizedBox(height: AppDimension.getHeight(16)),
