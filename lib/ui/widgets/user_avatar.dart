@@ -31,6 +31,22 @@ class _UserAvatarState extends State<UserAvatar> {
     _loadUserData();
   }
 
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isOpen) {
+        _removeOverlay();
+      }
+    });
+  }
+
   Future<void> _loadUserData() async {
     debugPrint('Loading user data for avatar');
     try {
@@ -58,31 +74,34 @@ class _UserAvatarState extends State<UserAvatar> {
   }
 
   void _handleSignOut() async {
-    final userService = locator<UserService>();
-    await userService.logout();
-    _removeOverlay();
-    NavigationService.pushReplacementNamed(AppRoutes.signInView);
+    try {
+      final userService = locator<UserService>();
+      await userService.logout();
+      _removeOverlay();
+      NavigationService.pushReplacementNamed(AppRoutes.signInView);
+    } catch (e) {
+      debugPrint('Error signing out: $e');
+    }
   }
 
   void _showOverlay() {
-    _overlayEntry = _createOverlayEntry();
-    Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _isOpen = true);
-  }
+    _removeOverlay();
 
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    setState(() => _isOpen = false);
-  }
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
 
-  OverlayEntry _createOverlayEntry() {
-    return OverlayEntry(
+    final screenWidth = MediaQuery.of(context).size.width;
+    final rightSpace = screenWidth - (offset.dx + size.width);
+
+    _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
         width: 140.w,
         child: CompositedTransformFollower(
           link: _layerLink,
-          offset: Offset(0, 45.h),
+          targetAnchor: Alignment.bottomRight,
+          followerAnchor: Alignment.topRight,
+          offset: Offset(-16.w, -8.h),
           child: Material(
             elevation: 2,
             color: Colors.transparent,
@@ -119,12 +138,25 @@ class _UserAvatarState extends State<UserAvatar> {
         ),
       ),
     );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _isOpen = true);
   }
 
-  @override
-  void dispose() {
-    _removeOverlay();
-    super.dispose();
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) {
+      setState(() => _isOpen = false);
+    }
+  }
+
+  Future<bool> onWillPop() async {
+    if (_isOpen) {
+      _removeOverlay();
+      return false;
+    }
+    return true;
   }
 
   String _getInitials() {
@@ -215,28 +247,31 @@ class _UserAvatarState extends State<UserAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: GestureDetector(
-        onTap: () {
-          if (_isOpen) {
-            _removeOverlay();
-          } else {
-            _showOverlay();
-          }
-        },
-        child: Container(
-          padding: EdgeInsets.all(8.w),
-          child: Row(
-            children: [
-              _buildAvatar(),
-              AppSpacing.h4(),
-              Icon(
-                _isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                color: AppColors.textPrimary,
-                size: 20.w,
-              ),
-            ],
+    return WillPopScope(
+      onWillPop: onWillPop,
+      child: CompositedTransformTarget(
+        link: _layerLink,
+        child: GestureDetector(
+          onTap: () {
+            if (_isOpen) {
+              _removeOverlay();
+            } else {
+              _showOverlay();
+            }
+          },
+          child: Container(
+            padding: EdgeInsets.all(8.w),
+            child: Row(
+              children: [
+                _buildAvatar(),
+                AppSpacing.h4(),
+                Icon(
+                  _isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: AppColors.textPrimary,
+                  size: 20.w,
+                ),
+              ],
+            ),
           ),
         ),
       ),
