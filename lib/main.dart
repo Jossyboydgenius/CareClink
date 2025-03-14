@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
           child: MaterialApp(
             title: 'CareClink',
             navigatorKey: NavigationService.navigatorKey,
+            navigatorObservers: [NavigationService.routeObserver],
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
             initialRoute: AppRoutes.initialRoute,
