@@ -123,7 +123,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.grey),
+                  border: Border.all(color: AppColors.grey400),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
