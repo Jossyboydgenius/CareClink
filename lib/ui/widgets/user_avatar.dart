@@ -16,7 +16,7 @@ class UserAvatar extends StatefulWidget {
   State<UserAvatar> createState() => _UserAvatarState();
 }
 
-class _UserAvatarState extends State<UserAvatar> {
+class _UserAvatarState extends State<UserAvatar> with RouteAware {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
@@ -32,19 +32,31 @@ class _UserAvatarState extends State<UserAvatar> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      NavigationService.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    NavigationService.routeObserver.unsubscribe(this);
     _removeOverlay();
     super.dispose();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isOpen) {
-        _removeOverlay();
-      }
-    });
+  void didPushNext() {
+    _removeOverlay();
+    super.didPushNext();
+  }
+
+  @override
+  void didPopNext() {
+    _removeOverlay();
+    super.didPopNext();
   }
 
   Future<void> _loadUserData() async {
@@ -87,59 +99,69 @@ class _UserAvatarState extends State<UserAvatar> {
   void _showOverlay() {
     _removeOverlay();
 
-    final RenderBox renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final rightSpace = screenWidth - (offset.dx + size.width);
-
     _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        width: 140.w,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          targetAnchor: Alignment.bottomRight,
-          followerAnchor: Alignment.topRight,
-          offset: Offset(-16.w, -8.h),
-          child: Material(
-            elevation: 2,
-            color: Colors.transparent,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.grey),
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _removeOverlay,
+              child: Container(
+                color: Colors.transparent,
               ),
-              child: InkWell(
-                onTap: _handleSignOut,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Sign Out',
-                        style: AppTextStyle.regular14.copyWith(
+            ),
+          ),
+          CompositedTransformFollower(
+            link: _layerLink,
+            targetAnchor: Alignment.bottomRight,
+            followerAnchor: Alignment.topRight,
+            offset: Offset(-16.w, -8.h),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 140.w,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.grey),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: _handleSignOut,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Sign Out',
+                          style: AppTextStyle.regular14.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        AppIcons(
+                          icon: AppIconData.logOut,
+                          size: 16,
                           color: AppColors.textPrimary,
                         ),
-                      ),
-                      AppIcons(
-                        icon: AppIconData.logOut,
-                        size: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
 
-    Overlay.of(context).insert(_overlayEntry!);
+    Overlay.of(context, rootOverlay: true).insert(_overlayEntry!);
     setState(() => _isOpen = true);
   }
 
