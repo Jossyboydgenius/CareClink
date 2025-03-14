@@ -82,7 +82,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
       ),
       child: Container(
         width: 0.98.sw,
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(14.w),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +121,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 12.w,
-                          vertical: 4.h,
+                          vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
                           color: _getStatusColor(),
@@ -152,7 +152,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
               children: [
                 Text(
                   'Date & Time:',
-                  style: AppTextStyle.regular14,
+                  style: AppTextStyle.regular12,
                 ),
                 AppSpacing.h8(),
                 Expanded(
