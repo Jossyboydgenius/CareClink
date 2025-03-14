@@ -61,7 +61,7 @@ class AppointmentCard extends StatelessWidget {
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: 12.w,
-                            vertical: 4.h,
+                            vertical: 2.h,
                           ),
                           decoration: BoxDecoration(
                             color: _getStatusColor(),
