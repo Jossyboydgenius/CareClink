@@ -13,7 +13,7 @@ extension NavigatorStateX on NavigatorState {
 
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+  static final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
 
   static Future<dynamic> removeUntill(String routeName) async {
     return navigatorKey.currentState
