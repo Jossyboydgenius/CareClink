@@ -9,6 +9,7 @@ import '../widgets/appointment_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
 import '../widgets/manual_clock_entry_dialog.dart';
+import '../widgets/user_avatar.dart';
 import '../../shared/app_images.dart';
 
 class AppointmentView extends StatefulWidget {
@@ -109,22 +110,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                     height: 60,
                     width: 160,
                   ),
-                  Container(
-                    width: 40.w,
-                    height: 40.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'JD',
-                        style: AppTextStyle.semibold14.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const UserAvatar(),
                 ],
               ),
             ),
