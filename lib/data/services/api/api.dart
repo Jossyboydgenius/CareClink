@@ -15,11 +15,29 @@ class Api {
   final AppFlavorConfig _config = locator<AppFlavorConfig>();
   static const bool useStaging = false;
   String get baseUrl => _config.apiBaseUrl;
-  Map<String, String> headers = {
-    HttpHeaders.acceptHeader: 'application/json',
-    'Content-Type': 'application/json; charset=UTF-8',
-  };
+  String? _token;
   final LocalStorageService localStorageService = locator<LocalStorageService>();
+
+  void updateToken(String? token) {
+    _token = token;
+    debugPrint('API token updated: $_token');
+  }
+
+  Map<String, String> get _headers {
+    final headers = {
+      'accept': 'application/json',
+      'Content-Type': 'application/json; charset=UTF-8',
+    };
+
+    if (_token != null && _token!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $_token';
+      debugPrint('Adding authorization header: Bearer $_token');
+    } else {
+      debugPrint('No token available for headers');
+    }
+
+    return headers;
+  }
 
   Future<ApiResponse> postData(
     String url,
@@ -180,8 +198,7 @@ class Api {
     log('body: $body');
     Map<String, String> networkHeaders;
 
-    networkHeaders = {};
-    networkHeaders.addAll(headers);
+    networkHeaders = _headers;
 
     if (hasHeader) {
       final userValue = await localStorageService
