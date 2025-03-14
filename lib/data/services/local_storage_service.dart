@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../app/locator.dart';
+import 'package:flutter/foundation.dart';
 
 class LocalStorageKeys {
   static String refreshToken = 'refreshToken';
@@ -13,6 +14,8 @@ class LocalStorageKeys {
   static String userId = 'userId';
   static String userRole = 'userRole';
   static String userEmail = 'userEmail';
+  static String userFullname = 'userFullname';
+  static String userProfileImage = 'userProfileImage';
 }
 
 class LocalStorageService {
@@ -41,20 +44,43 @@ class LocalStorageService {
     required String userId,
     required String email,
     required String role,
+    required String fullname,
+    String? profileImage,
   }) async {
-    await saveStorageValue(LocalStorageKeys.accessToken, token);
-    await saveStorageValue(LocalStorageKeys.userId, userId);
-    await saveStorageValue(LocalStorageKeys.userEmail, email);
-    await saveStorageValue(LocalStorageKeys.userRole, role);
+    debugPrint('Saving credentials to secure storage');
+    await Future.wait([
+      fSStorage.write(key: LocalStorageKeys.accessToken, value: token),
+      fSStorage.write(key: LocalStorageKeys.userId, value: userId),
+      fSStorage.write(key: LocalStorageKeys.userEmail, value: email),
+      fSStorage.write(key: LocalStorageKeys.userRole, value: role),
+      fSStorage.write(key: LocalStorageKeys.userFullname, value: fullname),
+      if (profileImage != null)
+        fSStorage.write(key: LocalStorageKeys.userProfileImage, value: profileImage),
+    ]);
+    debugPrint('Credentials saved successfully');
   }
 
   Future<Map<String, String?>> getUserCredentials() async {
-    return {
-      'token': await getStorageValue(LocalStorageKeys.accessToken),
-      'userId': await getStorageValue(LocalStorageKeys.userId),
-      'email': await getStorageValue(LocalStorageKeys.userEmail),
-      'role': await getStorageValue(LocalStorageKeys.userRole),
+    debugPrint('Retrieving credentials from secure storage');
+    final credentials = await Future.wait([
+      fSStorage.read(key: LocalStorageKeys.accessToken),
+      fSStorage.read(key: LocalStorageKeys.userId),
+      fSStorage.read(key: LocalStorageKeys.userEmail),
+      fSStorage.read(key: LocalStorageKeys.userRole),
+      fSStorage.read(key: LocalStorageKeys.userFullname),
+      fSStorage.read(key: LocalStorageKeys.userProfileImage),
+    ]);
+    
+    final result = {
+      'token': credentials[0],
+      'userId': credentials[1],
+      'email': credentials[2],
+      'role': credentials[3],
+      'fullname': credentials[4],
+      'profileImage': credentials[5],
     };
+    debugPrint('Retrieved credentials: $result');
+    return result;
   }
 
   Future<void> clearAuthAll() async {
@@ -68,6 +94,8 @@ class LocalStorageService {
     await fSStorage.delete(key: LocalStorageKeys.userId);
     await fSStorage.delete(key: LocalStorageKeys.userRole);
     await fSStorage.delete(key: LocalStorageKeys.userEmail);
+    await fSStorage.delete(key: LocalStorageKeys.userFullname);
+    await fSStorage.delete(key: LocalStorageKeys.userProfileImage);
     // Don't clear remember me preference when logging out
   }
 
