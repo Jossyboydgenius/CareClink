@@ -90,12 +90,14 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         final token = response.data['token'];
         final user = response.data['user'];
 
-        // Save auth credentials
+        // Save auth credentials with new required fields
         await _localStorageService.saveUserCredentials(
           token: token,
           userId: user['id'],
           email: user['email'],
           role: user['role'],
+          fullname: user['fullname'],
+          profileImage: user['profileImage'], // This is optional, so it's okay if it's null
         );
 
         // Handle remember me
