@@ -142,7 +142,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                         ),
                         padding: EdgeInsets.symmetric(
                           horizontal: 16.w,
-                          vertical: 12.h,
+                          vertical: 8.h,
                         ),
                         child: Row(
                           children: [
