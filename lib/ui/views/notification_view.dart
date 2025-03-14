@@ -6,6 +6,7 @@ import '../../shared/app_spacing.dart';
 import '../../shared/app_icons.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/notification_card.dart';
+import '../widgets/user_avatar.dart';
 import '../../data/models/notification_model.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
@@ -78,22 +79,7 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                     height: 60,
                     width: 160,
                   ),
-                  Container(
-                    width: 40.w,
-                    height: 40.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'JD',
-                        style: AppTextStyle.semibold14.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const UserAvatar(),
                 ],
               ),
             ),
