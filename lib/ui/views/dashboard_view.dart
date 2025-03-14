@@ -8,6 +8,7 @@ import '../widgets/activity_card.dart';
 import '../widgets/skeleton_activity_card.dart';
 import '../widgets/timesheet_card.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/user_avatar.dart';
 import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_colors.dart';
@@ -127,22 +128,7 @@ class _DashboardState extends State<Dashboard> {
                         ),
                       ],
                     ),
-                    Container(
-                      width: 40.w,
-                      height: 40.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'JD',
-                          style: AppTextStyle.semibold14.copyWith(
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+                    const UserAvatar(),
                   ],
                 ),
               ),
