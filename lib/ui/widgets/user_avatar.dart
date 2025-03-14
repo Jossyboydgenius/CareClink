@@ -8,7 +8,6 @@ import '../../data/services/user_service.dart';
 import '../../app/locator.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class UserAvatar extends StatefulWidget {
   const UserAvatar({super.key});
@@ -23,6 +22,8 @@ class _UserAvatarState extends State<UserAvatar> {
   bool _isOpen = false;
   String? _profileImage;
   String? _fullname;
+  bool _isLoading = true;
+  bool _imageError = false;
 
   @override
   void initState() {
@@ -32,16 +33,27 @@ class _UserAvatarState extends State<UserAvatar> {
 
   Future<void> _loadUserData() async {
     debugPrint('Loading user data for avatar');
-    final userService = locator<UserService>();
-    final userData = await userService.getCurrentUser();
-    debugPrint('User data received: ${userData.toString()}');
-    
-    if (mounted) {
-      setState(() {
-        _profileImage = userData['profileImage'];
-        _fullname = userData['fullname'];
-        debugPrint('Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
-      });
+    try {
+      final userService = locator<UserService>();
+      final userData = await userService.getCurrentUser();
+      debugPrint('User data received: ${userData.toString()}');
+      
+      if (mounted) {
+        setState(() {
+          _profileImage = userData['profileImage'];
+          _fullname = userData['fullname'];
+          _isLoading = false;
+          debugPrint('Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _imageError = true;
+        });
+      }
     }
   }
 
@@ -116,47 +128,73 @@ class _UserAvatarState extends State<UserAvatar> {
   }
 
   String _getInitials() {
-    if (_fullname == null || _fullname!.isEmpty) {
-      debugPrint('No fullname available for initials');
-      return '';
-    }
+    if (_fullname == null || _fullname!.isEmpty) return '';
     final names = _fullname!.split(' ');
     if (names.length >= 2) {
-      final initials = '${names[0][0]}${names[1][0]}'.toUpperCase();
-      debugPrint('Generated initials: $initials');
-      return initials;
+      return '${names[0][0]}${names[1][0]}'.toUpperCase();
     }
-    debugPrint('Single initial: ${names[0][0].toUpperCase()}');
     return names[0][0].toUpperCase();
   }
 
   Widget _buildAvatar() {
-    debugPrint('Building avatar - Profile Image: $_profileImage');
-    if (_profileImage != null && _profileImage!.isNotEmpty) {
+    if (_isLoading) {
+      return _buildLoadingAvatar();
+    }
+
+    if (_profileImage != null && _profileImage!.isNotEmpty && !_imageError) {
       return ClipOval(
-        child: CachedNetworkImage(
-          width: 40.w,
-          height: 40.w,
-          imageUrl: _profileImage!,
-          fit: BoxFit.cover,
-          placeholder: (context, url) {
-            debugPrint('Loading profile image placeholder');
-            return _buildInitialsAvatar();
-          },
-          errorWidget: (context, url, error) {
-            debugPrint('Error loading profile image: $error');
-            return _buildInitialsAvatar();
-          },
+        child: Stack(
+          children: [
+            _buildInitialsAvatar(), // Show initials as fallback
+            Image.network(
+              _profileImage!,
+              width: 40.w,
+              height: 40.w,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return _buildLoadingAvatar();
+              },
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('Error loading image: $error');
+                return _buildInitialsAvatar();
+              },
+            ),
+          ],
         ),
       );
     }
-    debugPrint('No profile image, using initials avatar');
+
     return _buildInitialsAvatar();
   }
 
+  Widget _buildLoadingAvatar() {
+    return Stack(
+      children: [
+        _buildInitialsAvatar(),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 20.w,
+                height: 20.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInitialsAvatar() {
-    final initials = _getInitials();
-    debugPrint('Building initials avatar: $initials');
     return Container(
       width: 40.w,
       height: 40.w,
@@ -166,7 +204,7 @@ class _UserAvatarState extends State<UserAvatar> {
       ),
       child: Center(
         child: Text(
-          initials,
+          _getInitials(),
           style: AppTextStyle.semibold14.copyWith(
             color: AppColors.white,
           ),
