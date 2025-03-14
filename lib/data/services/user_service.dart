@@ -30,15 +30,27 @@ class UserService {
       hasHeader: false,
     );
 
-    // If login is successful, store the credentials
     if (response.isSuccessful && response.data != null) {
       final data = response.data as Map<String, dynamic>;
+      final user = data['user'] as Map<String, dynamic>;
+      final token = data['token'];
+
+      debugPrint('Saving user credentials - Token: $token');
+      debugPrint('User data: ${user.toString()}');
+
+      // Save auth credentials
       await _storage.saveUserCredentials(
-        token: data['token'],
-        userId: data['userId'],
-        email: data['email'],
-        role: data['role'],
+        token: token,
+        userId: user['id'],
+        email: user['email'],
+        role: user['role'],
+        fullname: user['fullname'],
+        profileImage: user['profileImage'],
       );
+
+      // Update the API token immediately after login
+      _api.updateToken(token);
+      debugPrint('API token updated');
     }
 
     return response;
@@ -51,5 +63,19 @@ class UserService {
 
   Future<void> logout() async {
     await _storage.clearAuthAll();
+    _api.updateToken(null); // Clear the token on logout
+  }
+
+  Future<Map<String, String?>> getCurrentUser() async {
+    final credentials = await _storage.getUserCredentials();
+    debugPrint('Retrieved credentials: ${credentials.toString()}');
+    
+    // Update the API token when getting current user
+    if (credentials['token'] != null) {
+      _api.updateToken(credentials['token']!);
+      debugPrint('Updated API token from stored credentials');
+    }
+    
+    return credentials;
   }
 } 
