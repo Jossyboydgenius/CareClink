@@ -12,7 +12,8 @@ extension NavigatorStateX on NavigatorState {
 }
 
 class NavigationService {
-  static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
   static Future<dynamic> removeUntill(String routeName) async {
     return navigatorKey.currentState
@@ -26,7 +27,7 @@ class NavigationService {
   }
 
   static Future<dynamic> pushReplacementNamed(String routeName,
-      {dynamic arguments}) async {
+      {Object? arguments}) async {
     return navigatorKey.currentState
         ?.pushReplacementNamed(routeName, arguments: arguments);
   }
