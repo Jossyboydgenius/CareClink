@@ -41,9 +41,16 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     if (widget.recentTimesheet != null) {
       // Check if timesheet already exists before adding
-      final existingTimesheet = _timesheetService.getTimesheet(widget.recentTimesheet!['id']);
+      final existingTimesheet = _timesheetService.getTimesheet(widget.recentTimesheet!['appointmentId']);
       if (existingTimesheet == null) {
-        _timesheetService.addTimesheet(widget.recentTimesheet!);
+        _timesheetService.addTimesheet({
+          'id': widget.recentTimesheet!['appointmentId'],
+          'clientName': widget.recentTimesheet!['client'],
+          'clockIn': widget.recentTimesheet!['clockIn'],
+          'clockOut': widget.recentTimesheet!['clockOut'],
+          'duration': widget.recentTimesheet!['duration'].toString(),
+          'status': widget.recentTimesheet!['status'],
+        });
       }
     }
     
