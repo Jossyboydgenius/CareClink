@@ -10,9 +10,13 @@ import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
 import '../widgets/manual_clock_entry_dialog.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/appointment_skeleton.dart';
 import '../../shared/app_images.dart';
 import '../../shared/app_toast.dart';
 import '../../data/services/timesheet_service.dart';
+import '../../app/locator.dart';
+import '../../data/models/appointment_model.dart';
+import '../../data/services/appointment_service.dart';
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -23,61 +27,34 @@ class AppointmentView extends StatefulWidget {
 
 class _AppointmentViewState extends State<AppointmentView> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _selectedAppointmentId;
-  final List<Map<String, dynamic>> _appointments = [
-    {
-      'id': '10001',
-      'clientName': 'Sarah Johnson',
-      'dateTime': '2025-01-14 10:00 - 11:00 AM',
-      'timestamp': DateTime(2025, 1, 14, 10, 0),
-      'status': AppointmentStatus.scheduled,
-    },
-    {
-      'id': '10002',
-      'clientName': 'Michael Chen',
-      'dateTime': '2025-01-15 10:00 - 11:00 AM',
-      'timestamp': DateTime(2025, 1, 15, 10, 0),
-      'status': AppointmentStatus.completed,
-    },
-    {
-      'id': '10003',
-      'clientName': 'Emily Rodriguez',
-      'dateTime': '2025-01-15 11:30 - 12:30 PM',
-      'timestamp': DateTime(2025, 1, 15, 11, 30),
-      'status': AppointmentStatus.scheduled,
-    },
-    {
-      'id': '10004',
-      'clientName': 'David Thompson',
-      'dateTime': '2025-01-15 2:00 - 3:00 PM',
-      'timestamp': DateTime(2025, 1, 15, 14, 0),
-      'status': AppointmentStatus.pending,
-    },
-    {
-      'id': '10005',
-      'clientName': 'Maria Garcia',
-      'dateTime': '2025-01-15 3:30 - 4:30 PM',
-      'timestamp': DateTime(2025, 1, 15, 15, 30),
-      'status': AppointmentStatus.reschedule,
-    },
-    {
-      'id': '10006',
-      'clientName': 'James Wilson',
-      'dateTime': '2025-01-15 5:00 - 6:00 PM',
-      'timestamp': DateTime(2025, 1, 15, 17, 0),
-      'status': AppointmentStatus.scheduled,
-    },
-  ];
-
-  List<Map<String, dynamic>> _filteredAppointments = [];
+  List<AppointmentModel> _appointments = [];
+  List<AppointmentModel> _filteredAppointments = [];
   List<Map<String, dynamic>> _recentTimesheet = [];
   final TimesheetService _timesheetService = TimesheetService();
+  final AppointmentService _appointmentService = locator<AppointmentService>();
 
   @override
   void initState() {
     super.initState();
-    _filteredAppointments = List.from(_appointments);
+    _loadAppointments();
+  }
+
+  Future<void> _loadAppointments() async {
+    setState(() => _isLoading = true);
+    try {
+      final appointments = await _appointmentService.getAppointments();
+      setState(() {
+        _appointments = appointments;
+        _filteredAppointments = List.from(_appointments);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading appointments: $e');
+      setState(() => _isLoading = false);
+      AppToast.showError(context, 'Failed to load appointments');
+    }
   }
 
   void _filterAppointments(String query) {
@@ -87,7 +64,7 @@ class _AppointmentViewState extends State<AppointmentView> {
       } else {
         _filteredAppointments = _appointments
             .where((appointment) =>
-                appointment['clientName'].toLowerCase().contains(query.toLowerCase()))
+                appointment.clientName.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -96,11 +73,17 @@ class _AppointmentViewState extends State<AppointmentView> {
   bool _isAppointmentElapsed(DateTime timestamp) {
     // Only pending appointments can be considered as elapsed
     final selectedAppointment = _appointments.firstWhere(
-      (appointment) => appointment['timestamp'] == timestamp,
-      orElse: () => {'status': AppointmentStatus.none},
+      (appointment) => appointment.timestamp == timestamp,
+      orElse: () => AppointmentModel(
+        id: '',
+        clientName: '',
+        dateTime: '',
+        timestamp: DateTime.now(),
+        status: AppointmentStatus.none,
+      ),
     );
     
-    return selectedAppointment['status'] == AppointmentStatus.pending;
+    return selectedAppointment.status == AppointmentStatus.pending;
   }
 
   bool _canInteractWithAppointment(AppointmentStatus status) {
@@ -121,26 +104,26 @@ class _AppointmentViewState extends State<AppointmentView> {
     if (_selectedAppointmentId == null) return;
 
     final selectedAppointment = _appointments.firstWhere(
-      (appointment) => appointment['id'] == _selectedAppointmentId,
+      (appointment) => appointment.id == _selectedAppointmentId,
     );
 
     // Check if appointment can be interacted with
-    if (!_canInteractWithAppointment(selectedAppointment['status'])) {
+    if (!_canInteractWithAppointment(selectedAppointment.status)) {
       AppToast.showError(context, 'This appointment cannot be clocked in');
       return;
     }
 
-    final isElapsed = _isAppointmentElapsed(selectedAppointment['timestamp']);
+    final isElapsed = _isAppointmentElapsed(selectedAppointment.timestamp);
 
     if (isElapsed) {
       // Show manual clock entry dialog only for pending appointments
       showDialog(
         context: context,
         builder: (context) => ManualClockEntryDialog(
-          appointmentId: selectedAppointment['id'],
-          clientName: selectedAppointment['clientName'],
-          dateTime: selectedAppointment['dateTime'],
-          status: selectedAppointment['status'],
+          appointmentId: selectedAppointment.id,
+          clientName: selectedAppointment.clientName,
+          dateTime: selectedAppointment.dateTime,
+          status: selectedAppointment.status,
           onSave: (date, clockIn, clockOut) {
             _moveToRecentTimesheet(selectedAppointment, clockInTime: clockIn);
             NavigationService.goBack();
@@ -154,22 +137,22 @@ class _AppointmentViewState extends State<AppointmentView> {
     }
   }
 
-  void _moveToRecentTimesheet(Map<String, dynamic> appointment, {TimeOfDay? clockInTime}) async {
+  void _moveToRecentTimesheet(AppointmentModel appointment, {TimeOfDay? clockInTime}) async {
     if (!mounted) return;
 
     final now = DateTime.now();
     final clockIn = clockInTime ?? TimeOfDay.fromDateTime(now);
     
     // Check if timesheet already exists
-    final existingTimesheet = await _timesheetService.getTimesheet(appointment['id']);
+    final existingTimesheet = await _timesheetService.getTimesheet(appointment.id);
     if (existingTimesheet != null) {
       AppToast.showError(context, 'Timesheet already exists for this appointment');
       return;
     }
     
     final timesheetEntry = {
-      'id': appointment['id'],
-      'clientName': appointment['clientName'],
+      'id': appointment.id,
+      'clientName': appointment.clientName,
       'clockIn': '${clockIn.hour}:${clockIn.minute.toString().padLeft(2, '0')}',
       'clockOut': '',
       'duration': '',
@@ -184,7 +167,7 @@ class _AppointmentViewState extends State<AppointmentView> {
     // Update state before navigating
     setState(() {
       // Remove from appointments list
-      _appointments.removeWhere((a) => a['id'] == appointment['id']);
+      _appointments.removeWhere((a) => a.id == appointment.id);
       _filteredAppointments = List.from(_appointments);
       _selectedAppointmentId = null;
     });
@@ -201,15 +184,15 @@ class _AppointmentViewState extends State<AppointmentView> {
   @override
   Widget build(BuildContext context) {
     final selectedAppointment = _selectedAppointmentId != null 
-        ? _appointments.firstWhere((a) => a['id'] == _selectedAppointmentId)
+        ? _appointments.firstWhere((a) => a.id == _selectedAppointmentId)
         : null;
     
     final isElapsed = selectedAppointment != null 
-        ? _isAppointmentElapsed(selectedAppointment['timestamp'])
+        ? _isAppointmentElapsed(selectedAppointment.timestamp)
         : false;
 
     final canInteract = selectedAppointment != null 
-        ? _canInteractWithAppointment(selectedAppointment['status'])
+        ? _canInteractWithAppointment(selectedAppointment.status)
         : false;
 
     return Scaffold(
@@ -232,81 +215,123 @@ class _AppointmentViewState extends State<AppointmentView> {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Today Appointment',
-                        style: AppTextStyle.semibold24,
-                      ),
-                      AppSpacing.v8(),
-                      Text(
-                        'Select the appointment you will like to clock in.',
-                        style: AppTextStyle.regular14.copyWith(
-                          color: AppColors.grey300,
+              child: RefreshIndicator(
+                onRefresh: _loadAppointments,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Today Appointment',
+                          style: AppTextStyle.semibold24,
                         ),
-                      ),
-                      AppSpacing.v16(),
-                      // Search bar
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.grey100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.grey200),
+                        AppSpacing.v8(),
+                        Text(
+                          'Select the appointment you will like to clock in.',
+                          style: AppTextStyle.regular14.copyWith(
+                            color: AppColors.grey300,
+                          ),
                         ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 8.h,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: AppColors.grey300,
-                              size: 24.w,
+                        AppSpacing.v16(),
+                        // Search bar
+                        if (_appointments.isNotEmpty)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.grey100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.grey200),
                             ),
-                            AppSpacing.h8(),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: _filterAppointments,
-                                decoration: InputDecoration(
-                                  hintText: 'Search Client Name...',
-                                  hintStyle: AppTextStyle.regular14.copyWith(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  color: AppColors.grey300,
+                                  size: 24.w,
+                                ),
+                                AppSpacing.h8(),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchController,
+                                    onChanged: _filterAppointments,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search Client Name...',
+                                      hintStyle: AppTextStyle.regular14.copyWith(
+                                        color: AppColors.grey300,
+                                      ),
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        AppSpacing.v16(),
+                        if (_isLoading)
+                          Column(
+                            children: List.generate(3, (index) => Padding(
+                              padding: EdgeInsets.only(bottom: 12.h),
+                              child: const AppointmentSkeleton(),
+                            )),
+                          )
+                        else if (_appointments.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 32.h),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.event_busy,
+                                    size: 48.w,
                                     color: AppColors.grey300,
                                   ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
+                                  AppSpacing.v16(),
+                                  Text(
+                                    'No Appointments Available',
+                                    style: AppTextStyle.regular14.copyWith(
+                                      color: AppColors.grey300,
+                                    ),
+                                  ),
+                                  AppSpacing.v8(),
+                                  Text(
+                                    'Pull to refresh to check for new appointments',
+                                    style: AppTextStyle.regular12.copyWith(
+                                      color: AppColors.grey300,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      AppSpacing.v16(),
-                      // Appointment cards
-                      ..._filteredAppointments.map((appointment) => Column(
-                        children: [
-                          AppointmentCard(
-                            clientName: appointment['clientName'],
-                            dateTime: appointment['dateTime'],
-                            status: appointment['status'],
-                            isSelected: _selectedAppointmentId == appointment['id'],
-                            onTap: () {
-                              setState(() {
-                                _selectedAppointmentId = appointment['id'];
-                              });
-                            },
-                          ),
-                          if (appointment != _filteredAppointments.last) AppSpacing.v12(),
-                        ],
-                      )).toList(),
-                      AppSpacing.v12(),
-                    ],
+                          )
+                        else
+                          ..._filteredAppointments.map((appointment) => Column(
+                            children: [
+                              AppointmentCard(
+                                clientName: appointment.clientName,
+                                dateTime: appointment.dateTime,
+                                status: appointment.status,
+                                isSelected: _selectedAppointmentId == appointment.id,
+                                onTap: () {
+                                  setState(() {
+                                    _selectedAppointmentId = appointment.id;
+                                  });
+                                },
+                              ),
+                              if (appointment != _filteredAppointments.last) AppSpacing.v12(),
+                            ],
+                          )).toList(),
+                        AppSpacing.v12(),
+                      ],
+                    ),
                   ),
                 ),
               ),
