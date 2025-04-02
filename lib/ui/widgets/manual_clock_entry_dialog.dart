@@ -5,7 +5,7 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../../shared/app_toast.dart';
 import '../../data/services/navigator_service.dart';
-import '../widgets/appointment_card.dart';
+import '../../data/models/appointment_model.dart';
 import 'app_button.dart';
 import 'app_date_picker.dart';
 import 'app_time_picker.dart';
