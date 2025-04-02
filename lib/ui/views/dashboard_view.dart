@@ -69,17 +69,31 @@ class _DashboardState extends State<Dashboard> {
       final clockInHour = int.parse(clockInTime[0]);
       final clockInMinute = int.parse(clockInTime[1]);
       
-      // Calculate duration in minutes
-      final durationInMinutes = ((now.hour - clockInHour) * 60 + (now.minute - clockInMinute));
+      // Calculate duration ensuring we handle wrap-around cases
+      int durationInMinutes;
+      final nowTotalMinutes = now.hour * 60 + now.minute;
+      final clockInTotalMinutes = clockInHour * 60 + clockInMinute;
+      
+      if (nowTotalMinutes >= clockInTotalMinutes) {
+        durationInMinutes = nowTotalMinutes - clockInTotalMinutes;
+      } else {
+        // Handle case where clock out is on next day
+        durationInMinutes = (24 * 60 - clockInTotalMinutes) + nowTotalMinutes;
+      }
       
       final updatedTimesheet = {
         ...timesheet,
-        'clockOut': '${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+        'clockOut': '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
         'duration': '${durationInMinutes}min',
         'status': 'clockout',
       };
       _timesheetService.updateTimesheet(appointmentId, updatedTimesheet);
-      setState(() {}); // Trigger rebuild to reflect changes
+      
+      // Force rebuild of the entire dashboard content
+      setState(() {
+        _pages[0] = _buildDashboardContent();
+      });
+      
       AppToast.showSuccess(context, 'Successfully clocked out');
     }
   }
