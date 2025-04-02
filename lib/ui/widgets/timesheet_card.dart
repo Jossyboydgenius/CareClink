@@ -42,13 +42,13 @@ class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
   DurationStatus _getStatusFromString(String status) {
-    try {
-      final cleanStatus = status.replaceAll('DurationStatus.', '');
-      return DurationStatus.values.firstWhere(
-        (e) => e.toString().split('.').last.toLowerCase() == cleanStatus.toLowerCase()
-      );
-    } catch (e) {
-      return DurationStatus.clockIn;
+    switch (status.toLowerCase()) {
+      case 'clockin':
+        return DurationStatus.clockIn;
+      case 'clockout':
+        return DurationStatus.clockOut;
+      default:
+        return DurationStatus.none;
     }
   }
 
@@ -98,7 +98,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           child: const Text('Clock Out'),
                         ),
                       )
-                    else if (showDuration)
+                    else
                       Row(
                         children: [
                           Text(
@@ -108,7 +108,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                             ),
                           ),
                           Text(
-                            widget.duration!,
+                            widget.duration ?? '0min',
                             style: AppTextStyle.semibold12,
                           ),
                         ],
