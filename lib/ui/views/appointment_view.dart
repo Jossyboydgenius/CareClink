@@ -11,6 +11,8 @@ import '../widgets/app_button.dart';
 import '../widgets/manual_clock_entry_dialog.dart';
 import '../widgets/user_avatar.dart';
 import '../../shared/app_images.dart';
+import '../../shared/app_toast.dart';
+import '../../data/services/timesheet_service.dart';
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -26,37 +28,51 @@ class _AppointmentViewState extends State<AppointmentView> {
   final List<Map<String, dynamic>> _appointments = [
     {
       'id': '10001',
-      'clientName': 'Jane Cooper',
+      'clientName': 'Sarah Johnson',
       'dateTime': '2025-01-14 10:00 - 11:00 AM',
+      'timestamp': DateTime(2025, 1, 14, 10, 0),
       'status': AppointmentStatus.scheduled,
     },
     {
       'id': '10002',
-      'clientName': 'Wade Warren',
+      'clientName': 'Michael Chen',
       'dateTime': '2025-01-15 10:00 - 11:00 AM',
+      'timestamp': DateTime(2025, 1, 15, 10, 0),
       'status': AppointmentStatus.completed,
     },
     {
       'id': '10003',
-      'clientName': 'Wade Warren',
-      'dateTime': '2025-01-15 10:00 - 11:00 AM',
-      'status': AppointmentStatus.completed,
+      'clientName': 'Emily Rodriguez',
+      'dateTime': '2025-01-15 11:30 - 12:30 PM',
+      'timestamp': DateTime(2025, 1, 15, 11, 30),
+      'status': AppointmentStatus.scheduled,
     },
     {
       'id': '10004',
-      'clientName': 'Robert Johnson',
-      'dateTime': '2025-01-15 10:00 - 11:00 AM',
-      'status': AppointmentStatus.completed,
+      'clientName': 'David Thompson',
+      'dateTime': '2025-01-15 2:00 - 3:00 PM',
+      'timestamp': DateTime(2025, 1, 15, 14, 0),
+      'status': AppointmentStatus.pending,
     },
     {
       'id': '10005',
-      'clientName': 'Emily Thompson',
-      'dateTime': '2025-01-15 10:00 - 11:00 AM',
+      'clientName': 'Maria Garcia',
+      'dateTime': '2025-01-15 3:30 - 4:30 PM',
+      'timestamp': DateTime(2025, 1, 15, 15, 30),
       'status': AppointmentStatus.reschedule,
+    },
+    {
+      'id': '10006',
+      'clientName': 'James Wilson',
+      'dateTime': '2025-01-15 5:00 - 6:00 PM',
+      'timestamp': DateTime(2025, 1, 15, 17, 0),
+      'status': AppointmentStatus.scheduled,
     },
   ];
 
   List<Map<String, dynamic>> _filteredAppointments = [];
+  List<Map<String, dynamic>> _recentTimesheet = [];
+  final TimesheetService _timesheetService = TimesheetService();
 
   @override
   void initState() {
@@ -77,24 +93,101 @@ class _AppointmentViewState extends State<AppointmentView> {
     });
   }
 
-  void _addNewAppointment(String appointmentId, DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) {
-    final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    final formattedClockIn = '${clockIn.hourOfPeriod == 0 ? 12 : clockIn.hourOfPeriod}:${clockIn.minute.toString().padLeft(2, '0')}${clockIn.period == DayPeriod.am ? 'AM' : 'PM'}';
-    final formattedClockOut = '${clockOut.hourOfPeriod == 0 ? 12 : clockOut.hourOfPeriod}:${clockOut.minute.toString().padLeft(2, '0')}${clockOut.period == DayPeriod.am ? 'AM' : 'PM'}';
+  bool _isAppointmentElapsed(DateTime timestamp) {
+    // For testing purposes, we'll consider appointments with status 'completed' as elapsed
+    final selectedAppointment = _appointments.firstWhere(
+      (appointment) => appointment['timestamp'] == timestamp,
+      orElse: () => {'status': AppointmentStatus.none},
+    );
     
+    return selectedAppointment['status'] == AppointmentStatus.completed;
+  }
+
+  void _handleClockIn() {
+    if (_selectedAppointmentId == null) return;
+
+    final selectedAppointment = _appointments.firstWhere(
+      (appointment) => appointment['id'] == _selectedAppointmentId,
+    );
+
+    final isElapsed = _isAppointmentElapsed(selectedAppointment['timestamp']);
+
+    if (isElapsed) {
+      // Show manual clock entry dialog for elapsed appointments
+      showDialog(
+        context: context,
+        builder: (context) => ManualClockEntryDialog(
+          appointmentId: selectedAppointment['id'],
+          clientName: selectedAppointment['clientName'],
+          dateTime: selectedAppointment['dateTime'],
+          status: selectedAppointment['status'],
+          onSave: (date, clockIn, clockOut) {
+            _moveToRecentTimesheet(selectedAppointment, clockInTime: clockIn);
+            NavigationService.goBack();
+          },
+        ),
+      );
+    } else {
+      // Direct clock in for current/future appointments
+      final now = TimeOfDay.now();
+      _moveToRecentTimesheet(selectedAppointment, clockInTime: now);
+    }
+  }
+
+  void _moveToRecentTimesheet(Map<String, dynamic> appointment, {TimeOfDay? clockInTime}) async {
+    if (!mounted) return;
+
+    final now = DateTime.now();
+    final clockIn = clockInTime ?? TimeOfDay.fromDateTime(now);
+    
+    // Check if timesheet already exists
+    final existingTimesheet = await _timesheetService.getTimesheet(appointment['id']);
+    if (existingTimesheet != null) {
+      AppToast.showError(context, 'Timesheet already exists for this appointment');
+      return;
+    }
+    
+    final timesheetEntry = {
+      'id': appointment['id'],
+      'clientName': appointment['clientName'],
+      'clockIn': '${clockIn.hour}:${clockIn.minute.toString().padLeft(2, '0')}',
+      'clockOut': '',
+      'duration': '',
+      'status': 'clockin',
+    };
+
+    _timesheetService.addTimesheet(timesheetEntry);
+
+    // Show success message first
+    AppToast.showSuccess(context, 'Successfully clocked in');
+
+    // Update state before navigating
     setState(() {
-      _appointments.add({
-        'id': appointmentId,
-        'clientName': 'New Client',
-        'dateTime': '$formattedDate $formattedClockIn - $formattedClockOut',
-        'status': AppointmentStatus.pending,
-      });
+      // Remove from appointments list
+      _appointments.removeWhere((a) => a['id'] == appointment['id']);
       _filteredAppointments = List.from(_appointments);
+      _selectedAppointmentId = null;
     });
+
+    // Navigate to dashboard with the timesheet data
+    if (mounted) {
+      await NavigationService.pushReplacementNamed(
+        AppRoutes.dashboardView,
+        arguments: timesheetEntry,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedAppointment = _selectedAppointmentId != null 
+        ? _appointments.firstWhere((a) => a['id'] == _selectedAppointmentId)
+        : null;
+    
+    final isElapsed = selectedAppointment != null 
+        ? _isAppointmentElapsed(selectedAppointment['timestamp'])
+        : false;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -204,7 +297,7 @@ class _AppointmentViewState extends State<AppointmentView> {
               ),
               padding: EdgeInsets.all(16.w),
               child: AppButton(
-                text: 'Clock In',
+                text: isElapsed ? 'Manual Clock In' : 'Clock In',
                 onPressed: _handleClockIn,
                 isLoading: _isLoading,
                 enabled: _selectedAppointmentId != null,
@@ -220,51 +313,6 @@ class _AppointmentViewState extends State<AppointmentView> {
           if (index != 2) {
             NavigationService.pushNamed(AppRoutes.dashboardView);
           }
-        },
-      ),
-    );
-  }
-
-  void _handleClockIn() {
-    // Find the selected appointment
-    final selectedAppointment = _appointments.firstWhere(
-      (appointment) => appointment['id'] == _selectedAppointmentId,
-      orElse: () => _appointments.last,
-    );
-    
-    // Generate a new ID by incrementing the last ID
-    final lastId = int.parse(_appointments.last['id']);
-    final nextId = (lastId + 1).toString();
-    
-    showDialog(
-      context: context,
-      builder: (context) => ManualClockEntryDialog(
-        appointmentId: selectedAppointment['id'],
-        clientName: selectedAppointment['clientName'],
-        dateTime: selectedAppointment['dateTime'],
-        status: selectedAppointment['status'],
-        onSave: (date, clockIn, clockOut) {
-          // Format the date and times
-          final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-          final formattedClockIn = '${clockIn.hourOfPeriod == 0 ? 12 : clockIn.hourOfPeriod}:${clockIn.minute.toString().padLeft(2, '0')}${clockIn.period == DayPeriod.am ? 'AM' : 'PM'}';
-          final formattedClockOut = '${clockOut.hourOfPeriod == 0 ? 12 : clockOut.hourOfPeriod}:${clockOut.minute.toString().padLeft(2, '0')}${clockOut.period == DayPeriod.am ? 'AM' : 'PM'}';
-          
-          // Update the selected appointment
-          setState(() {
-            // Find the index of the selected appointment
-            final index = _appointments.indexWhere((appointment) => appointment['id'] == selectedAppointment['id']);
-            if (index != -1) {
-              // Update the appointment
-              _appointments[index] = {
-                'id': selectedAppointment['id'],
-                'clientName': selectedAppointment['clientName'],
-                'dateTime': '$formattedDate $formattedClockIn - $formattedClockOut',
-                'status': AppointmentStatus.pending,
-              };
-              // Update filtered appointments
-              _filteredAppointments = List.from(_appointments);
-            }
-          });
         },
       ),
     );
