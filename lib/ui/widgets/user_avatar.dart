@@ -24,6 +24,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
   String? _fullname;
   bool _isLoading = true;
   bool _imageError = false;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -34,70 +35,65 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _unsubscribeFromRoute();
+    _subscribeToRoute();
+  }
+
+  void _subscribeToRoute() {
     final route = ModalRoute.of(context);
     if (route != null) {
       NavigationService.routeObserver.subscribe(this, route);
     }
   }
 
+  void _unsubscribeFromRoute() {
+    NavigationService.routeObserver.unsubscribe(this);
+  }
+
   @override
   void dispose() {
-    NavigationService.routeObserver.unsubscribe(this);
+    _isDisposed = true;
     _removeOverlay();
+    _unsubscribeFromRoute();
     super.dispose();
   }
 
   @override
   void didPushNext() {
-    _removeOverlay();
+    if (!_isDisposed) {
+      _removeOverlay();
+    }
     super.didPushNext();
   }
 
   @override
   void didPopNext() {
-    _removeOverlay();
+    if (!_isDisposed) {
+      _removeOverlay();
+    }
     super.didPopNext();
   }
 
-  Future<void> _loadUserData() async {
-    debugPrint('Loading user data for avatar');
-    try {
-      final userService = locator<UserService>();
-      final userData = await userService.getCurrentUser();
-      debugPrint('User data received: ${userData.toString()}');
-      
-      if (mounted) {
-        setState(() {
-          _profileImage = userData['profileImage'];
-          _fullname = userData['fullname'];
-          _isLoading = false;
-          debugPrint('Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading user data: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _imageError = true;
-        });
-      }
+  void _removeOverlay() {
+    if (_overlayEntry != null) {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
     }
-  }
-
-  void _handleSignOut() async {
-    try {
-      final userService = locator<UserService>();
-      await userService.logout();
-      _removeOverlay();
-      NavigationService.pushReplacementNamed(AppRoutes.signInView);
-    } catch (e) {
-      debugPrint('Error signing out: $e');
+    
+    if (!_isDisposed && mounted) {
+      setState(() {
+        _isOpen = false;
+      });
     }
   }
 
   void _showOverlay() {
+    if (!mounted || _isDisposed) return;
+    
     _removeOverlay();
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    if (overlay == null) return;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -161,15 +157,54 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
       ),
     );
 
-    Overlay.of(context, rootOverlay: true).insert(_overlayEntry!);
-    setState(() => _isOpen = true);
+    if (!_isDisposed) {
+      overlay.insert(_overlayEntry!);
+      if (mounted) {
+        setState(() {
+          _isOpen = true;
+        });
+      }
+    }
   }
 
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    if (mounted) {
-      setState(() => _isOpen = false);
+  Future<void> _loadUserData() async {
+    if (!mounted || _isDisposed) return;
+    
+    debugPrint('Loading user data for avatar');
+    try {
+      final userService = locator<UserService>();
+      final userData = await userService.getCurrentUser();
+      debugPrint('User data received: ${userData.toString()}');
+      
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _profileImage = userData['profileImage'];
+          _fullname = userData['fullname'];
+          _isLoading = false;
+          debugPrint('Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLoading = false;
+          _imageError = true;
+        });
+      }
+    }
+  }
+
+  void _handleSignOut() async {
+    if (_isDisposed) return;
+    
+    try {
+      final userService = locator<UserService>();
+      await userService.logout();
+      _removeOverlay();
+      NavigationService.pushReplacementNamed(AppRoutes.signInView);
+    } catch (e) {
+      debugPrint('Error signing out: $e');
     }
   }
 
