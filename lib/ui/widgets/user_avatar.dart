@@ -217,8 +217,11 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
   }
 
   String _getInitials() {
-    if (_fullname == null || _fullname!.isEmpty) return '';
-    final names = _fullname!.split(' ');
+    if (_fullname == null || _fullname!.trim().isEmpty) return '';
+    
+    final names = _fullname!.trim().split(' ').where((name) => name.isNotEmpty).toList();
+    if (names.isEmpty) return '';
+    
     if (names.length >= 2) {
       return '${names[0][0]}${names[1][0]}'.toUpperCase();
     }
@@ -284,6 +287,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
   }
 
   Widget _buildInitialsAvatar() {
+    final initials = _getInitials();
     return Container(
       width: 40.w,
       height: 40.w,
@@ -293,7 +297,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
       ),
       child: Center(
         child: Text(
-          _getInitials(),
+          initials.isEmpty ? '?' : initials,
           style: AppTextStyle.semibold14.copyWith(
             color: AppColors.white,
           ),
