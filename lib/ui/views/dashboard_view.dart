@@ -13,9 +13,18 @@ import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_images.dart';
+import '../../shared/app_toast.dart';
+import '../../data/services/timesheet_service.dart';
+import 'notification_view.dart';
+import 'appointment_view.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key});
+  final Map<String, dynamic>? recentTimesheet;
+  
+  const Dashboard({
+    super.key,
+    this.recentTimesheet,
+  });
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -23,6 +32,57 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   int _currentIndex = 0;
+  final List<Widget> _pages = [];
+  final PageController _pageController = PageController();
+  final TimesheetService _timesheetService = TimesheetService();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recentTimesheet != null) {
+      // Check if timesheet already exists before adding
+      final existingTimesheet = _timesheetService.getTimesheet(widget.recentTimesheet!['id']);
+      if (existingTimesheet == null) {
+        _timesheetService.addTimesheet(widget.recentTimesheet!);
+      }
+    }
+    
+    // Initialize pages with keeping state
+    _pages.addAll([
+      _buildDashboardContent(),
+      const NotificationView(),
+      const AppointmentView(),
+    ]);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleClockOut(String appointmentId) {
+    final now = TimeOfDay.now();
+    final timesheet = _timesheetService.getTimesheet(appointmentId);
+    if (timesheet != null) {
+      final clockInTime = timesheet['clockIn'].split(':');
+      final clockInHour = int.parse(clockInTime[0]);
+      final clockInMinute = int.parse(clockInTime[1]);
+      
+      // Calculate duration in minutes
+      final durationInMinutes = ((now.hour - clockInHour) * 60 + (now.minute - clockInMinute));
+      
+      final updatedTimesheet = {
+        ...timesheet,
+        'clockOut': '${now.hour}:${now.minute.toString().padLeft(2, '0')}',
+        'duration': '${durationInMinutes}min',
+        'status': 'clockout',
+      };
+      _timesheetService.updateTimesheet(appointmentId, updatedTimesheet);
+      setState(() {}); // Trigger rebuild to reflect changes
+      AppToast.showSuccess(context, 'Successfully clocked out');
+    }
+  }
 
   Widget _buildActivityCards(BuildContext context, DashboardState state) {
     return LayoutBuilder(
@@ -101,138 +161,145 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDashboardContent() {
     return BlocProvider(
       create: (context) => DashboardBloc()..add(const LoadDashboardSummaries()),
-      child: Scaffold(
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Fixed Header Section
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimension.getWidth(24),
-                  vertical: AppDimension.getHeight(16),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fixed Header Section
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimension.getWidth(24),
+              vertical: AppDimension.getHeight(16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        AppImages(
-                          imagePath: AppImageData.careclinkLogo,
-                          height: 60,
-                          width: 160,
-                        ),
-                      ],
+                    AppImages(
+                      imagePath: AppImageData.careclinkLogo,
+                      height: 60,
+                      width: 160,
                     ),
-                    const UserAvatar(),
                   ],
                 ),
-              ),
-              // Scrollable Content
-              Expanded(
-                child: BlocBuilder<DashboardBloc, DashboardState>(
-                  builder: (context, state) {
-                    if (state.error != null) {
-                      return Center(child: Text(state.error!));
-                    }
+                const UserAvatar(),
+              ],
+            ),
+          ),
+          // Scrollable Content
+          Expanded(
+            child: BlocBuilder<DashboardBloc, DashboardState>(
+              builder: (context, state) {
+                if (state.error != null) {
+                  return Center(child: Text(state.error!));
+                }
 
-                    return SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppDimension.getWidth(24),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: AppDimension.getHeight(2)),
-                            // Welcome text
-                            Text.rich(
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimension.getWidth(24),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: AppDimension.getHeight(2)),
+                        // Welcome text
+                        Text.rich(
+                          TextSpan(
+                            children: [
                               TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Welcome Back ',
-                                    style: AppTextStyle.welcomeBack,
-                                  ),
-                                  TextSpan(
-                                    text: '👋',
-                                    style: AppTextStyle.welcomeBack,
-                                  ),
-                                ],
+                                text: 'Welcome Back ',
+                                style: AppTextStyle.welcomeBack,
+                              ),
+                              TextSpan(
+                                text: '👋',
+                                style: AppTextStyle.welcomeBack,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: AppDimension.getHeight(2)),
+                        Text(
+                          'Check your activities summary',
+                          style: AppTextStyle.activitiesSummary,
+                        ),
+                        SizedBox(height: AppDimension.getHeight(16)),
+                        // Activity cards with skeleton loading
+                        _buildActivityCards(context, state),
+                        SizedBox(height: AppDimension.getHeight(32)),
+                        // Timesheet section
+                        Text(
+                          'Recent Timesheet',
+                          style: AppTextStyle.activitiesSummary,
+                        ),
+                        SizedBox(height: AppDimension.getHeight(16)),
+                        // Recent timesheet list
+                        if (_timesheetService.recentTimesheets.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 32.h),
+                              child: Text(
+                                'No recent timesheets',
+                                style: AppTextStyle.regular14.copyWith(
+                                  color: AppColors.grey300,
+                                ),
                               ),
                             ),
-                            SizedBox(height: AppDimension.getHeight(2)),
-                            Text(
-                              'Check your activities summary',
-                              style: AppTextStyle.activitiesSummary,
-                            ),
-                            SizedBox(height: AppDimension.getHeight(16)),
-                            // Activity cards with skeleton loading
-                            _buildActivityCards(context, state),
-                            SizedBox(height: AppDimension.getHeight(32)),
-                            // Timesheet section
-                            Text(
-                              'Recent Timesheet',
-                              style: AppTextStyle.activitiesSummary,
-                            ),
-                            SizedBox(height: AppDimension.getHeight(16)),
-                            // Example 1: Clock In status (0 min duration)
-                            TimesheetCard(
-                              clientName: 'Jane Cooper',
-                              staffName: 'John Smith',
-                              clockIn: '10:00',
-                              status: DurationStatus.clockOut,
-                              onClockOut: () {},
-                              onExpandDetails: () {},
-                            ),
-                            SizedBox(height: AppDimension.getHeight(16)),
-                            // Example 2: Has duration (no status badge)
-                            TimesheetCard(
-                              clientName: 'Wade Warren',
-                              staffName: 'Sarah Johnson',
-                              clockIn: '10:00',
-                              clockOut: '10:30',
-                              duration: '30min',
-                              status: DurationStatus.clockOut,
-                              onClockOut: () {},
-                              onExpandDetails: () {},
-                            ),
-                            SizedBox(height: AppDimension.getHeight(16)),
-                            // Example 3: Completed status
-                            TimesheetCard(
-                              clientName: 'Robert Johnson',
-                              staffName: 'Emily Thompson',
-                              clockIn: '09:00',
-                              clockOut: '10:00',
-                              duration: '0min',
-                              status: DurationStatus.completed,
-                              onClockOut: () {},
-                              onExpandDetails: () {},
-                            ),
-                            // Add bottom padding to ensure content doesn't get hidden behind bottom nav
-                            SizedBox(height: AppDimension.getHeight(80)),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+                          )
+                        else
+                          ...List.generate(_timesheetService.recentTimesheets.length, (index) {
+                            final timesheet = _timesheetService.recentTimesheets[index];
+                            return Column(
+                              children: [
+                                TimesheetCard(
+                                  clientName: timesheet['clientName'],
+                                  staffName: timesheet['clientName'],
+                                  clockIn: timesheet['clockIn'],
+                                  clockOut: timesheet['clockOut'],
+                                  duration: timesheet['duration'],
+                                  status: timesheet['status'],
+                                  onClockOut: () => _handleClockOut(timesheet['id']),
+                                  onExpandDetails: () {},
+                                ),
+                                if (index != _timesheetService.recentTimesheets.length - 1)
+                                  SizedBox(height: AppDimension.getHeight(16)),
+                              ],
+                            );
+                          }),
+                        // Add bottom padding to ensure content doesn't get hidden behind bottom nav
+                        SizedBox(height: AppDimension.getHeight(80)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
         ),
-        bottomNavigationBar: BottomNavBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-        ),
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }
