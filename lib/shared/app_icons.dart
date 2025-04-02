@@ -10,6 +10,7 @@ class AppIconData {
   static const String notification = '${_basePath}notification.svg';
   static const String check = '${_basePath}check.svg';
   static const String logOut = '${_basePath}log-out.svg';
+  static const String roundCheck = '${_basePath}round-check.svg';
 }
 
 class AppIcons extends StatelessWidget {
