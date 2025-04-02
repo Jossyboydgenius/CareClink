@@ -94,13 +94,27 @@ class _AppointmentViewState extends State<AppointmentView> {
   }
 
   bool _isAppointmentElapsed(DateTime timestamp) {
-    // For testing purposes, we'll consider appointments with status 'completed' as elapsed
+    // Only pending appointments can be considered as elapsed
     final selectedAppointment = _appointments.firstWhere(
       (appointment) => appointment['timestamp'] == timestamp,
       orElse: () => {'status': AppointmentStatus.none},
     );
     
-    return selectedAppointment['status'] == AppointmentStatus.completed;
+    return selectedAppointment['status'] == AppointmentStatus.pending;
+  }
+
+  bool _canInteractWithAppointment(AppointmentStatus status) {
+    // Only scheduled and pending appointments can be interacted with
+    switch (status) {
+      case AppointmentStatus.scheduled:
+        return true;
+      case AppointmentStatus.pending:
+        return true;
+      case AppointmentStatus.completed:
+      case AppointmentStatus.reschedule:
+      default:
+        return false;
+    }
   }
 
   void _handleClockIn() {
@@ -110,10 +124,16 @@ class _AppointmentViewState extends State<AppointmentView> {
       (appointment) => appointment['id'] == _selectedAppointmentId,
     );
 
+    // Check if appointment can be interacted with
+    if (!_canInteractWithAppointment(selectedAppointment['status'])) {
+      AppToast.showError(context, 'This appointment cannot be clocked in');
+      return;
+    }
+
     final isElapsed = _isAppointmentElapsed(selectedAppointment['timestamp']);
 
     if (isElapsed) {
-      // Show manual clock entry dialog for elapsed appointments
+      // Show manual clock entry dialog only for pending appointments
       showDialog(
         context: context,
         builder: (context) => ManualClockEntryDialog(
@@ -128,7 +148,7 @@ class _AppointmentViewState extends State<AppointmentView> {
         ),
       );
     } else {
-      // Direct clock in for current/future appointments
+      // Direct clock in for scheduled appointments
       final now = TimeOfDay.now();
       _moveToRecentTimesheet(selectedAppointment, clockInTime: now);
     }
@@ -186,6 +206,10 @@ class _AppointmentViewState extends State<AppointmentView> {
     
     final isElapsed = selectedAppointment != null 
         ? _isAppointmentElapsed(selectedAppointment['timestamp'])
+        : false;
+
+    final canInteract = selectedAppointment != null 
+        ? _canInteractWithAppointment(selectedAppointment['status'])
         : false;
 
     return Scaffold(
@@ -298,9 +322,9 @@ class _AppointmentViewState extends State<AppointmentView> {
               padding: EdgeInsets.all(16.w),
               child: AppButton(
                 text: isElapsed ? 'Manual Clock In' : 'Clock In',
-                onPressed: _handleClockIn,
+                onPressed: canInteract ? _handleClockIn : null,
                 isLoading: _isLoading,
-                enabled: _selectedAppointmentId != null,
+                enabled: _selectedAppointmentId != null && canInteract,
                 backgroundColor: AppColors.green,
               ),
             ),
