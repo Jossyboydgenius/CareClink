@@ -1,6 +1,7 @@
+import 'package:careclink/shared/app_spacing.dart';
+import 'package:careclink/ui/widgets/skeleton_timesheet_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dashboard/dashboard_bloc/dashboard_bloc.dart';
 import 'dashboard/dashboard_bloc/dashboard_event.dart';
 import 'dashboard/dashboard_bloc/dashboard_state.dart';
@@ -35,21 +36,37 @@ class _DashboardState extends State<Dashboard> {
   final List<Widget> _pages = [];
   final PageController _pageController = PageController();
   final TimesheetService _timesheetService = TimesheetService();
+  late final DashboardBloc _dashboardBloc;
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  final Set<String> _loadingTimesheets = {};
+  bool _isInitialLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _dashboardBloc = DashboardBloc()..add(const LoadDashboardSummaries());
+    
     if (widget.recentTimesheet != null) {
       // Check if timesheet already exists before adding
       final existingTimesheet = _timesheetService.getTimesheet(widget.recentTimesheet!['appointmentId']);
       if (existingTimesheet == null) {
+        final clientData = widget.recentTimesheet!['client'];
+        String clientName = 'Unknown Client';
+        if (clientData != null) {
+          if (clientData is Map) {
+            clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
+          } else if (clientData is String) {
+            clientName = clientData;
+          }
+        }
+        
         _timesheetService.addTimesheet({
           'id': widget.recentTimesheet!['appointmentId'],
-          'clientName': widget.recentTimesheet!['client'],
+          'clientName': clientName,
           'clockIn': widget.recentTimesheet!['clockIn'],
           'clockOut': widget.recentTimesheet!['clockOut'],
-          'duration': widget.recentTimesheet!['duration'].toString(),
-          'status': widget.recentTimesheet!['status'],
+          'duration': widget.recentTimesheet!['duration']?.toString() ?? '0',
+          'status': 'clockin',
         });
       }
     }
@@ -60,49 +77,73 @@ class _DashboardState extends State<Dashboard> {
       const NotificationView(),
       const AppointmentView(),
     ]);
+
+    // Immediately fetch timesheets when mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialLoad();
+    });
   }
 
   @override
   void dispose() {
+    _dashboardBloc.close();
     _pageController.dispose();
     super.dispose();
   }
 
-  void _handleClockOut(String appointmentId) {
-    final now = TimeOfDay.now();
-    final timesheet = _timesheetService.getTimesheet(appointmentId);
-    if (timesheet != null) {
-      final clockInTime = timesheet['clockIn'].split(':');
-      final clockInHour = int.parse(clockInTime[0]);
-      final clockInMinute = int.parse(clockInTime[1]);
-      
-      // Calculate duration ensuring we handle wrap-around cases
-      int durationInMinutes;
-      final nowTotalMinutes = now.hour * 60 + now.minute;
-      final clockInTotalMinutes = clockInHour * 60 + clockInMinute;
-      
-      if (nowTotalMinutes >= clockInTotalMinutes) {
-        durationInMinutes = nowTotalMinutes - clockInTotalMinutes;
-      } else {
-        // Handle case where clock out is on next day
-        durationInMinutes = (24 * 60 - clockInTotalMinutes) + nowTotalMinutes;
-      }
-      
-      final updatedTimesheet = {
-        ...timesheet,
-        'clockOut': '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-        'duration': '${durationInMinutes}min',
-        'status': 'clockout',
-      };
-      _timesheetService.updateTimesheet(appointmentId, updatedTimesheet);
-      
-      // Force rebuild of the entire dashboard content
+  Future<void> _initialLoad() async {
+    setState(() {
+      _isInitialLoading = true;
+    });
+    await _fetchTimesheets();
+    setState(() {
+      _isInitialLoading = false;
+    });
+  }
+
+  Future<void> _fetchTimesheets() async {
+    final response = await _timesheetService.getTimesheets();
+    if (response.isSuccessful && response.data != null) {
       setState(() {
-        _pages[0] = _buildDashboardContent();
+        _timesheetService.clearTimesheets();
+        final timesheets = response.data['timesheets'] as List;
+        for (final timesheet in timesheets) {
+          final clientData = timesheet['client'];
+          String clientName = 'Unknown Client';
+          if (clientData != null) {
+            if (clientData is Map) {
+              clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
+            } else if (clientData is String) {
+              clientName = clientData;
+            }
+          }
+
+          _timesheetService.addTimesheet({
+            'id': timesheet['_id'],
+            'clientName': clientName,
+            'clockIn': timesheet['clockIn'],
+            'clockOut': timesheet['clockOut'],
+            'duration': timesheet['duration']?.toString() ?? '0',
+            'status': timesheet['clockOut'] == null ? 'clockin' : 'clockout',  // Set status based on clockOut
+          });
+        }
       });
-      
-      AppToast.showSuccess(context, 'Successfully clocked out');
+    } else {
+      AppToast.showError(context, response.message ?? 'Failed to fetch timesheets');
     }
+  }
+
+  Future<void> _refreshDashboard() async {
+    // Clear existing timesheets first
+    setState(() {
+      _timesheetService.clearTimesheets();
+    });
+    
+    // Fetch new data
+    await Future.wait([
+      _fetchTimesheets(),
+      Future(() => _dashboardBloc.add(const LoadDashboardSummaries())),
+    ]);
   }
 
   Widget _buildActivityCards(BuildContext context, DashboardState state) {
@@ -183,43 +224,44 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildDashboardContent() {
-    return BlocProvider(
-      create: (context) => DashboardBloc()..add(const LoadDashboardSummaries()),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Fixed Header Section
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppDimension.getWidth(24),
-              vertical: AppDimension.getHeight(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    AppImages(
-                      imagePath: AppImageData.careclinkLogo,
-                      height: 60,
-                      width: 160,
-                    ),
-                  ],
-                ),
-                const UserAvatar(),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Fixed Header Section
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppDimension.getWidth(24),
+            vertical: AppDimension.getHeight(16),
           ),
-          // Scrollable Content
-          Expanded(
-            child: BlocBuilder<DashboardBloc, DashboardState>(
-              builder: (context, state) {
-                if (state.error != null) {
-                  return Center(child: Text(state.error!));
-                }
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  AppImages(
+                    imagePath: AppImageData.careclinkLogo,
+                    height: 60,
+                    width: 160,
+                  ),
+                ],
+              ),
+              const UserAvatar(),
+            ],
+          ),
+        ),
+        // Scrollable Content
+        Expanded(
+          child: BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, state) {
+              if (state.error != null) {
+                return Center(child: Text(state.error!));
+              }
 
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+              return RefreshIndicator(
+                key: _refreshIndicatorKey,
+                onRefresh: _refreshDashboard,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: AppDimension.getWidth(24),
@@ -259,68 +301,107 @@ class _DashboardState extends State<Dashboard> {
                         ),
                         SizedBox(height: AppDimension.getHeight(16)),
                         // Recent timesheet list
-                        if (_timesheetService.recentTimesheets.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 32.h),
-                              child: Text(
-                                'No recent timesheets',
-                                style: AppTextStyle.regular14.copyWith(
-                                  color: AppColors.grey300,
-                                ),
-                              ),
-                            ),
-                          )
-                        else
-                          ...List.generate(_timesheetService.recentTimesheets.length, (index) {
-                            final timesheet = _timesheetService.recentTimesheets[index];
-                            return Column(
-                              children: [
-                                TimesheetCard(
-                                  clientName: timesheet['clientName'],
-                                  staffName: timesheet['clientName'],
-                                  clockIn: timesheet['clockIn'],
-                                  clockOut: timesheet['clockOut'],
-                                  duration: timesheet['duration'],
-                                  status: timesheet['status'],
-                                  onClockOut: () => _handleClockOut(timesheet['id']),
-                                  onExpandDetails: () {},
-                                ),
-                                if (index != _timesheetService.recentTimesheets.length - 1)
-                                  SizedBox(height: AppDimension.getHeight(16)),
-                              ],
-                            );
-                          }),
+                        _buildTimesheetSection(),
                         // Add bottom padding to ensure content doesn't get hidden behind bottom nav
                         SizedBox(height: AppDimension.getHeight(80)),
                       ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildTimesheetSection() {
+    if (_isInitialLoading || _timesheetService.recentTimesheets.isEmpty) {
+      return Column(
+        children: [
+          AppSpacing.v16(),
+          const SkeletonTimesheetCard(),
+          AppSpacing.v16(),
+          const SkeletonTimesheetCard(),
+          AppSpacing.v16(),
+          const SkeletonTimesheetCard(),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        ..._timesheetService.recentTimesheets.map((timesheet) {
+          final String timesheetId = timesheet['id'];
+          final bool isLoading = _loadingTimesheets.contains(timesheetId);
+          final bool canClockOut = !isLoading && (timesheet['status'] == 'clockin' || timesheet['clockOut'] == null);
+          
+          return Column(
+            children: [
+              TimesheetCard(
+                clientName: timesheet['clientName'],
+                staffName: timesheet['clientName'],
+                clockIn: timesheet['clockIn'],
+                clockOut: timesheet['clockOut'],
+                duration: timesheet['duration'],
+                status: timesheet['status'],
+                onClockOut: canClockOut ? () => _handleClockOut(timesheetId) : null,
+                onExpandDetails: () {},
+                isClockingOut: isLoading,
+              ),
+              if (timesheet != _timesheetService.recentTimesheets.last)
+                AppSpacing.v16(),
+            ],
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Future<void> _handleClockOut(String timesheetId) async {
+    // Set loading state immediately
+    setState(() {
+      _loadingTimesheets.add(timesheetId);
+    });
+
+    try {
+      final response = await _timesheetService.clockOut(timesheetId);
+      if (response.isSuccessful) {
+        AppToast.showSuccess(context, response.message ?? 'Successfully clocked out');
+        // Refresh everything
+        await _refreshDashboard();
+      } else {
+        AppToast.showError(context, response.message ?? 'Failed to clock out');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingTimesheets.remove(timesheetId);
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
+    return BlocProvider.value(
+      value: _dashboardBloc,
+      child: Scaffold(
+        body: SafeArea(
+          child: IndexedStack(
+            index: _currentIndex,
+            children: _pages,
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        bottomNavigationBar: BottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ),
       ),
     );
   }
