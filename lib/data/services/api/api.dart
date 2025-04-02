@@ -186,6 +186,62 @@ class Api {
     }
   }
 
+  Future<ApiResponse> putData(
+    String url,
+    Map<String, dynamic> body, {
+    bool hasHeader = true,
+  }) async {
+    try {
+      final request = Request('PUT', Uri.parse(_config.apiBaseUrl + url));
+      
+      if (hasHeader) {
+        final userValue = await localStorageService.getStorageValue(LocalStorageKeys.accessToken);
+        if (userValue != null) {
+          request.headers['Authorization'] = 'Bearer $userValue';
+        }
+      }
+      
+      request.headers['Content-Type'] = 'application/json';
+      request.body = json.encode(body);
+      
+      debugPrint('PUT request to ${_config.apiBaseUrl + url} with body: $body');
+      
+      final streamedResponse = await request.send();
+      final response = await Response.fromStream(streamedResponse);
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final responseData = response.body.isNotEmpty ? json.decode(response.body) : null;
+        return ApiResponse(
+          isSuccessful: true,
+          data: responseData,
+          message: responseData?['message'] ?? 'Clock-out time successfully updated',
+        );
+      } else {
+        return ApiResponse(
+          isSuccessful: false,
+          message: 'Failed with status code: ${response.statusCode}',
+        );
+      }
+    } on SocketException catch (e) {
+      debugPrint('SocketException: $e');
+      return ApiResponse(
+        data: null,
+        isSuccessful: false,
+        message: 'No Internet connection',
+      );
+    } on TimeoutException catch (e) {
+      debugPrint('TimeoutException: $e');
+      return ApiResponse.timeout();
+    } on Exception catch (e) {
+      debugPrint('Error: $e');
+      return ApiResponse(
+        data: null,
+        isSuccessful: false,
+        message: e.toString(),
+      );
+    }
+  }
+
   Future<ApiResponse> _sendRequest(
     request,
     bool hasHeader, {
