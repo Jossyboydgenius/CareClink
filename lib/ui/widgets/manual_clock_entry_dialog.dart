@@ -13,36 +13,51 @@ import 'app_time_picker.dart';
 class ManualClockEntryDialog extends StatefulWidget {
   final String appointmentId;
   final String clientName;
-  final String dateTime;
+  final DateTime dateTime;
   final AppointmentStatus status;
-  final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut) onSave;
+  final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut, String reason) onSave;
 
   const ManualClockEntryDialog({
-    super.key,
+    Key? key,
     required this.appointmentId,
     required this.clientName,
     required this.dateTime,
     required this.status,
     required this.onSave,
-  });
+  }) : super(key: key);
 
   @override
   State<ManualClockEntryDialog> createState() => _ManualClockEntryDialogState();
 }
 
 class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
-  bool _isLoading = false;
+  late DateTime _selectedDate;
+  late TimeOfDay _clockInTime;
+  late TimeOfDay _clockOutTime;
   String? _selectedReason;
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedClockIn = TimeOfDay.now();
-  TimeOfDay _selectedClockOut = TimeOfDay.now();
+  String? _clockInError;
+  String? _clockOutError;
+  String? _reasonError;
+
   final List<String> _reasons = [
-    'Appointment Completed',
-    'Reschedule',
-    'No Show',
-    'Others',
+    'Delayed',
+    'Traffic',
+    'Weather',
+    'Emergency',
+    'Other',
   ];
-  
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.dateTime;
+    _clockInTime = TimeOfDay.fromDateTime(widget.dateTime);
+    _clockOutTime = TimeOfDay(
+      hour: _clockInTime.hour + 1,
+      minute: _clockInTime.minute,
+    );
+  }
+
   Color _getStatusColor() {
     switch (widget.status) {
       case AppointmentStatus.scheduled:
@@ -157,7 +172,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                 AppSpacing.h8(),
                 Expanded(
                   child: Text(
-                    widget.dateTime,
+                    widget.dateTime.toString(),
                     style: AppTextStyle.semibold14,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -173,14 +188,14 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
             AppSpacing.v12(),
             AppTimePicker(
               label: 'Clock In',
-              selectedTime: _selectedClockIn,
-              onTimeSelected: (time) => setState(() => _selectedClockIn = time),
+              selectedTime: _clockInTime,
+              onTimeSelected: (time) => setState(() => _clockInTime = time),
             ),
             AppSpacing.v12(),
             AppTimePicker(
               label: 'Clock Out',
-              selectedTime: _selectedClockOut,
-              onTimeSelected: (time) => setState(() => _selectedClockOut = time),
+              selectedTime: _clockOutTime,
+              onTimeSelected: (time) => setState(() => _clockOutTime = time),
             ),
             AppSpacing.v12(),
             Text(
@@ -196,7 +211,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   horizontal: 16.w,
                   vertical: 8.h,
                 ),
-                hintText: 'Select item...',
+                hintText: 'Select reason...',
                 hintStyle: AppTextStyle.regular14.copyWith(
                   color: AppColors.grey300,
                 ),
@@ -232,36 +247,61 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
               onChanged: (String? value) {
                 setState(() {
                   _selectedReason = value;
+                  _reasonError = null;
                 });
               },
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please select a reason';
+                }
+                return null;
+              },
             ),
+            if (_reasonError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _reasonError!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             AppSpacing.v16(),
             AppButton(
               text: 'Save',
               onPressed: () {
-                setState(() => _isLoading = true);
-                Future<void>.delayed(const Duration(seconds: 2)).then((_) {
-                  if (!mounted) return;
-                  setState(() => _isLoading = false);
-                  
-                  // Validate times
-                  if (_selectedClockIn == null || _selectedClockOut == null) {
-                    AppToast.showError(context, 'Please select both clock in and clock out times');
-                    return;
-                  }
-                  
-                  // Save and show success message
-                  widget.onSave(_selectedDate, _selectedClockIn!, _selectedClockOut!);
-                  NavigationService.goBack();
-                  AppToast.showSuccess(context, 'Successfully saved manual clock entry');
-                });
+                if (_selectedReason == null) {
+                  setState(() {
+                    _reasonError = 'Please select a reason';
+                  });
+                  return;
+                }
+
+                if (_validateTimes()) {
+                  widget.onSave(
+                    _selectedDate,
+                    _clockInTime,
+                    _clockOutTime,
+                    _selectedReason!,
+                  );
+                }
               },
-              isLoading: _isLoading,
+              isLoading: false,
               enabled: _selectedReason != null,
             ),
           ],
         ),
       ),
     );
+  }
+
+  bool _validateTimes() {
+    if (_clockInTime == null || _clockOutTime == null) {
+      AppToast.showError(context, 'Please select both clock in and clock out times');
+      return false;
+    }
+    return true;
   }
 } 
