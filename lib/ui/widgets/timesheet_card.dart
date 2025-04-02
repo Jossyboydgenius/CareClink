@@ -19,6 +19,7 @@ class TimesheetCard extends StatefulWidget {
   final String status;
   final VoidCallback? onClockOut;
   final VoidCallback? onExpandDetails;
+  final bool isClockingOut;
 
   const TimesheetCard({
     super.key,
@@ -30,6 +31,7 @@ class TimesheetCard extends StatefulWidget {
     required this.status,
     this.onClockOut,
     this.onExpandDetails,
+    this.isClockingOut = false,
   });
 
   @override
@@ -73,31 +75,41 @@ class _TimesheetCardState extends State<TimesheetCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.staffName,
-                      style: AppTextStyle.semibold16,
+                    Expanded(
+                      child: Text(
+                        widget.clientName,
+                        style: AppTextStyle.semibold16,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
-                    if (status == DurationStatus.clockIn)
+                    if (widget.onClockOut != null || widget.isClockingOut)
                       Container(
                         height: 32.h,
                         decoration: BoxDecoration(
-                          color: AppColors.red,
+                          color: widget.isClockingOut ? AppColors.grey200 : AppColors.red,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: TextButton(
-                          onPressed: widget.onClockOut,
+                          onPressed: widget.isClockingOut ? null : widget.onClockOut,
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.white,
+                            foregroundColor: widget.isClockingOut ? AppColors.grey : AppColors.white,
                             padding: EdgeInsets.symmetric(horizontal: 16.w),
                             textStyle: AppTextStyle.regular14.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: AppColors.white,
+                            ),
+                            backgroundColor: widget.isClockingOut ? AppColors.grey200 : null,
+                            disabledForegroundColor: AppColors.grey,
+                          ),
+                          child: Text(
+                            'Clock Out',
+                            style: TextStyle(
+                              color: widget.isClockingOut ? AppColors.grey : AppColors.white,
                             ),
                           ),
-                          child: const Text('Clock Out'),
                         ),
                       )
-                    else
+                    else if (showDuration)
                       Row(
                         children: [
                           Text(
