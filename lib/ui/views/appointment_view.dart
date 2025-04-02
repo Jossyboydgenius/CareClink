@@ -47,7 +47,7 @@ class _AppointmentViewState extends State<AppointmentView> {
       final appointments = await _appointmentService.getAppointments();
       setState(() {
         _appointments = appointments;
-        _filteredAppointments = List.from(_appointments);
+    _filteredAppointments = List.from(_appointments);
         _isLoading = false;
       });
     } catch (e) {
@@ -266,64 +266,64 @@ class _AppointmentViewState extends State<AppointmentView> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _loadAppointments,
-                child: SingleChildScrollView(
+              child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Today Appointment',
-                          style: AppTextStyle.semibold24,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Today Appointment',
+                        style: AppTextStyle.semibold24,
+                      ),
+                      AppSpacing.v8(),
+                      Text(
+                        'Select the appointment you will like to clock in.',
+                        style: AppTextStyle.regular14.copyWith(
+                          color: AppColors.grey300,
                         ),
-                        AppSpacing.v8(),
-                        Text(
-                          'Select the appointment you will like to clock in.',
-                          style: AppTextStyle.regular14.copyWith(
-                            color: AppColors.grey300,
-                          ),
-                        ),
-                        AppSpacing.v16(),
-                        // Search bar
+                      ),
+                      AppSpacing.v16(),
+                      // Search bar
                         if (_appointments.isNotEmpty)
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.grey100,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.grey200),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.grey200),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.search,
+                              color: AppColors.grey300,
+                              size: 24.w,
                             ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16.w,
-                              vertical: 8.h,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.search,
-                                  color: AppColors.grey300,
-                                  size: 24.w,
-                                ),
-                                AppSpacing.h8(),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    onChanged: _filterAppointments,
-                                    decoration: InputDecoration(
-                                      hintText: 'Search Client Name...',
-                                      hintStyle: AppTextStyle.regular14.copyWith(
-                                        color: AppColors.grey300,
-                                      ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
+                            AppSpacing.h8(),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: _filterAppointments,
+                                decoration: InputDecoration(
+                                  hintText: 'Search Client Name...',
+                                  hintStyle: AppTextStyle.regular14.copyWith(
+                                    color: AppColors.grey300,
                                   ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        AppSpacing.v16(),
+                          ],
+                        ),
+                      ),
+                      AppSpacing.v16(),
                         if (_isLoading)
                           Column(
                             children: List.generate(3, (index) => Padding(
@@ -362,24 +362,24 @@ class _AppointmentViewState extends State<AppointmentView> {
                             ),
                           )
                         else
-                          ..._filteredAppointments.map((appointment) => Column(
-                            children: [
-                              AppointmentCard(
+                      ..._filteredAppointments.map((appointment) => Column(
+                        children: [
+                          AppointmentCard(
                                 clientName: appointment.clientName,
                                 dateTime: appointment.dateTime,
                                 status: appointment.status,
                                 isSelected: _selectedAppointmentId == appointment.id,
-                                onTap: () {
-                                  setState(() {
+                            onTap: () {
+                              setState(() {
                                     _selectedAppointmentId = appointment.id;
-                                  });
-                                },
-                              ),
-                              if (appointment != _filteredAppointments.last) AppSpacing.v12(),
-                            ],
-                          )).toList(),
-                        AppSpacing.v12(),
-                      ],
+                              });
+                            },
+                          ),
+                          if (appointment != _filteredAppointments.last) AppSpacing.v12(),
+                        ],
+                      )).toList(),
+                      AppSpacing.v12(),
+                    ],
                     ),
                   ),
                 ),
