@@ -3,14 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
-
-enum AppointmentStatus {
-  none,
-  pending,
-  scheduled,
-  completed,
-  reschedule,
-}
+import '../../data/models/appointment_model.dart';
 
 class AppointmentCard extends StatelessWidget {
   final String clientName;
