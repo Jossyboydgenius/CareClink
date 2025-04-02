@@ -100,7 +100,7 @@ class _AppointmentViewState extends State<AppointmentView> {
     }
   }
 
-  void _handleClockIn() {
+  void _handleClockIn() async {
     if (_selectedAppointmentId == null) return;
 
     final selectedAppointment = _appointments.firstWhere(
@@ -116,41 +116,92 @@ class _AppointmentViewState extends State<AppointmentView> {
     final isElapsed = _isAppointmentElapsed(selectedAppointment.timestamp);
 
     if (isElapsed) {
-      // Show manual clock entry dialog only for pending appointments
+      // Show manual clock entry dialog for pending appointments
       showDialog(
         context: context,
         builder: (context) => ManualClockEntryDialog(
           appointmentId: selectedAppointment.id,
           clientName: selectedAppointment.clientName,
-          dateTime: selectedAppointment.dateTime,
+          dateTime: DateTime.parse(selectedAppointment.dateTime),
           status: selectedAppointment.status,
-          onSave: (date, clockIn, clockOut) {
-            _moveToRecentTimesheet(selectedAppointment, clockInTime: clockIn);
-            NavigationService.goBack();
+          onSave: (date, clockIn, clockOut, reason) async {
+            try {
+              final clockInDateTime = DateTime(
+                date.year,
+                date.month,
+                date.day,
+                clockIn.hour,
+                clockIn.minute,
+              );
+
+              final response = await _appointmentService.manualClockIn(
+                appointmentId: selectedAppointment.id,
+                date: date,
+                clockIn: clockInDateTime,
+                reason: reason,
+              );
+
+              if (!mounted) return;
+
+              if (response.isSuccessful) {
+                final timesheet = response.data['timesheet'];
+                _moveToRecentTimesheet(selectedAppointment, clockInTime: clockIn, timesheetData: timesheet);
+                NavigationService.goBack();
+                AppToast.showSuccess(context, response.message ?? 'Successfully clocked in');
+              } else {
+                AppToast.showError(context, response.message ?? 'Failed to clock in');
+              }
+            } catch (e) {
+              debugPrint('Error during manual clock in: $e');
+              if (!mounted) return;
+              AppToast.showError(context, 'Failed to clock in: $e');
+            }
           },
         ),
       );
     } else {
       // Direct clock in for scheduled appointments
-      final now = TimeOfDay.now();
-      _moveToRecentTimesheet(selectedAppointment, clockInTime: now);
+      try {
+        setState(() => _isLoading = true);
+        
+        final response = await _appointmentService.clockIn(
+          appointmentId: selectedAppointment.id,
+          date: DateTime.now(),
+        );
+
+        if (!mounted) return;
+
+        if (response.isSuccessful) {
+          final timesheet = response.data['timesheet'];
+          final now = TimeOfDay.now();
+          _moveToRecentTimesheet(selectedAppointment, clockInTime: now, timesheetData: timesheet);
+          AppToast.showSuccess(context, response.message ?? 'Successfully clocked in');
+        } else {
+          AppToast.showError(context, response.message ?? 'Failed to clock in');
+        }
+      } catch (e) {
+        debugPrint('Error during clock in: $e');
+        if (!mounted) return;
+        AppToast.showError(context, 'Failed to clock in: $e');
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
-  void _moveToRecentTimesheet(AppointmentModel appointment, {TimeOfDay? clockInTime}) async {
+  void _moveToRecentTimesheet(AppointmentModel appointment, {
+    TimeOfDay? clockInTime,
+    Map<String, dynamic>? timesheetData,
+  }) async {
     if (!mounted) return;
 
     final now = DateTime.now();
     final clockIn = clockInTime ?? TimeOfDay.fromDateTime(now);
     
-    // Check if timesheet already exists
-    final existingTimesheet = await _timesheetService.getTimesheet(appointment.id);
-    if (existingTimesheet != null) {
-      AppToast.showError(context, 'Timesheet already exists for this appointment');
-      return;
-    }
-    
-    final timesheetEntry = {
+    // Use the timesheet data from the API response if available
+    final timesheetEntry = timesheetData ?? {
       'id': appointment.id,
       'clientName': appointment.clientName,
       'clockIn': '${clockIn.hour}:${clockIn.minute.toString().padLeft(2, '0')}',
@@ -158,8 +209,6 @@ class _AppointmentViewState extends State<AppointmentView> {
       'duration': '',
       'status': 'clockin',
     };
-
-    _timesheetService.addTimesheet(timesheetEntry);
 
     // Show success message first
     AppToast.showSuccess(context, 'Successfully clocked in');
