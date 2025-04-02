@@ -3,12 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
+import '../widgets/app_button.dart';
+import '../../data/models/timesheet_model.dart';
 
 enum DurationStatus {
   none,
   clockIn,
   clockOut,
-  completed,
 }
 
 class TimesheetCard extends StatefulWidget {
@@ -17,7 +18,7 @@ class TimesheetCard extends StatefulWidget {
   final String clockIn;
   final String? clockOut;
   final String? duration;
-  final DurationStatus status;
+  final String status;
   final VoidCallback? onClockOut;
   final VoidCallback? onExpandDetails;
 
@@ -28,7 +29,7 @@ class TimesheetCard extends StatefulWidget {
     required this.clockIn,
     this.clockOut,
     this.duration,
-    this.status = DurationStatus.none,
+    required this.status,
     this.onClockOut,
     this.onExpandDetails,
   });
@@ -40,37 +41,21 @@ class TimesheetCard extends StatefulWidget {
 class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
-  Color _getStatusColor() {
-    switch (widget.status) {
-      case DurationStatus.clockIn:
-        return AppColors.green;
-      case DurationStatus.clockOut:
-        return AppColors.red;
-      case DurationStatus.completed:
-        return AppColors.green;
-      default:
-        return AppColors.textPrimary;
-    }
-  }
-
-  String _getStatusText() {
-    switch (widget.status) {
-      case DurationStatus.clockIn:
-        return 'Clock In';
-      case DurationStatus.clockOut:
-        return 'Clock Out';
-      case DurationStatus.completed:
-        return 'Completed';
-      default:
-        return '';
+  DurationStatus _getStatusFromString(String status) {
+    try {
+      final cleanStatus = status.replaceAll('DurationStatus.', '');
+      return DurationStatus.values.firstWhere(
+        (e) => e.toString().split('.').last.toLowerCase() == cleanStatus.toLowerCase()
+      );
+    } catch (e) {
+      return DurationStatus.clockIn;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine if we should show the status badge or duration
-    final bool showDuration = widget.duration != null && widget.duration != '0min';
-    final bool showStatus = widget.status != DurationStatus.none && !showDuration;
+    final status = _getStatusFromString(widget.status);
+    final bool showDuration = widget.duration != null && widget.duration!.isNotEmpty && widget.duration != '0min';
 
     return Container(
       decoration: BoxDecoration(
@@ -86,7 +71,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Staff name and status/duration
+                // Staff name and clock out button/duration
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -94,21 +79,23 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       widget.staffName,
                       style: AppTextStyle.semibold16,
                     ),
-                    if (showStatus)
+                    if (status == DurationStatus.clockIn)
                       Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 22.w,
-                          vertical: 6.h,
-                        ),
+                        height: 32.h,
                         decoration: BoxDecoration(
-                          color: _getStatusColor(),
-                          borderRadius: BorderRadius.circular(6.r),
+                          color: AppColors.red,
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: Text(
-                          _getStatusText(),
-                          style: AppTextStyle.medium14.copyWith(
-                            color: AppColors.white,
+                        child: TextButton(
+                          onPressed: widget.onClockOut,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            textStyle: AppTextStyle.regular14.copyWith(
+                              color: AppColors.white,
+                            ),
                           ),
+                          child: const Text('Clock Out'),
                         ),
                       )
                     else if (showDuration)
@@ -129,7 +116,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                   ],
                 ),
                 AppSpacing.v12(),
-                // Clock in time
+                // Clock in/out times
                 Row(
                   children: [
                     Text(
@@ -142,7 +129,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       widget.clockIn,
                       style: AppTextStyle.semibold12,
                     ),
-                    if (widget.clockOut != null) ...[
+                    if (widget.clockOut != null && widget.clockOut!.isNotEmpty) ...[
                       Expanded(
                         child: Container(
                           margin: EdgeInsets.symmetric(horizontal: 8.w),
