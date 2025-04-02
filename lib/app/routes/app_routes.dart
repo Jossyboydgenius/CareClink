@@ -17,7 +17,9 @@ class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
     splashScreenView: (context) => const SplashScreen(),
     signInView: (context) => const SignInView(),
-    dashboardView: (context) => const Dashboard(),
+    dashboardView: (context) => Dashboard(
+      recentTimesheet: ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?,
+    ),
     notificationView: (context) => const NotificationView(),
     appointmentView: (context) => const AppointmentView(),
   };
