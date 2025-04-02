@@ -90,6 +90,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                             foregroundColor: AppColors.white,
                             padding: EdgeInsets.symmetric(horizontal: 16.w),
                             textStyle: AppTextStyle.regular14.copyWith(
+                              fontWeight: FontWeight.w800,
                               color: AppColors.white,
                             ),
                           ),
