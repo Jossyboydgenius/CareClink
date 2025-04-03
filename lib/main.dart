@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'app/routes/app_routes.dart';
 import 'app/themes.dart';
 import 'data/services/navigator_service.dart';
@@ -11,10 +12,19 @@ import 'app/flavor_config.dart';
 import 'ui/views/sign_in_bloc/sign_in_bloc.dart';
 import 'shared/app_sizer.dart';
 import 'shared/connection_status.dart';
+import 'data/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  try {
+    // Initialize Firebase with default settings
+    await Firebase.initializeApp();
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Error initializing Firebase: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -27,6 +37,9 @@ Future<void> main() async {
     webUrl: dotenv.env['WEB_URL_PROD']!,
     mixpanelToken: dotenv.env['MIXPANEL_TOKEN_PROD']!,
   ));
+
+  // Initialize notification service
+  await locator<NotificationService>().initialize();
 
   runApp(const MyApp());
 }
