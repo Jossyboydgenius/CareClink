@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../app/locator.dart';
 import 'api/api.dart';
 import 'api/api_response.dart';
-import '../models/timesheet_model.dart';
 
 class TimesheetService {
   static final TimesheetService _instance = TimesheetService._internal();
@@ -48,7 +47,8 @@ class TimesheetService {
       'clockIn': formatTimeFromISO(updatedTimesheet['clockIn']),
       'clockOut': formatTimeFromISO(updatedTimesheet['clockOut']),
     };
-    final index = _recentTimesheets.indexWhere((timesheet) => timesheet['id'] == id);
+    final index =
+        _recentTimesheets.indexWhere((timesheet) => timesheet['id'] == id);
     if (index != -1) {
       _recentTimesheets[index] = formattedTimesheet;
     }
@@ -87,11 +87,12 @@ class TimesheetService {
         '/interpreter/check-out/$timesheetId',
         <String, dynamic>{},
       );
-      
+
       if (response.isSuccessful) {
         // Fetch updated timesheets from backend
         final timesheetsResponse = await getTimesheets();
-        if (timesheetsResponse.isSuccessful && timesheetsResponse.data != null) {
+        if (timesheetsResponse.isSuccessful &&
+            timesheetsResponse.data != null) {
           clearTimesheets();
           final timesheets = timesheetsResponse.data['timesheets'] as List;
           for (final timesheet in timesheets) {
@@ -99,7 +100,8 @@ class TimesheetService {
             String clientName = 'Unknown Client';
             if (clientData != null) {
               if (clientData is Map) {
-                clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
+                clientName =
+                    clientData['fullname']?.toString() ?? 'Unknown Client';
               } else if (clientData is String) {
                 clientName = clientData;
               }
@@ -116,7 +118,7 @@ class TimesheetService {
           }
         }
       }
-      
+
       return response;
     } catch (e) {
       debugPrint('Error clocking out: $e');
@@ -127,4 +129,4 @@ class TimesheetService {
       );
     }
   }
-} 
+}
