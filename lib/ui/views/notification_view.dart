@@ -7,7 +7,6 @@ import '../../shared/app_icons.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/notification_card.dart';
 import '../widgets/user_avatar.dart';
-import '../../data/models/notification_model.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
 import '../../shared/app_images.dart';
@@ -24,27 +23,17 @@ class _NotificationViewState extends State<NotificationView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _notificationsEnabled = true;
-  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_handleTabChange);
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _handleTabChange() {
-    // Update for both during animation and when animation completes
-    setState(() {
-      _currentIndex = _tabController.index;
-    });
   }
 
   void _handleMarkAsRead(String id) {
@@ -116,86 +105,57 @@ class _NotificationViewState extends State<NotificationView>
                 padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Row(
                   children: [
-                    InkWell(
-                      onTap: () {
-                        _tabController.animateTo(0);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _currentIndex == 0
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Unread',
-                          style: AppTextStyle.medium14.copyWith(
-                            color: _currentIndex == 0
-                                ? AppColors.primary
-                                : AppColors.grey300,
-                          ),
-                        ),
+                    Expanded(
+                      child: TabBar(
+                        controller: _tabController,
+                        labelColor: AppColors.primary,
+                        unselectedLabelColor: AppColors.grey300,
+                        indicatorColor: AppColors.primary,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelStyle: AppTextStyle.medium14,
+                        unselectedLabelStyle: AppTextStyle.medium14,
+                        dividerColor: Colors.transparent,
+                        tabs: const [
+                          Tab(text: 'Unread'),
+                          Tab(text: 'All'),
+                        ],
                       ),
                     ),
-                    AppSpacing.h16(),
-                    InkWell(
-                      onTap: () {
-                        _tabController.animateTo(1);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: _currentIndex == 1
-                                  ? AppColors.primary
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'All',
-                          style: AppTextStyle.medium14.copyWith(
-                            color: _currentIndex == 1
-                                ? AppColors.primary
-                                : AppColors.grey300,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (_currentIndex == 0 && unreadNotifications.isNotEmpty)
-                      TextButton(
-                        onPressed: _handleMarkAllAsRead,
-                        style: TextButton.styleFrom(
-                          textStyle: AppTextStyle.medium14.copyWith(
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            AppIcons(
-                              icon: AppIconData.check,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            AppSpacing.h4(),
-                            Text(
-                              'Mark All as Read',
-                              style: AppTextStyle.medium14.copyWith(
-                                color: AppColors.primary,
+                    if (unreadNotifications.isNotEmpty)
+                      Builder(builder: (context) {
+                        return Visibility(
+                          visible: _tabController.index == 0,
+                          maintainState: true,
+                          maintainAnimation: true,
+                          maintainSize: true,
+                          child: TextButton(
+                            onPressed: _handleMarkAllAsRead,
+                            style: TextButton.styleFrom(
+                              textStyle: AppTextStyle.medium14.copyWith(
                                 decoration: TextDecoration.underline,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                            child: Row(
+                              children: [
+                                AppIcons(
+                                  icon: AppIconData.check,
+                                  size: 14,
+                                  color: AppColors.primary,
+                                ),
+                                AppSpacing.h4(),
+                                Text(
+                                  'Mark All as Read',
+                                  style: AppTextStyle.medium14.copyWith(
+                                    color: AppColors.primary,
+                                    decoration: TextDecoration.underline,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                   ],
                 ),
               ),
