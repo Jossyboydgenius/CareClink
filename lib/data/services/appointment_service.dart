@@ -3,7 +3,6 @@ import '../../app/locator.dart';
 import '../models/appointment_model.dart';
 import 'api/api.dart';
 import 'api/api_response.dart';
-import 'local_storage_service.dart';
 
 class AppointmentService {
   final Api _api = locator<Api>();
@@ -91,4 +90,4 @@ class AppointmentService {
       );
     }
   }
-} 
+}
