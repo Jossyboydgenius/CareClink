@@ -6,6 +6,7 @@ import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
 import '../../shared/form_validator.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_input.dart';
 import '../widgets/app_checkbox.dart';
 import '../../shared/app_images.dart';
 import '../../app/routes/app_routes.dart';
@@ -47,22 +48,26 @@ class _SignInViewState extends State<SignInView> {
       child: Scaffold(
         body: SafeArea(
           child: BlocListener<SignInBloc, SignInState>(
-            listenWhen: (previous, current) => previous.status != current.status,
+            listenWhen: (previous, current) =>
+                previous.status != current.status,
             listener: (context, state) {
               if (state.status == SignInStatus.success) {
                 // AppToast.showSuccess(context, 'Sign in successful!');
                 NavigationService.pushReplacementNamed(AppRoutes.dashboardView);
               } else if (state.status == SignInStatus.failure) {
-                AppToast.showError(context, state.errorMessage ?? 'Something went wrong');
+                AppToast.showError(
+                    context, state.errorMessage ?? 'Something went wrong');
               }
             },
             child: BlocBuilder<SignInBloc, SignInState>(
               builder: (context, state) {
                 // Update controllers when state changes
-                if (state.email != null && _emailController.text != state.email) {
+                if (state.email != null &&
+                    _emailController.text != state.email) {
                   _emailController.text = state.email!;
                 }
-                if (state.password != null && _passwordController.text != state.password) {
+                if (state.password != null &&
+                    _passwordController.text != state.password) {
                   _passwordController.text = state.password!;
                 }
 
@@ -93,74 +98,44 @@ class _SignInViewState extends State<SignInView> {
                           textAlign: TextAlign.center,
                         ),
                         AppSpacing.v32(),
-                        Text(
-                          'Email Address',
-                          style: AppTextStyle.medium14,
-                        ),
-                        AppSpacing.v8(),
-                        TextFormField(
+                        AppInput(
                           controller: _emailController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your email address',
-                            hintStyle: AppTextStyle.regular14.copyWith(
-                              color: AppColors.grey300,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: AppColors.grey400,
-                              ),
-                            ),
-                          ),
+                          labelText: 'Email Address',
+                          hintText: 'Enter your email address',
                           keyboardType: TextInputType.emailAddress,
                           validator: FormValidators.validateEmail,
                           onChanged: (value) {
-                            context.read<SignInBloc>().add(SignInEmailChange(value));
+                            context
+                                .read<SignInBloc>()
+                                .add(SignInEmailChange(value));
                           },
                         ),
                         AppSpacing.v24(),
-                        Text(
-                          'Password',
-                          style: AppTextStyle.medium14,
-                        ),
-                        AppSpacing.v8(),
-                        TextFormField(
+                        AppInput(
                           controller: _passwordController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter your password',
-                            hintStyle: AppTextStyle.regular14.copyWith(
-                              color: AppColors.grey300,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: AppColors.grey400,
-                              ),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                state.obscurePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: AppColors.grey300,
-                              ),
-                              onPressed: () {
-                                context.read<SignInBloc>().add(
-                                    const SignInTogglePasswordVisibility());
-                              },
-                            ),
-                          ),
+                          labelText: 'Password',
+                          hintText: 'Enter your password',
                           obscureText: state.obscurePassword,
                           validator: FormValidators.validatePassword,
                           onChanged: (value) {
-                            context.read<SignInBloc>().add(SignInPasswordChange(value));
+                            context
+                                .read<SignInBloc>()
+                                .add(SignInPasswordChange(value));
                           },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              state.obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: AppColors.grey300,
+                              size: 20.w,
+                            ),
+                            onPressed: () {
+                              context
+                                  .read<SignInBloc>()
+                                  .add(const SignInTogglePasswordVisibility());
+                            },
+                          ),
                         ),
                         AppSpacing.v16(),
                         Row(
@@ -187,11 +162,14 @@ class _SignInViewState extends State<SignInView> {
                           text: 'Log in',
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              context.read<SignInBloc>().add(const SignInUser());
+                              context
+                                  .read<SignInBloc>()
+                                  .add(const SignInUser());
                             }
                           },
                           isLoading: state.status == SignInStatus.loading,
-                          enabled: state.email != null && state.password != null,
+                          enabled:
+                              state.email != null && state.password != null,
                         ),
                       ],
                     ),
