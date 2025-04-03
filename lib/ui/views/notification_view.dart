@@ -6,11 +6,14 @@ import '../../shared/app_spacing.dart';
 import '../../shared/app_icons.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/notification_card.dart';
+import '../widgets/notification_skeleton.dart';
 import '../widgets/user_avatar.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
 import '../../shared/app_images.dart';
-import '../../data/services/mock_notification_service.dart';
+import '../../app/locator.dart';
+import '../../data/services/notification_service.dart';
+import '../../data/models/notification_model.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -23,11 +26,16 @@ class _NotificationViewState extends State<NotificationView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _notificationsEnabled = true;
+  final NotificationService _notificationService =
+      locator<NotificationService>();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Refresh notifications when view is opened
+    _notificationService.refreshNotifications();
   }
 
   @override
@@ -36,240 +44,470 @@ class _NotificationViewState extends State<NotificationView>
     super.dispose();
   }
 
-  void _handleMarkAsRead(String id) {
-    setState(() {
-      MockNotificationService.markAsRead(id);
-    });
+  void _handleMarkAsRead(String id) async {
+    await _notificationService.markAsRead(id);
   }
 
-  void _handleMarkAllAsRead() {
-    setState(() {
-      MockNotificationService.markAllAsRead();
-    });
+  void _handleMarkAllAsRead() async {
+    await _notificationService.markAllAsRead();
   }
 
   @override
   Widget build(BuildContext context) {
-    final unreadNotifications =
-        MockNotificationService.getUnreadNotifications();
-    final allNotifications = MockNotificationService.getAllNotifications();
-
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with Logo and Profile
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: StreamBuilder<List<NotificationModel>>(
+          stream: _notificationService.notificationsStream,
+          builder: (context, snapshot) {
+            // Handle loading and error states
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppImages(
-                    imagePath: AppImageData.careclinkLogo,
-                    height: 60,
-                    width: 160,
+                  // Header with Logo and Profile
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AppImages(
+                          imagePath: AppImageData.careclinkLogo,
+                          height: 60,
+                          width: 160,
+                        ),
+                        const UserAvatar(),
+                      ],
+                    ),
                   ),
-                  const UserAvatar(),
-                ],
-              ),
-            ),
-            // Notification Title and Toggle
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Notification',
-                    style: AppTextStyle.semibold24,
+                  // Notification Title and Toggle
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Text(
+                      'Notification',
+                      style: AppTextStyle.semibold24,
+                    ),
                   ),
-                  Switch(
-                    value: _notificationsEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _notificationsEnabled = value;
-                      });
-                    },
-                    activeColor: AppColors.white,
-                    activeTrackColor: AppColors.primary,
-                    inactiveThumbColor: AppColors.white,
-                    inactiveTrackColor: AppColors.grey200,
-                  ),
-                ],
-              ),
-            ),
-            AppSpacing.v16(),
-            if (_notificationsEnabled) ...[
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.w),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TabBar(
-                        controller: _tabController,
-                        labelColor: AppColors.primary,
-                        unselectedLabelColor: AppColors.grey300,
-                        indicatorColor: AppColors.primary,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelStyle: AppTextStyle.medium14,
-                        unselectedLabelStyle: AppTextStyle.medium14,
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Unread'),
-                          Tab(text: 'All'),
-                        ],
+                  AppSpacing.v16(),
+                  // Tab bar skeleton
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: AppColors.grey200,
+                            width: 1,
+                          ),
+                        ),
                       ),
                     ),
-                    if (unreadNotifications.isNotEmpty)
-                      Builder(builder: (context) {
-                        return Visibility(
-                          visible: _tabController.index == 0,
-                          maintainState: true,
-                          maintainAnimation: true,
-                          maintainSize: true,
-                          child: TextButton(
-                            onPressed: _handleMarkAllAsRead,
-                            style: TextButton.styleFrom(
-                              textStyle: AppTextStyle.medium14.copyWith(
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                AppIcons(
-                                  icon: AppIconData.check,
-                                  size: 14,
-                                  color: AppColors.primary,
-                                ),
-                                AppSpacing.h4(),
-                                Text(
-                                  'Mark All as Read',
-                                  style: AppTextStyle.medium14.copyWith(
-                                    color: AppColors.primary,
-                                    decoration: TextDecoration.underline,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
-                  ],
-                ),
-              ),
-              AppSpacing.v16(),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Unread tab
-                    unreadNotifications.isNotEmpty
-                        ? SingleChildScrollView(
-                            padding: EdgeInsets.symmetric(horizontal: 24.w),
-                            child: Column(
-                              children: [
-                                ...unreadNotifications.map((notification) {
-                                  return Column(
-                                    children: [
-                                      NotificationCard(
-                                        notification: notification,
-                                        onMarkAsRead: () =>
-                                            _handleMarkAsRead(notification.id),
-                                      ),
-                                      if (notification !=
-                                          unreadNotifications.last)
-                                        AppSpacing.v16(),
-                                    ],
-                                  );
-                                }).toList(),
-                              ],
-                            ),
-                          )
-                        : Center(
-                            child: Text(
-                              'No unread notifications',
-                              style: AppTextStyle.regular14.copyWith(
-                                color: AppColors.grey300,
-                              ),
-                            ),
-                          ),
-                    // All tab
-                    SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  ),
+                  AppSpacing.v16(),
+                  // Skeleton loading
+                  Expanded(
+                    child: NotificationListSkeleton(itemCount: 3),
+                  ),
+                ],
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with Logo and Profile
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AppImages(
+                          imagePath: AppImageData.careclinkLogo,
+                          height: 60,
+                          width: 160,
+                        ),
+                        const UserAvatar(),
+                      ],
+                    ),
+                  ),
+                  // Notification Title and Toggle
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Text(
+                      'Notification',
+                      style: AppTextStyle.semibold24,
+                    ),
+                  ),
+                  AppSpacing.v16(),
+                  Expanded(
+                    child: Center(
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (allNotifications.isNotEmpty)
-                            ...allNotifications.map((notification) {
-                              return Column(
-                                children: [
-                                  NotificationCard(
-                                    notification: notification,
-                                    showMarkAsRead: !notification.isRead,
-                                    onMarkAsRead: () =>
-                                        _handleMarkAsRead(notification.id),
-                                  ),
-                                  if (notification != allNotifications.last)
-                                    AppSpacing.v16(),
-                                ],
-                              );
-                            }).toList()
-                          else
-                            SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(vertical: 32.h),
-                                    child: Text(
-                                      'No notifications',
-                                      style: AppTextStyle.regular14.copyWith(
-                                        color: AppColors.grey300,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          Icon(
+                            Icons.error_outline,
+                            size: 48.w,
+                            color: AppColors.grey300,
+                          ),
+                          AppSpacing.v16(),
+                          Text(
+                            'Failed to load notifications',
+                            style: AppTextStyle.medium16.copyWith(
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                          AppSpacing.v8(),
+                          Text(
+                            'Pull down to try again',
+                            style: AppTextStyle.regular14.copyWith(
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                          AppSpacing.v24(),
+                          ElevatedButton(
+                            onPressed: () =>
+                                _notificationService.refreshNotifications(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: AppColors.white,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w, vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
+                            child: Text(
+                              'Try Again',
+                              style: AppTextStyle.medium14.copyWith(
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ] else
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  ),
+                ],
+              );
+            }
+
+            final allNotifications = snapshot.data ?? [];
+            final unreadNotifications =
+                allNotifications.where((n) => !n.isRead).toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with Logo and Profile
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.notifications_off_outlined,
-                        size: 48.w,
-                        color: AppColors.grey300,
+                      AppImages(
+                        imagePath: AppImageData.careclinkLogo,
+                        height: 60,
+                        width: 160,
                       ),
-                      AppSpacing.v16(),
+                      const UserAvatar(),
+                    ],
+                  ),
+                ),
+                // Notification Title and Toggle
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Text(
-                        'Notifications are turned off',
-                        style: AppTextStyle.regular14.copyWith(
-                          color: AppColors.grey300,
-                        ),
+                        'Notification',
+                        style: AppTextStyle.semibold24,
                       ),
-                      AppSpacing.v8(),
-                      Text(
-                        'Turn on notifications to stay updated',
-                        style: AppTextStyle.regular12.copyWith(
-                          color: AppColors.grey300,
-                        ),
+                      Switch(
+                        value: _notificationsEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _notificationsEnabled = value;
+                          });
+                        },
+                        activeColor: AppColors.white,
+                        activeTrackColor: AppColors.primary,
+                        inactiveThumbColor: AppColors.white,
+                        inactiveTrackColor: AppColors.grey200,
                       ),
                     ],
                   ),
                 ),
-              ),
-          ],
+                AppSpacing.v16(),
+                if (_notificationsEnabled) ...[
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: AppColors.primary,
+                            unselectedLabelColor: AppColors.grey300,
+                            indicatorColor: AppColors.primary,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            labelStyle: AppTextStyle.medium14,
+                            unselectedLabelStyle: AppTextStyle.medium14,
+                            dividerColor: Colors.transparent,
+                            tabs: const [
+                              Tab(text: 'Unread'),
+                              Tab(text: 'All'),
+                            ],
+                          ),
+                        ),
+                        if (unreadNotifications.isNotEmpty)
+                          Builder(builder: (context) {
+                            return Visibility(
+                              visible: _tabController.index == 0,
+                              maintainState: true,
+                              maintainAnimation: true,
+                              maintainSize: true,
+                              child: TextButton(
+                                onPressed: _handleMarkAllAsRead,
+                                style: TextButton.styleFrom(
+                                  textStyle: AppTextStyle.medium14.copyWith(
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    AppIcons(
+                                      icon: AppIconData.check,
+                                      size: 14,
+                                      color: AppColors.primary,
+                                    ),
+                                    AppSpacing.h4(),
+                                    Text(
+                                      'Mark All as Read',
+                                      style: AppTextStyle.medium14.copyWith(
+                                        color: AppColors.primary,
+                                        decoration: TextDecoration.underline,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                      ],
+                    ),
+                  ),
+                  AppSpacing.v16(),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // Unread tab
+                        unreadNotifications.isNotEmpty
+                            ? RefreshIndicator(
+                                onRefresh: () async {
+                                  // Show temporary loading state
+                                  setState(() {});
+                                  await _notificationService
+                                      .refreshNotifications();
+                                  setState(() {});
+                                },
+                                child: SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 24.w),
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    child: snapshot.connectionState ==
+                                            ConnectionState.waiting
+                                        ? const NotificationListSkeleton(
+                                            itemCount: 3)
+                                        : Column(
+                                            key: const ValueKey(
+                                                'unread-content'),
+                                            children: unreadNotifications
+                                                .map((notification) {
+                                              return Column(
+                                                children: [
+                                                  NotificationCard(
+                                                    notification: notification,
+                                                    onMarkAsRead: () =>
+                                                        _handleMarkAsRead(
+                                                            notification.id),
+                                                  ),
+                                                  if (notification !=
+                                                      unreadNotifications.last)
+                                                    AppSpacing.v16(),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
+                                  ),
+                                ),
+                              )
+                            : RefreshIndicator(
+                                onRefresh: () async {
+                                  await _notificationService
+                                      .refreshNotifications();
+                                },
+                                child: SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  child: SizedBox(
+                                    height: MediaQuery.of(context).size.height -
+                                        230.h,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.mark_email_read_outlined,
+                                            size: 48.w,
+                                            color: AppColors.grey300,
+                                          ),
+                                          AppSpacing.v16(),
+                                          Text(
+                                            'No unread notifications',
+                                            style:
+                                                AppTextStyle.medium16.copyWith(
+                                              color: AppColors.grey300,
+                                            ),
+                                          ),
+                                          AppSpacing.v8(),
+                                          Text(
+                                            'Pull down to refresh',
+                                            style:
+                                                AppTextStyle.regular14.copyWith(
+                                              color: AppColors.grey300,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        // All tab
+                        RefreshIndicator(
+                          onRefresh: () async {
+                            // Show temporary loading state
+                            setState(() {});
+                            await _notificationService.refreshNotifications();
+                            setState(() {});
+                          },
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: snapshot.connectionState ==
+                                      ConnectionState.waiting
+                                  ? const NotificationListSkeleton(itemCount: 3)
+                                  : allNotifications.isNotEmpty
+                                      ? Column(
+                                          key: const ValueKey('all-content'),
+                                          children: allNotifications
+                                              .map((notification) {
+                                            return Column(
+                                              children: [
+                                                NotificationCard(
+                                                  notification: notification,
+                                                  showMarkAsRead:
+                                                      !notification.isRead,
+                                                  onMarkAsRead: () =>
+                                                      _handleMarkAsRead(
+                                                          notification.id),
+                                                ),
+                                                if (notification !=
+                                                    allNotifications.last)
+                                                  AppSpacing.v16(),
+                                              ],
+                                            );
+                                          }).toList(),
+                                        )
+                                      : SizedBox(
+                                          width: double.infinity,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height -
+                                              230.h,
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons
+                                                      .notifications_off_outlined,
+                                                  size: 48.w,
+                                                  color: AppColors.grey300,
+                                                ),
+                                                AppSpacing.v16(),
+                                                Text(
+                                                  'No notifications',
+                                                  style: AppTextStyle.medium16
+                                                      .copyWith(
+                                                    color: AppColors.grey300,
+                                                  ),
+                                                ),
+                                                AppSpacing.v8(),
+                                                Text(
+                                                  'Pull down to refresh',
+                                                  style: AppTextStyle.regular14
+                                                      .copyWith(
+                                                    color: AppColors.grey300,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.notifications_off_outlined,
+                            size: 48.w,
+                            color: AppColors.grey300,
+                          ),
+                          AppSpacing.v16(),
+                          Text(
+                            'Notifications are turned off',
+                            style: AppTextStyle.regular14.copyWith(
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                          AppSpacing.v8(),
+                          Text(
+                            'Turn on notifications to stay updated',
+                            style: AppTextStyle.regular12.copyWith(
+                              color: AppColors.grey300,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
       bottomNavigationBar: BottomNavBar(
