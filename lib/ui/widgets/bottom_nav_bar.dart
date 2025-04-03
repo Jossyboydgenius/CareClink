@@ -4,7 +4,7 @@ import '../../shared/app_colors.dart';
 import '../../shared/app_icons.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
-import '../../data/models/notification_model.dart';
+import '../../data/services/mock_notification_service.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -29,7 +29,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
     // Prevent rapid taps (debounce)
     final now = DateTime.now();
-    if (_lastTap != null && now.difference(_lastTap!) < const Duration(milliseconds: 300)) {
+    if (_lastTap != null &&
+        now.difference(_lastTap!) < const Duration(milliseconds: 300)) {
       return;
     }
     _lastTap = now;
@@ -57,7 +58,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           _isNavigating = false;
           return;
       }
-      
+
       if (mounted) {
         widget.onTap(index);
       }
@@ -70,7 +71,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = NotificationService.getUnreadNotifications().length;
+    final unreadCount = MockNotificationService.getUnreadNotifications().length;
 
     return Container(
       decoration: BoxDecoration(
@@ -94,7 +95,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
             icon: AppIcons(
               icon: AppIconData.dashboard,
               size: 20,
-              color: widget.currentIndex == 0 ? AppColors.primary : AppColors.grey300,
+              color: widget.currentIndex == 0
+                  ? AppColors.primary
+                  : AppColors.grey300,
             ),
             label: 'Dashboard',
           ),
@@ -115,7 +118,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
               ),
               child: AppIcons(
                 icon: AppIconData.notification,
-                color: widget.currentIndex == 1 ? AppColors.primary : AppColors.grey300,
+                color: widget.currentIndex == 1
+                    ? AppColors.primary
+                    : AppColors.grey300,
               ),
             ),
             label: 'Notification',
@@ -123,7 +128,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
           BottomNavigationBarItem(
             icon: AppIcons(
               icon: AppIconData.calendar,
-              color: widget.currentIndex == 2 ? AppColors.primary : AppColors.grey300,
+              color: widget.currentIndex == 2
+                  ? AppColors.primary
+                  : AppColors.grey300,
             ),
             label: 'Appointment',
           ),
