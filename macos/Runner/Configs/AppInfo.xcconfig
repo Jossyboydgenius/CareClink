@@ -8,7 +8,7 @@
 PRODUCT_NAME = CareClink
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.carelink.app
+PRODUCT_BUNDLE_IDENTIFIER = com.careclink.app
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 CareClink. All rights reserved.
