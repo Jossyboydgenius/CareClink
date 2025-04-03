@@ -5,6 +5,7 @@ import '../data/services/user_service.dart';
 import '../data/services/local_storage_service.dart';
 import '../data/services/appointment_summary_service.dart';
 import '../data/services/appointment_service.dart';
+import '../data/services/notification_service.dart';
 import 'flavor_config.dart';
 
 final locator = GetIt.instance;
@@ -22,17 +23,25 @@ void _registerServices() {
     locator.registerLazySingleton<UserService>(() => UserService());
   }
   if (!locator.isRegistered<LocalStorageService>()) {
-    locator.registerLazySingleton<LocalStorageService>(() => LocalStorageService());
+    locator.registerLazySingleton<LocalStorageService>(
+        () => LocalStorageService());
   }
   if (!locator.isRegistered<AppointmentSummaryService>()) {
-    locator.registerLazySingleton<AppointmentSummaryService>(() => AppointmentSummaryService());
+    locator.registerLazySingleton<AppointmentSummaryService>(
+        () => AppointmentSummaryService());
   }
   if (!locator.isRegistered<AppointmentService>()) {
-    locator.registerLazySingleton<AppointmentService>(() => AppointmentService());
+    locator
+        .registerLazySingleton<AppointmentService>(() => AppointmentService());
+  }
+  if (!locator.isRegistered<NotificationService>()) {
+    locator.registerLazySingleton<NotificationService>(
+        () => NotificationService());
   }
 }
 
 Future<void> _registerExternalDependencies(AppFlavorConfig config) async {
   locator.registerLazySingleton<AppFlavorConfig>(() => config);
-  locator.registerLazySingleton<FlutterSecureStorage>(() => const FlutterSecureStorage());
-} 
+  locator.registerLazySingleton<FlutterSecureStorage>(
+      () => const FlutterSecureStorage());
+}
