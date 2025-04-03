@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 // Import flutter_local_notifications conditionally
@@ -7,7 +6,7 @@ import '../../app/locator.dart';
 import '../models/notification_model.dart';
 import 'local_storage_service.dart';
 import 'api/api.dart';
-import 'mock_notification_service.dart';
+import 'notification_api_service.dart';
 
 // Top-level function to handle background messages
 @pragma('vm:entry-point')
@@ -20,6 +19,8 @@ class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final LocalStorageService _storageService = locator<LocalStorageService>();
   final Api _api = locator<Api>();
+  final NotificationApiService _notificationApiService =
+      locator<NotificationApiService>();
 
   static const String FCM_TOKEN_KEY = 'fcm_token';
 
@@ -111,6 +112,9 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
 
+      // Fetch initial notifications from server
+      await _notificationApiService.fetchNotifications();
+
       debugPrint('Firebase Cloud Messaging fully initialized');
     } catch (e) {
       debugPrint('Error initializing Firebase Messaging: $e');
@@ -125,7 +129,7 @@ class NotificationService {
       RemoteNotification? notification = message.notification;
       AndroidNotification? android = message.notification?.android;
 
-      // Add the notification to our local notifications list
+      // Create notification model from FCM message
       final notificationModel = NotificationModel.fromFcm({
         'id': message.messageId ??
             DateTime.now().millisecondsSinceEpoch.toString(),
@@ -134,7 +138,8 @@ class NotificationService {
         'type': message.data['type'] ?? 'General',
       });
 
-      MockNotificationService.notifications.insert(0, notificationModel);
+      // Add the notification to our notification service
+      _notificationApiService.addNotification(notificationModel);
 
       // Local notifications showing is commented out due to dependency issues
       // if (notification != null && android != null) {
@@ -156,11 +161,9 @@ class NotificationService {
       //     );
       //   } catch (e) {
       //     debugPrint('Error showing local notification: $e');
-      //     // Notification data was still added to MockNotificationService
       //   }
       // }
 
-      // Even without local notifications, the notification is still added to our service
       debugPrint('Notification added to service: ${notificationModel.title}');
     } catch (e) {
       debugPrint('Error handling foreground message: $e');
@@ -225,5 +228,27 @@ class NotificationService {
     } catch (e) {
       debugPrint('Error deleting FCM token: $e');
     }
+  }
+
+  // Get the notification stream for UI components to listen to
+  Stream<List<NotificationModel>> get notificationsStream =>
+      _notificationApiService.notificationsStream;
+
+  // Get unread notification count
+  int getUnreadCount() => _notificationApiService.getUnreadCount();
+
+  // Force refresh notifications from server
+  Future<void> refreshNotifications() async {
+    await _notificationApiService.fetchNotifications(force: true);
+  }
+
+  // Mark a single notification as read
+  Future<bool> markAsRead(String id) async {
+    return await _notificationApiService.markAsRead(id);
+  }
+
+  // Mark all notifications as read
+  Future<bool> markAllAsRead() async {
+    return await _notificationApiService.markAllAsRead();
   }
 }
