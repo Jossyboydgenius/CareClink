@@ -6,6 +6,7 @@ import '../data/services/local_storage_service.dart';
 import '../data/services/appointment_summary_service.dart';
 import '../data/services/appointment_service.dart';
 import '../data/services/notification_service.dart';
+import '../data/services/notification_api_service.dart';
 import 'flavor_config.dart';
 
 final locator = GetIt.instance;
@@ -33,6 +34,10 @@ void _registerServices() {
   if (!locator.isRegistered<AppointmentService>()) {
     locator
         .registerLazySingleton<AppointmentService>(() => AppointmentService());
+  }
+  if (!locator.isRegistered<NotificationApiService>()) {
+    locator.registerLazySingleton<NotificationApiService>(
+        () => NotificationApiService());
   }
   if (!locator.isRegistered<NotificationService>()) {
     locator.registerLazySingleton<NotificationService>(
