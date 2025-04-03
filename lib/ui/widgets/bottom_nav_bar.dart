@@ -4,7 +4,8 @@ import '../../shared/app_colors.dart';
 import '../../shared/app_icons.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
-import '../../data/services/mock_notification_service.dart';
+import '../../app/locator.dart';
+import '../../data/services/notification_service.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -23,6 +24,17 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   bool _isNavigating = false;
   DateTime? _lastTap;
+  final NotificationService _notificationService =
+      locator<NotificationService>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set up a listener to rebuild the widget when notifications change
+    _notificationService.notificationsStream.listen((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   Future<void> _handleNavigation(BuildContext context, int index) async {
     if (index == widget.currentIndex) return;
@@ -71,7 +83,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = MockNotificationService.getUnreadNotifications().length;
+    final unreadCount = _notificationService.getUnreadCount();
 
     return Container(
       decoration: BoxDecoration(
