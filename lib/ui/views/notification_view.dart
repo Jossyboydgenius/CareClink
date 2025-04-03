@@ -11,6 +11,7 @@ import '../../data/models/notification_model.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
 import '../../shared/app_images.dart';
+import '../../data/services/mock_notification_service.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -19,7 +20,8 @@ class NotificationView extends StatefulWidget {
   State<NotificationView> createState() => _NotificationViewState();
 }
 
-class _NotificationViewState extends State<NotificationView> with SingleTickerProviderStateMixin {
+class _NotificationViewState extends State<NotificationView>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _notificationsEnabled = true;
   int _currentIndex = 0;
@@ -39,29 +41,29 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
   }
 
   void _handleTabChange() {
-    if (_tabController.indexIsChanging) {
-      setState(() {
-        _currentIndex = _tabController.index;
-      });
-    }
+    // Update for both during animation and when animation completes
+    setState(() {
+      _currentIndex = _tabController.index;
+    });
   }
 
   void _handleMarkAsRead(String id) {
     setState(() {
-      NotificationService.markAsRead(id);
+      MockNotificationService.markAsRead(id);
     });
   }
 
   void _handleMarkAllAsRead() {
     setState(() {
-      NotificationService.markAllAsRead();
+      MockNotificationService.markAllAsRead();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final unreadNotifications = NotificationService.getUnreadNotifications();
-    final allNotifications = NotificationService.getAllNotifications();
+    final unreadNotifications =
+        MockNotificationService.getUnreadNotifications();
+    final allNotifications = MockNotificationService.getAllNotifications();
 
     return Scaffold(
       body: SafeArea(
@@ -123,7 +125,9 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: _currentIndex == 0 ? AppColors.primary : Colors.transparent,
+                              color: _currentIndex == 0
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               width: 2,
                             ),
                           ),
@@ -131,7 +135,9 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                         child: Text(
                           'Unread',
                           style: AppTextStyle.medium14.copyWith(
-                            color: _currentIndex == 0 ? AppColors.primary : AppColors.grey300,
+                            color: _currentIndex == 0
+                                ? AppColors.primary
+                                : AppColors.grey300,
                           ),
                         ),
                       ),
@@ -146,7 +152,9 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: _currentIndex == 1 ? AppColors.primary : Colors.transparent,
+                              color: _currentIndex == 1
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               width: 2,
                             ),
                           ),
@@ -154,7 +162,9 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                         child: Text(
                           'All',
                           style: AppTextStyle.medium14.copyWith(
-                            color: _currentIndex == 1 ? AppColors.primary : AppColors.grey300,
+                            color: _currentIndex == 1
+                                ? AppColors.primary
+                                : AppColors.grey300,
                           ),
                         ),
                       ),
@@ -205,9 +215,11 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                                     children: [
                                       NotificationCard(
                                         notification: notification,
-                                        onMarkAsRead: () => _handleMarkAsRead(notification.id),
+                                        onMarkAsRead: () =>
+                                            _handleMarkAsRead(notification.id),
                                       ),
-                                      if (notification != unreadNotifications.last)
+                                      if (notification !=
+                                          unreadNotifications.last)
                                         AppSpacing.v16(),
                                     ],
                                   );
@@ -235,7 +247,8 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                                   NotificationCard(
                                     notification: notification,
                                     showMarkAsRead: !notification.isRead,
-                                    onMarkAsRead: () => _handleMarkAsRead(notification.id),
+                                    onMarkAsRead: () =>
+                                        _handleMarkAsRead(notification.id),
                                   ),
                                   if (notification != allNotifications.last)
                                     AppSpacing.v16(),
@@ -249,7 +262,8 @@ class _NotificationViewState extends State<NotificationView> with SingleTickerPr
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 32.h),
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 32.h),
                                     child: Text(
                                       'No notifications',
                                       style: AppTextStyle.regular14.copyWith(
