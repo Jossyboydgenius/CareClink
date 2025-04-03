@@ -1,4 +1,4 @@
-package com.carelink.app
+package com.careclink.app
 
 import io.flutter.embedding.android.FlutterActivity
 
