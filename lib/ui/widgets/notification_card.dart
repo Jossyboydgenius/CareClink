@@ -46,25 +46,29 @@ class NotificationCard extends StatelessWidget {
               Icon(
                 Icons.info_outline,
                 color: AppColors.grey300,
-                size: 20.w,
+                size: 18.w,
               ),
               AppSpacing.h8(),
-              Text(
-                notification.type,
-                style: AppTextStyle.regular14.copyWith(
-                  color: AppColors.grey300,
+              Expanded(
+                child: Text(
+                  notification.type,
+                  style: AppTextStyle.regular12.copyWith(
+                    color: AppColors.grey300,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              AppSpacing.h8(),
               Icon(
                 Icons.access_time,
-                size: 16.w,
+                size: 14.w,
                 color: AppColors.grey300,
               ),
               AppSpacing.h4(),
               Text(
                 _getTimeAgo(),
-                style: AppTextStyle.regular14.copyWith(
+                style: AppTextStyle.regular12.copyWith(
                   color: AppColors.grey300,
                 ),
               ),
@@ -119,4 +123,4 @@ class NotificationCard extends StatelessWidget {
       ),
     );
   }
-} 
+}
