@@ -17,6 +17,7 @@ import '../../data/services/timesheet_service.dart';
 import '../../app/locator.dart';
 import '../../data/models/appointment_model.dart';
 import '../../data/services/appointment_service.dart';
+import '../../app/navigation_state_manager.dart';
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -34,26 +35,39 @@ class _AppointmentViewState extends State<AppointmentView> {
   List<Map<String, dynamic>> _recentTimesheet = [];
   final TimesheetService _timesheetService = TimesheetService();
   final AppointmentService _appointmentService = locator<AppointmentService>();
+  final NavigationStateManager _stateManager =
+      locator<NavigationStateManager>();
+  bool _appointmentsLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    // Use the state manager to load appointments
     _loadAppointments();
   }
 
   Future<void> _loadAppointments() async {
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
     try {
-      final appointments = await _appointmentService.getAppointments();
-      setState(() {
-        _appointments = appointments;
-    _filteredAppointments = List.from(_appointments);
-        _isLoading = false;
-      });
+      // Use the state manager to get cached appointments
+      final appointments = await _stateManager.getCachedAppointments();
+      if (mounted) {
+        setState(() {
+          _appointments = appointments;
+          _filteredAppointments = List.from(_appointments);
+          _isLoading = false;
+          _appointmentsLoaded = true;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading appointments: $e');
-      setState(() => _isLoading = false);
-      AppToast.showError(context, 'Failed to load appointments');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        AppToast.showError(context, 'Failed to load appointments');
+      }
     }
   }
 
@@ -63,8 +77,9 @@ class _AppointmentViewState extends State<AppointmentView> {
         _filteredAppointments = List.from(_appointments);
       } else {
         _filteredAppointments = _appointments
-            .where((appointment) =>
-                appointment.clientName.toLowerCase().contains(query.toLowerCase()))
+            .where((appointment) => appointment.clientName
+                .toLowerCase()
+                .contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -82,7 +97,7 @@ class _AppointmentViewState extends State<AppointmentView> {
         status: AppointmentStatus.none,
       ),
     );
-    
+
     return selectedAppointment.status == AppointmentStatus.pending;
   }
 
@@ -145,11 +160,14 @@ class _AppointmentViewState extends State<AppointmentView> {
 
               if (response.isSuccessful) {
                 final timesheet = response.data['timesheet'];
-                _moveToRecentTimesheet(selectedAppointment, clockInTime: clockIn, timesheetData: timesheet);
-                NavigationService.goBack();
-                AppToast.showSuccess(context, response.message ?? 'Successfully clocked in');
+                _moveToRecentTimesheet(selectedAppointment,
+                    clockInTime: clockIn, timesheetData: timesheet);
+                NavigationService.pop();
+                AppToast.showSuccess(
+                    context, response.message ?? 'Successfully clocked in');
               } else {
-                AppToast.showError(context, response.message ?? 'Failed to clock in');
+                AppToast.showError(
+                    context, response.message ?? 'Failed to clock in');
               }
             } catch (e) {
               debugPrint('Error during manual clock in: $e');
@@ -163,7 +181,7 @@ class _AppointmentViewState extends State<AppointmentView> {
       // Direct clock in for scheduled appointments
       try {
         setState(() => _isLoading = true);
-        
+
         final response = await _appointmentService.clockIn(
           appointmentId: selectedAppointment.id,
           date: DateTime.now(),
@@ -174,8 +192,10 @@ class _AppointmentViewState extends State<AppointmentView> {
         if (response.isSuccessful) {
           final timesheet = response.data['timesheet'];
           final now = TimeOfDay.now();
-          _moveToRecentTimesheet(selectedAppointment, clockInTime: now, timesheetData: timesheet);
-          AppToast.showSuccess(context, response.message ?? 'Successfully clocked in');
+          _moveToRecentTimesheet(selectedAppointment,
+              clockInTime: now, timesheetData: timesheet);
+          AppToast.showSuccess(
+              context, response.message ?? 'Successfully clocked in');
         } else {
           AppToast.showError(context, response.message ?? 'Failed to clock in');
         }
@@ -191,7 +211,8 @@ class _AppointmentViewState extends State<AppointmentView> {
     }
   }
 
-  void _moveToRecentTimesheet(AppointmentModel appointment, {
+  void _moveToRecentTimesheet(
+    AppointmentModel appointment, {
     TimeOfDay? clockInTime,
     Map<String, dynamic>? timesheetData,
   }) async {
@@ -199,16 +220,18 @@ class _AppointmentViewState extends State<AppointmentView> {
 
     final now = DateTime.now();
     final clockIn = clockInTime ?? TimeOfDay.fromDateTime(now);
-    
+
     // Use the timesheet data from the API response if available
-    final timesheetEntry = timesheetData ?? {
-      'id': appointment.id,
-      'clientName': appointment.clientName,
-      'clockIn': '${clockIn.hour}:${clockIn.minute.toString().padLeft(2, '0')}',
-      'clockOut': '',
-      'duration': '',
-      'status': 'clockin',
-    };
+    final timesheetEntry = timesheetData ??
+        {
+          'id': appointment.id,
+          'clientName': appointment.clientName,
+          'clockIn':
+              '${clockIn.hour}:${clockIn.minute.toString().padLeft(2, '0')}',
+          'clockOut': '',
+          'duration': '',
+          'status': 'clockin',
+        };
 
     // Show success message first
     AppToast.showSuccess(context, 'Successfully clocked in');
@@ -230,17 +253,44 @@ class _AppointmentViewState extends State<AppointmentView> {
     }
   }
 
+  Future<void> _handlePullToRefresh() async {
+    // Force refresh appointments
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    try {
+      // Force refresh by calling the service directly
+      final appointments = await _appointmentService.getAppointments();
+      if (mounted) {
+        setState(() {
+          _appointments = appointments;
+          _filteredAppointments = List.from(_appointments);
+          _isLoading = false;
+        });
+      }
+      // Mark appointments as refreshed in the state manager
+      _stateManager.markAppointmentsRefreshed();
+    } catch (e) {
+      debugPrint('Error refreshing appointments: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        AppToast.showError(context, 'Failed to refresh appointments');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selectedAppointment = _selectedAppointmentId != null 
+    final selectedAppointment = _selectedAppointmentId != null
         ? _appointments.firstWhere((a) => a.id == _selectedAppointmentId)
         : null;
-    
-    final isElapsed = selectedAppointment != null 
+
+    final isElapsed = selectedAppointment != null
         ? _isAppointmentElapsed(selectedAppointment.timestamp)
         : false;
 
-    final canInteract = selectedAppointment != null 
+    final canInteract = selectedAppointment != null
         ? _canInteractWithAppointment(selectedAppointment.status)
         : false;
 
@@ -265,71 +315,74 @@ class _AppointmentViewState extends State<AppointmentView> {
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _loadAppointments,
-              child: SingleChildScrollView(
+                onRefresh: _handlePullToRefresh,
+                child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Today Appointment',
-                        style: AppTextStyle.semibold24,
-                      ),
-                      AppSpacing.v8(),
-                      Text(
-                        'Select the appointment you will like to clock in.',
-                        style: AppTextStyle.regular14.copyWith(
-                          color: AppColors.grey300,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Today Appointment',
+                          style: AppTextStyle.semibold24,
                         ),
-                      ),
-                      AppSpacing.v16(),
-                      // Search bar
+                        AppSpacing.v8(),
+                        Text(
+                          'Select the appointment you will like to clock in.',
+                          style: AppTextStyle.regular14.copyWith(
+                            color: AppColors.grey300,
+                          ),
+                        ),
+                        AppSpacing.v16(),
+                        // Search bar
                         if (_appointments.isNotEmpty)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.grey100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.grey200),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 8.h,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: AppColors.grey300,
-                              size: 24.w,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.grey100,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.grey200),
                             ),
-                            AppSpacing.h8(),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: _filterAppointments,
-                                decoration: InputDecoration(
-                                  hintText: 'Search Client Name...',
-                                  hintStyle: AppTextStyle.regular14.copyWith(
-                                    color: AppColors.grey300,
-                                  ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 8.h,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  color: AppColors.grey300,
+                                  size: 24.w,
                                 ),
-                              ),
+                                AppSpacing.h8(),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _searchController,
+                                    onChanged: _filterAppointments,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search Client Name...',
+                                      hintStyle:
+                                          AppTextStyle.regular14.copyWith(
+                                        color: AppColors.grey300,
+                                      ),
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      AppSpacing.v16(),
+                          ),
+                        AppSpacing.v16(),
                         if (_isLoading)
                           Column(
-                            children: List.generate(3, (index) => Padding(
-                              padding: EdgeInsets.only(bottom: 12.h),
-                              child: const AppointmentSkeleton(),
-                            )),
+                            children: List.generate(
+                                3,
+                                (index) => Padding(
+                                      padding: EdgeInsets.only(bottom: 12.h),
+                                      child: const AppointmentSkeleton(),
+                                    )),
                           )
                         else if (_appointments.isEmpty)
                           Center(
@@ -362,24 +415,30 @@ class _AppointmentViewState extends State<AppointmentView> {
                             ),
                           )
                         else
-                      ..._filteredAppointments.map((appointment) => Column(
-                        children: [
-                          AppointmentCard(
-                                clientName: appointment.clientName,
-                                dateTime: appointment.dateTime,
-                                status: appointment.status,
-                                isSelected: _selectedAppointmentId == appointment.id,
-                            onTap: () {
-                              setState(() {
-                                    _selectedAppointmentId = appointment.id;
-                              });
-                            },
-                          ),
-                          if (appointment != _filteredAppointments.last) AppSpacing.v12(),
-                        ],
-                      )).toList(),
-                      AppSpacing.v12(),
-                    ],
+                          ..._filteredAppointments
+                              .map((appointment) => Column(
+                                    children: [
+                                      AppointmentCard(
+                                        clientName: appointment.clientName,
+                                        dateTime: appointment.dateTime,
+                                        status: appointment.status,
+                                        isSelected: _selectedAppointmentId ==
+                                            appointment.id,
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedAppointmentId =
+                                                appointment.id;
+                                          });
+                                        },
+                                      ),
+                                      if (appointment !=
+                                          _filteredAppointments.last)
+                                        AppSpacing.v12(),
+                                    ],
+                                  ))
+                              .toList(),
+                        AppSpacing.v12(),
+                      ],
                     ),
                   ),
                 ),
@@ -421,4 +480,4 @@ class _AppointmentViewState extends State<AppointmentView> {
     _searchController.dispose();
     super.dispose();
   }
-} 
+}
