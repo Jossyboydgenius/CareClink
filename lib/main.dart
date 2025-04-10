@@ -9,10 +9,13 @@ import 'app/themes.dart';
 import 'data/services/navigator_service.dart';
 import 'app/locator.dart';
 import 'app/flavor_config.dart';
+import 'app/navigation_state_manager.dart';
 import 'ui/views/sign_in_bloc/sign_in_bloc.dart';
 import 'shared/app_sizer.dart';
 import 'shared/connection_status.dart';
 import 'data/services/notification_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_manual_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,11 +23,16 @@ Future<void> main() async {
 
   try {
     // Initialize Firebase with default settings
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: FirebaseManualOptions.currentPlatform,
+    );
     debugPrint('Firebase initialized successfully');
   } catch (e) {
     debugPrint('Error initializing Firebase: $e');
   }
+
+  // Configure Firebase Cloud Messaging
+  await FirebaseMessaging.instance.requestPermission();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -40,6 +48,9 @@ Future<void> main() async {
 
   // Initialize notification service
   await locator<NotificationService>().initialize();
+
+  // Reset navigation state manager on app launch
+  locator<NavigationStateManager>().resetAllRefreshTimestamps();
 
   runApp(const MyApp());
 }
