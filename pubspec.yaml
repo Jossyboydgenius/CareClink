@@ -54,6 +54,7 @@ dependencies:
   flutter_svg: ^2.0.9
   badges: ^3.1.2
   flutter_local_notifications: ^19.0.0
+  pending_button: ^0.0.8
 
 dev_dependencies:
   flutter_test:
@@ -122,4 +123,4 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/app-logo.png"

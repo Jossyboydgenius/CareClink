@@ -560,6 +560,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+  pending_button:
+    dependency: "direct main"
+    description:
+      name: pending_button
+      sha256: b304d59e67f40fd343975333aaf3d4967ce93394d6303fec81f18a34c6adaf28
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.8"
   petitparser:
     dependency: transitive
     description:
