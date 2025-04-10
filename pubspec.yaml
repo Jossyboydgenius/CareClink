@@ -124,3 +124,4 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/images/app-logo.png"
+  remove_alpha_ios: true
