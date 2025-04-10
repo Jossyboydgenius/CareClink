@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:pending_button/pending_button.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -55,7 +56,9 @@ class _TimesheetCardState extends State<TimesheetCard> {
   @override
   Widget build(BuildContext context) {
     final status = _getStatusFromString(widget.status);
-    final bool showDuration = widget.duration != null && widget.duration!.isNotEmpty && widget.duration != '0min';
+    final bool showDuration = widget.duration != null &&
+        widget.duration!.isNotEmpty &&
+        widget.duration != '0min';
 
     return Container(
       decoration: BoxDecoration(
@@ -87,27 +90,48 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       Container(
                         height: 32.h,
                         decoration: BoxDecoration(
-                          color: widget.isClockingOut ? AppColors.grey200 : AppColors.red,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: TextButton(
-                          onPressed: widget.isClockingOut ? null : widget.onClockOut,
-                          style: TextButton.styleFrom(
-                            foregroundColor: widget.isClockingOut ? AppColors.grey : AppColors.white,
-                            padding: EdgeInsets.symmetric(horizontal: 16.w),
-                            textStyle: AppTextStyle.regular14.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                            backgroundColor: widget.isClockingOut ? AppColors.grey200 : null,
-                            disabledForegroundColor: AppColors.grey,
-                          ),
-                          child: Text(
-                            'Clock Out',
-                            style: TextStyle(
-                              color: widget.isClockingOut ? AppColors.grey : AppColors.white,
-                            ),
-                          ),
-                        ),
+                        child: widget.isClockingOut
+                            ? Container(
+                                width: 110.w,
+                                height: 32.h,
+                                decoration: BoxDecoration(
+                                  color: AppColors.grey200,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 14.w,
+                                    height: 14.w,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : PendingButton(
+                                width: 110.w,
+                                height: 32.h,
+                                backgroundColor: AppColors.red,
+                                foregroundColor: AppColors.white,
+                                borderRadius: 8.r,
+                                asynFunction: () async {
+                                  if (widget.onClockOut != null) {
+                                    widget.onClockOut!();
+                                  }
+                                  // Return a completed future for the button to work
+                                  return Future.value();
+                                },
+                                child: Text(
+                                  'Clock Out',
+                                  style: AppTextStyle.regular14.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              ),
                       )
                     else if (showDuration)
                       Row(
@@ -140,7 +164,8 @@ class _TimesheetCardState extends State<TimesheetCard> {
                       widget.clockIn,
                       style: AppTextStyle.semibold12,
                     ),
-                    if (widget.clockOut != null && widget.clockOut!.isNotEmpty) ...[
+                    if (widget.clockOut != null &&
+                        widget.clockOut!.isNotEmpty) ...[
                       Expanded(
                         child: Container(
                           margin: EdgeInsets.symmetric(horizontal: 8.w),
@@ -243,4 +268,4 @@ class _TimesheetCardState extends State<TimesheetCard> {
       ),
     );
   }
-} 
+}
