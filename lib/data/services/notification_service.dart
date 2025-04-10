@@ -112,8 +112,8 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
 
-      // Fetch initial notifications from server
-      await _notificationApiService.fetchNotifications();
+      // Fetch initial notifications from server - force refresh to ensure we have the latest data
+      await _notificationApiService.fetchNotifications(force: true);
 
       debugPrint('Firebase Cloud Messaging fully initialized');
     } catch (e) {
