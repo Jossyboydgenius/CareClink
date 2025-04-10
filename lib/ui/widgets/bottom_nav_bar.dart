@@ -37,6 +37,14 @@ class _BottomNavBarState extends State<BottomNavBar> {
     _notificationService.notificationsStream.listen((_) {
       if (mounted) setState(() {});
     });
+
+    // Refresh notifications when the widget is first built
+    _refreshNotifications();
+  }
+
+  Future<void> _refreshNotifications() async {
+    // Make sure we have the latest notifications
+    await _stateManager.refreshNotificationsIfNeeded();
   }
 
   Future<void> _handleNavigation(BuildContext context, int index) async {
