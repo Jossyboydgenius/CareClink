@@ -89,34 +89,48 @@ class TimesheetService {
       );
 
       if (response.isSuccessful) {
-        // Fetch updated timesheets from backend
-        final timesheetsResponse = await getTimesheets();
-        if (timesheetsResponse.isSuccessful &&
-            timesheetsResponse.data != null) {
-          clearTimesheets();
-          final timesheets = timesheetsResponse.data['timesheets'] as List;
-          for (final timesheet in timesheets) {
-            final clientData = timesheet['client'];
-            String clientName = 'Unknown Client';
-            if (clientData != null) {
-              if (clientData is Map) {
-                clientName =
-                    clientData['fullname']?.toString() ?? 'Unknown Client';
-              } else if (clientData is String) {
-                clientName = clientData;
-              }
-            }
+        // Use a microtask to allow UI to update before fetching timesheets
+        Future.microtask(() async {
+          // Fetch updated timesheets from backend
+          final timesheetsResponse = await getTimesheets();
+          if (timesheetsResponse.isSuccessful &&
+              timesheetsResponse.data != null) {
+            clearTimesheets();
+            final timesheets = timesheetsResponse.data['timesheets'] as List;
 
-            addTimesheet({
-              'id': timesheet['_id'],
-              'clientName': clientName,
-              'clockIn': timesheet['clockIn'],
-              'clockOut': timesheet['clockOut'],
-              'duration': timesheet['duration']?.toString() ?? '0',
-              'status': timesheet['clockOut'] == null ? 'clockin' : 'clockout',
-            });
+            // Process timesheets in small batches to prevent UI freeze
+            for (int i = 0; i < timesheets.length; i++) {
+              final timesheet = timesheets[i];
+
+              // Allow UI to update every few items
+              if (i > 0 && i % 5 == 0) {
+                await Future.delayed(Duration.zero);
+              }
+
+              // Process timesheet
+              final clientData = timesheet['client'];
+              String clientName = 'Unknown Client';
+              if (clientData != null) {
+                if (clientData is Map) {
+                  clientName =
+                      clientData['fullname']?.toString() ?? 'Unknown Client';
+                } else if (clientData is String) {
+                  clientName = clientData;
+                }
+              }
+
+              addTimesheet({
+                'id': timesheet['_id'],
+                'clientName': clientName,
+                'clockIn': timesheet['clockIn'],
+                'clockOut': timesheet['clockOut'],
+                'duration': timesheet['duration']?.toString() ?? '0',
+                'status':
+                    timesheet['clockOut'] == null ? 'clockin' : 'clockout',
+              });
+            }
           }
-        }
+        });
       }
 
       return response;
