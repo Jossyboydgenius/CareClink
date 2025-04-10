@@ -16,8 +16,8 @@ class AppointmentSkeleton extends StatelessWidget {
         border: Border.all(color: AppColors.grey200),
       ),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: AppColors.grey200,
+        highlightColor: AppColors.grey100,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -82,4 +82,4 @@ class AppointmentSkeleton extends StatelessWidget {
       ),
     );
   }
-} 
+}
