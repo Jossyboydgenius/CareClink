@@ -3,5 +3,7 @@ abstract class DashboardEvent {
 }
 
 class LoadDashboardSummaries extends DashboardEvent {
-  const LoadDashboardSummaries();
-} 
+  final bool forceRefresh;
+
+  const LoadDashboardSummaries({this.forceRefresh = false});
+}
