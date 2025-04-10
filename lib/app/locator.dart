@@ -7,6 +7,7 @@ import '../data/services/appointment_summary_service.dart';
 import '../data/services/appointment_service.dart';
 import '../data/services/notification_service.dart';
 import '../data/services/notification_api_service.dart';
+import 'navigation_state_manager.dart';
 import 'flavor_config.dart';
 
 final locator = GetIt.instance;
@@ -42,6 +43,10 @@ void _registerServices() {
   if (!locator.isRegistered<NotificationService>()) {
     locator.registerLazySingleton<NotificationService>(
         () => NotificationService());
+  }
+  if (!locator.isRegistered<NavigationStateManager>()) {
+    locator.registerLazySingleton<NavigationStateManager>(
+        () => NavigationStateManager());
   }
 }
 
