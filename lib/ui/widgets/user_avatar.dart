@@ -79,7 +79,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
       _overlayEntry?.remove();
       _overlayEntry = null;
     }
-    
+
     if (!_isDisposed && mounted) {
       setState(() {
         _isOpen = false;
@@ -89,7 +89,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
 
   void _showOverlay() {
     if (!mounted || _isDisposed) return;
-    
+
     _removeOverlay();
 
     final overlay = Overlay.of(context, rootOverlay: true);
@@ -131,7 +131,8 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
                 child: InkWell(
                   onTap: _handleSignOut,
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -169,19 +170,20 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
 
   Future<void> _loadUserData() async {
     if (!mounted || _isDisposed) return;
-    
+
     debugPrint('Loading user data for avatar');
     try {
       final userService = locator<UserService>();
       final userData = await userService.getCurrentUser();
       debugPrint('User data received: ${userData.toString()}');
-      
+
       if (!_isDisposed && mounted) {
         setState(() {
           _profileImage = userData['profileImage'];
           _fullname = userData['fullname'];
           _isLoading = false;
-          debugPrint('Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
+          debugPrint(
+              'Avatar state updated - Profile Image: $_profileImage, Fullname: $_fullname');
         });
       }
     } catch (e) {
@@ -197,7 +199,7 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
 
   void _handleSignOut() async {
     if (_isDisposed) return;
-    
+
     try {
       final userService = locator<UserService>();
       await userService.logout();
@@ -218,10 +220,11 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
 
   String _getInitials() {
     if (_fullname == null || _fullname!.trim().isEmpty) return '';
-    
-    final names = _fullname!.trim().split(' ').where((name) => name.isNotEmpty).toList();
+
+    final names =
+        _fullname!.trim().split(' ').where((name) => name.isNotEmpty).toList();
     if (names.isEmpty) return '';
-    
+
     if (names.length >= 2) {
       return '${names[0][0]}${names[1][0]}'.toUpperCase();
     }
@@ -338,4 +341,4 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
       ),
     );
   }
-} 
+}
