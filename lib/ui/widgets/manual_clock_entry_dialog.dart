@@ -15,7 +15,9 @@ class ManualClockEntryDialog extends StatefulWidget {
   final String clientName;
   final DateTime dateTime;
   final AppointmentStatus status;
-  final Function(DateTime date, TimeOfDay clockIn, TimeOfDay clockOut, String reason) onSave;
+  final Function(
+          DateTime date, TimeOfDay clockIn, TimeOfDay clockOut, String reason)
+      onSave;
 
   const ManualClockEntryDialog({
     Key? key,
@@ -110,7 +112,7 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
                   style: AppTextStyle.semibold20,
                 ),
                 IconButton(
-                  onPressed: () => NavigationService.goBack(),
+                  onPressed: () => NavigationService.pop(),
                   icon: Icon(
                     Icons.close,
                     color: AppColors.grey300,
@@ -299,9 +301,10 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
 
   bool _validateTimes() {
     if (_clockInTime == null || _clockOutTime == null) {
-      AppToast.showError(context, 'Please select both clock in and clock out times');
+      AppToast.showError(
+          context, 'Please select both clock in and clock out times');
       return false;
     }
     return true;
   }
-} 
+}
