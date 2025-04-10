@@ -75,6 +75,18 @@ class NavigationStateManager {
     return _notificationService.notificationsStream;
   }
 
+  /// Get only unread notifications
+  Future<List<NotificationModel>> getCachedUnreadNotifications() async {
+    // If we need to refresh, fetch unread notifications specifically
+    if (shouldRefreshNotifications()) {
+      await _notificationService.fetchUnreadNotifications(force: true);
+      _lastNotificationRefresh = DateTime.now();
+    }
+
+    // Return the unread notifications
+    return _notificationService.getUnreadNotifications();
+  }
+
   /// Get cached appointments or load them if needed
   Future<List<AppointmentModel>> getCachedAppointments() async {
     // If loading is in progress, wait for it
@@ -114,6 +126,17 @@ class NavigationStateManager {
     _isLoadingNotifications = true;
     try {
       await _notificationService.refreshNotifications();
+      _lastNotificationRefresh = DateTime.now();
+    } finally {
+      _isLoadingNotifications = false;
+    }
+  }
+
+  /// Force refresh unread notifications only
+  Future<void> forceRefreshUnreadNotifications() async {
+    _isLoadingNotifications = true;
+    try {
+      await _notificationService.fetchUnreadNotifications(force: true);
       _lastNotificationRefresh = DateTime.now();
     } finally {
       _isLoadingNotifications = false;
