@@ -16,12 +16,14 @@ import '../../shared/app_colors.dart';
 import '../../shared/app_images.dart';
 import '../../shared/app_toast.dart';
 import '../../data/services/timesheet_service.dart';
+import '../../app/navigation_state_manager.dart';
+import '../../app/locator.dart';
 import 'notification_view.dart';
 import 'appointment_view.dart';
 
 class Dashboard extends StatefulWidget {
   final Map<String, dynamic>? recentTimesheet;
-  
+
   const Dashboard({
     super.key,
     this.recentTimesheet,
@@ -37,40 +39,31 @@ class _DashboardState extends State<Dashboard> {
   final PageController _pageController = PageController();
   final TimesheetService _timesheetService = TimesheetService();
   late final DashboardBloc _dashboardBloc;
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  final NavigationStateManager _stateManager =
+      locator<NavigationStateManager>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
   final Set<String> _loadingTimesheets = {};
   bool _isInitialLoading = true;
+  bool _timesheetsLoaded = false;
+  List<Map<String, dynamic>> _cachedTimesheets = [];
+  DateTime? _lastTimesheetsRefresh;
 
   @override
   void initState() {
     super.initState();
     _dashboardBloc = DashboardBloc()..add(const LoadDashboardSummaries());
-    
+
+    // Add timesheet from appointment if provided
     if (widget.recentTimesheet != null) {
       // Check if timesheet already exists before adding
-      final existingTimesheet = _timesheetService.getTimesheet(widget.recentTimesheet!['appointmentId']);
+      final existingTimesheet =
+          _timesheetService.getTimesheet(widget.recentTimesheet!['id']);
       if (existingTimesheet == null) {
-        final clientData = widget.recentTimesheet!['client'];
-        String clientName = 'Unknown Client';
-        if (clientData != null) {
-          if (clientData is Map) {
-            clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
-          } else if (clientData is String) {
-            clientName = clientData;
-          }
-        }
-        
-        _timesheetService.addTimesheet({
-          'id': widget.recentTimesheet!['appointmentId'],
-          'clientName': clientName,
-          'clockIn': widget.recentTimesheet!['clockIn'],
-          'clockOut': widget.recentTimesheet!['clockOut'],
-          'duration': widget.recentTimesheet!['duration']?.toString() ?? '0',
-          'status': 'clockin',
-        });
+        _timesheetService.addTimesheet(widget.recentTimesheet!);
       }
     }
-    
+
     // Initialize pages with keeping state
     _pages.addAll([
       _buildDashboardContent(),
@@ -78,9 +71,9 @@ class _DashboardState extends State<Dashboard> {
       const AppointmentView(),
     ]);
 
-    // Immediately fetch timesheets when mounted
+    // Immediately fetch timesheets when mounted but only if needed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initialLoad();
+      _initialLoadIfNeeded();
     });
   }
 
@@ -91,6 +84,25 @@ class _DashboardState extends State<Dashboard> {
     super.dispose();
   }
 
+  Future<void> _initialLoadIfNeeded() async {
+    // Only load timesheets if they haven't been loaded or if it's time to refresh
+    if (!_timesheetsLoaded || _shouldRefreshTimesheets()) {
+      await _initialLoad();
+    } else {
+      // Still update UI to show we're done loading
+      setState(() {
+        _isInitialLoading = false;
+      });
+    }
+  }
+
+  bool _shouldRefreshTimesheets() {
+    if (_lastTimesheetsRefresh == null) return true;
+    // Use the same threshold as other services (5 minutes)
+    return DateTime.now().difference(_lastTimesheetsRefresh!).inMinutes >
+        NavigationStateManager.refreshThresholdMinutes;
+  }
+
   Future<void> _initialLoad() async {
     setState(() {
       _isInitialLoading = true;
@@ -98,38 +110,53 @@ class _DashboardState extends State<Dashboard> {
     await _fetchTimesheets();
     setState(() {
       _isInitialLoading = false;
+      _timesheetsLoaded = true;
     });
   }
 
   Future<void> _fetchTimesheets() async {
-    final response = await _timesheetService.getTimesheets();
-    if (response.isSuccessful && response.data != null) {
-      setState(() {
-        _timesheetService.clearTimesheets();
-        final timesheets = response.data['timesheets'] as List;
-        for (final timesheet in timesheets) {
-          final clientData = timesheet['client'];
-          String clientName = 'Unknown Client';
-          if (clientData != null) {
-            if (clientData is Map) {
-              clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
-            } else if (clientData is String) {
-              clientName = clientData;
-            }
-          }
+    // Only fetch if we need to refresh based on our caching logic
+    if (!_timesheetsLoaded || _shouldRefreshTimesheets()) {
+      final response = await _timesheetService.getTimesheets();
+      if (response.isSuccessful && response.data != null) {
+        setState(() {
+          _timesheetService.clearTimesheets();
+          final timesheets = response.data['timesheets'] as List;
+          _cachedTimesheets = [];
 
-          _timesheetService.addTimesheet({
-            'id': timesheet['_id'],
-            'clientName': clientName,
-            'clockIn': timesheet['clockIn'],
-            'clockOut': timesheet['clockOut'],
-            'duration': timesheet['duration']?.toString() ?? '0',
-            'status': timesheet['clockOut'] == null ? 'clockin' : 'clockout',  // Set status based on clockOut
-          });
-        }
-      });
-    } else {
-      AppToast.showError(context, response.message ?? 'Failed to fetch timesheets');
+          for (final timesheet in timesheets) {
+            final clientData = timesheet['client'];
+            String clientName = 'Unknown Client';
+            if (clientData != null) {
+              if (clientData is Map) {
+                clientName =
+                    clientData['fullname']?.toString() ?? 'Unknown Client';
+              } else if (clientData is String) {
+                clientName = clientData;
+              }
+            }
+
+            final timesheetData = {
+              'id': timesheet['_id'],
+              'clientName': clientName,
+              'clockIn': timesheet['clockIn'],
+              'clockOut': timesheet['clockOut'],
+              'duration': timesheet['duration']?.toString() ?? '0',
+              'status': timesheet['clockOut'] == null
+                  ? 'clockin'
+                  : 'clockout', // Set status based on clockOut
+            };
+
+            _cachedTimesheets.add(timesheetData);
+            _timesheetService.addTimesheet(timesheetData);
+          }
+          _timesheetsLoaded = true;
+          _lastTimesheetsRefresh = DateTime.now();
+        });
+      } else {
+        AppToast.showError(
+            context, response.message ?? 'Failed to fetch timesheets');
+      }
     }
   }
 
@@ -137,19 +164,26 @@ class _DashboardState extends State<Dashboard> {
     // Clear existing timesheets first
     setState(() {
       _timesheetService.clearTimesheets();
+      _timesheetsLoaded = false;
+      _lastTimesheetsRefresh = null;
     });
-    
-    // Fetch new data
+
+    // Fetch new data with force refresh
     await Future.wait([
       _fetchTimesheets(),
-      Future(() => _dashboardBloc.add(const LoadDashboardSummaries())),
+      Future(() =>
+          _dashboardBloc.add(const LoadDashboardSummaries(forceRefresh: true))),
     ]);
+
+    // Mark in our state manager that we've refreshed
+    _stateManager.markDashboardRefreshed();
   }
 
   Widget _buildActivityCards(BuildContext context, DashboardState state) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
+        final cardWidth =
+            (constraints.maxWidth - AppDimension.getWidth(16)) / 2;
         final cardHeight = cardWidth * 0.7;
 
         if (state.isLoading) {
@@ -206,13 +240,15 @@ class _DashboardState extends State<Dashboard> {
             ActivityCard(
               title: 'Monthly',
               hours: state.monthlySummary?.hours ?? '0 hr',
-              completedText: state.monthlySummary?.completed ?? '0 appointments',
+              completedText:
+                  state.monthlySummary?.completed ?? '0 appointments',
               cardColor: AppColors.activityOrange,
               borderColor: AppColors.activityOrangeBorder,
             ),
             ActivityCard(
               title: 'Pending Appointment',
-              hours: '${state.statusSummary?.pending ?? 0} ${(state.statusSummary?.pending ?? 0) <= 1 ? 'hr' : 'hrs'}',
+              hours:
+                  '${state.statusSummary?.pending ?? 0} ${(state.statusSummary?.pending ?? 0) <= 1 ? 'hr' : 'hrs'}',
               completedText: state.statusSummary?.completed ?? '0 / 0',
               cardColor: AppColors.activityPink,
               borderColor: AppColors.activityPinkBorder,
@@ -335,8 +371,10 @@ class _DashboardState extends State<Dashboard> {
         ..._timesheetService.recentTimesheets.map((timesheet) {
           final String timesheetId = timesheet['id'];
           final bool isLoading = _loadingTimesheets.contains(timesheetId);
-          final bool canClockOut = !isLoading && (timesheet['status'] == 'clockin' || timesheet['clockOut'] == null);
-          
+          final bool canClockOut = !isLoading &&
+              (timesheet['status'] == 'clockin' ||
+                  timesheet['clockOut'] == null);
+
           return Column(
             children: [
               TimesheetCard(
@@ -346,7 +384,8 @@ class _DashboardState extends State<Dashboard> {
                 clockOut: timesheet['clockOut'],
                 duration: timesheet['duration'],
                 status: timesheet['status'],
-                onClockOut: canClockOut ? () => _handleClockOut(timesheetId) : null,
+                onClockOut:
+                    canClockOut ? () => _handleClockOut(timesheetId) : null,
                 onExpandDetails: () {},
                 isClockingOut: isLoading,
               ),
@@ -368,7 +407,8 @@ class _DashboardState extends State<Dashboard> {
     try {
       final response = await _timesheetService.clockOut(timesheetId);
       if (response.isSuccessful) {
-        AppToast.showSuccess(context, response.message ?? 'Successfully clocked out');
+        AppToast.showSuccess(
+            context, response.message ?? 'Successfully clocked out');
         // Refresh everything
         await _refreshDashboard();
       } else {
@@ -389,9 +429,9 @@ class _DashboardState extends State<Dashboard> {
       value: _dashboardBloc,
       child: Scaffold(
         body: SafeArea(
-          child: IndexedStack(
-            index: _currentIndex,
-            children: _pages,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _pages[_currentIndex],
           ),
         ),
         bottomNavigationBar: BottomNavBar(
