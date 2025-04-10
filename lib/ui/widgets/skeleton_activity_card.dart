@@ -1,3 +1,4 @@
+import 'package:careclink/shared/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
@@ -27,8 +28,8 @@ class SkeletonActivityCard extends StatelessWidget {
         ),
       ),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: AppColors.grey200,
+        highlightColor: AppColors.grey100,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -83,4 +84,4 @@ class SkeletonActivityCard extends StatelessWidget {
       ),
     );
   }
-} 
+}
