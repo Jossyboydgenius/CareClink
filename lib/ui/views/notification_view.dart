@@ -14,6 +14,7 @@ import '../../shared/app_images.dart';
 import '../../app/locator.dart';
 import '../../data/services/notification_service.dart';
 import '../../data/models/notification_model.dart';
+import '../../app/navigation_state_manager.dart';
 
 class NotificationView extends StatefulWidget {
   const NotificationView({super.key});
@@ -28,14 +29,13 @@ class _NotificationViewState extends State<NotificationView>
   bool _notificationsEnabled = true;
   final NotificationService _notificationService =
       locator<NotificationService>();
+  final NavigationStateManager _stateManager =
+      locator<NavigationStateManager>();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    // Refresh notifications when view is opened
-    _notificationService.refreshNotifications();
   }
 
   @override
@@ -52,12 +52,17 @@ class _NotificationViewState extends State<NotificationView>
     await _notificationService.markAllAsRead();
   }
 
+  Future<void> _handlePullToRefresh() async {
+    // Force refresh notifications
+    await _stateManager.forceRefreshNotifications();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: StreamBuilder<List<NotificationModel>>(
-          stream: _notificationService.notificationsStream,
+          stream: _stateManager.getCachedNotifications(),
           builder: (context, snapshot) {
             // Handle loading and error states
             if (snapshot.connectionState == ConnectionState.waiting &&
@@ -314,8 +319,7 @@ class _NotificationViewState extends State<NotificationView>
                                 onRefresh: () async {
                                   // Show temporary loading state
                                   setState(() {});
-                                  await _notificationService
-                                      .refreshNotifications();
+                                  await _handlePullToRefresh();
                                   setState(() {});
                                 },
                                 child: SingleChildScrollView(
@@ -353,10 +357,7 @@ class _NotificationViewState extends State<NotificationView>
                                 ),
                               )
                             : RefreshIndicator(
-                                onRefresh: () async {
-                                  await _notificationService
-                                      .refreshNotifications();
-                                },
+                                onRefresh: _handlePullToRefresh,
                                 child: SingleChildScrollView(
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),
@@ -400,7 +401,7 @@ class _NotificationViewState extends State<NotificationView>
                           onRefresh: () async {
                             // Show temporary loading state
                             setState(() {});
-                            await _notificationService.refreshNotifications();
+                            await _handlePullToRefresh();
                             setState(() {});
                           },
                           child: SingleChildScrollView(
