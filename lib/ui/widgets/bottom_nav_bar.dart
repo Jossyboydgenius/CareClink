@@ -6,6 +6,7 @@ import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
 import '../../app/locator.dart';
 import '../../data/services/notification_service.dart';
+import '../../app/navigation_state_manager.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -26,6 +27,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   DateTime? _lastTap;
   final NotificationService _notificationService =
       locator<NotificationService>();
+  final NavigationStateManager _stateManager =
+      locator<NavigationStateManager>();
 
   @override
   void initState() {
@@ -52,19 +55,26 @@ class _BottomNavBarState extends State<BottomNavBar> {
     _isNavigating = true;
 
     try {
-      String targetRoute;
+      // Use the same navigation pattern for all tabs for consistency
       switch (index) {
         case 0:
-          targetRoute = AppRoutes.dashboardView;
-          await NavigationService.closeAllAndPushNamed(targetRoute);
+          // Dashboard tab
+          // Apply state management before navigating
+          await _stateManager.refreshNotificationsIfNeeded();
+          // Use pushNamed for consistency with other tabs
+          await NavigationService.pushNamed(AppRoutes.dashboardView);
           break;
         case 1:
-          targetRoute = AppRoutes.notificationView;
-          await NavigationService.pushNamed(targetRoute);
+          // Notification tab
+          // Only refresh notifications if needed based on our threshold
+          await _stateManager.refreshNotificationsIfNeeded();
+          await NavigationService.pushNamed(AppRoutes.notificationView);
           break;
         case 2:
-          targetRoute = AppRoutes.appointmentView;
-          await NavigationService.pushNamed(targetRoute);
+          // Appointment tab
+          // Appointment view will handle its own loading
+          await _stateManager.refreshAppointmentsIfNeeded();
+          await NavigationService.pushNamed(AppRoutes.appointmentView);
           break;
         default:
           _isNavigating = false;
