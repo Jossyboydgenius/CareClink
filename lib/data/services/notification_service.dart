@@ -138,8 +138,11 @@ class NotificationService {
         'type': message.data['type'] ?? 'General',
       });
 
-      // Add the notification to our notification service
+      // Add the notification to our notification service and refresh from server
       _notificationApiService.addNotification(notificationModel);
+
+      // Force refresh to get latest data from server
+      refreshNotifications();
 
       // Local notifications showing is commented out due to dependency issues
       // if (notification != null && android != null) {
@@ -237,9 +240,18 @@ class NotificationService {
   // Get unread notification count
   int getUnreadCount() => _notificationApiService.getUnreadCount();
 
+  // Get unread notifications
+  List<NotificationModel> getUnreadNotifications() =>
+      _notificationApiService.getUnreadNotifications();
+
   // Force refresh notifications from server
   Future<void> refreshNotifications() async {
     await _notificationApiService.fetchNotifications(force: true);
+  }
+
+  // Force refresh unread notifications from server
+  Future<void> fetchUnreadNotifications({bool force = true}) async {
+    await _notificationApiService.fetchUnreadNotifications(force: force);
   }
 
   // Mark a single notification as read
