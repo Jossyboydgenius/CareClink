@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../app/locator.dart';
 import '../models/notification_model.dart';
 import 'api/api.dart';
-import 'mock_notification_service.dart';
 import 'dart:async';
 
 class NotificationApiService {
@@ -25,8 +24,8 @@ class NotificationApiService {
   bool _isFetching = false;
 
   NotificationApiService() {
-    // Load initial mock data if available
-    _cachedNotifications = MockNotificationService.getAllNotifications();
+    // Initialize with empty list
+    _cachedNotifications = [];
     _notificationsStreamController.add(_cachedNotifications);
 
     // Setup polling for new notifications
@@ -145,6 +144,11 @@ class NotificationApiService {
 
   // Get unread notification count
   int getUnreadCount() {
+    // If we encountered errors loading notifications, or we have an empty cache
+    // and never successfully loaded, return 0 to hide the badge
+    if (_cachedNotifications.isEmpty && _lastFetchTime == null) {
+      return 0;
+    }
     return getUnreadNotifications().length;
   }
 
