@@ -57,10 +57,13 @@ class _DashboardState extends State<Dashboard> {
     // Add timesheet from appointment if provided
     if (widget.recentTimesheet != null) {
       // Check if timesheet already exists before adding
-      final existingTimesheet =
-          _timesheetService.getTimesheet(widget.recentTimesheet!['id']);
-      if (existingTimesheet == null) {
-        _timesheetService.addTimesheet(widget.recentTimesheet!);
+      final String? timesheetId = widget.recentTimesheet!['id'] as String?;
+
+      if (timesheetId != null) {
+        final existingTimesheet = _timesheetService.getTimesheet(timesheetId);
+        if (existingTimesheet == null) {
+          _timesheetService.addTimesheet(widget.recentTimesheet!);
+        }
       }
     }
 
@@ -405,14 +408,26 @@ class _DashboardState extends State<Dashboard> {
     });
 
     try {
-      final response = await _timesheetService.clockOut(timesheetId);
+      // Use a separate future to prevent UI blocking
+      final response = await Future(() async {
+        return await _timesheetService.clockOut(timesheetId);
+      });
+
       if (response.isSuccessful) {
         AppToast.showSuccess(
             context, response.message ?? 'Successfully clocked out');
-        // Refresh everything
-        await _refreshDashboard();
+
+        // Schedule the dashboard refresh as a microtask to prevent UI freezing
+        Future.microtask(() async {
+          await _refreshDashboard();
+        });
       } else {
         AppToast.showError(context, response.message ?? 'Failed to clock out');
+      }
+    } catch (e) {
+      debugPrint('Error during clock out: $e');
+      if (mounted) {
+        AppToast.showError(context, 'Error during clock out: $e');
       }
     } finally {
       if (mounted) {
