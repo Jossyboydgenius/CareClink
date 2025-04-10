@@ -36,10 +36,37 @@ class _NotificationViewState extends State<NotificationView>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // Listen for tab changes to load appropriate data
+    _tabController.addListener(_handleTabChange);
+
+    // Force refresh notifications when view is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleInitialLoad();
+    });
+  }
+
+  void _handleInitialLoad() async {
+    // Load data for the initial tab
+    if (_tabController.index == 0) {
+      await _handlePullToRefreshUnread();
+    } else {
+      await _handlePullToRefresh();
+    }
+  }
+
+  void _handleTabChange() {
+    // When tab changes, load appropriate data
+    if (_tabController.index == 0) {
+      _handlePullToRefreshUnread();
+    } else {
+      _handlePullToRefresh();
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -50,11 +77,27 @@ class _NotificationViewState extends State<NotificationView>
 
   void _handleMarkAllAsRead() async {
     await _notificationService.markAllAsRead();
+    // Refresh unread notifications after marking all as read
+    await _handlePullToRefreshUnread();
   }
 
+  // For All Notifications tab
   Future<void> _handlePullToRefresh() async {
-    // Force refresh notifications
+    // Force refresh all notifications
     await _stateManager.forceRefreshNotifications();
+  }
+
+  // For Unread Notifications tab
+  Future<void> _handlePullToRefreshUnread() async {
+    // Force refresh unread notifications
+    await _stateManager.forceRefreshUnreadNotifications();
+  }
+
+  Future<void> _handlePullToRefreshAll() async {
+    // Show temporary loading state
+    setState(() {});
+    await _handlePullToRefresh();
+    setState(() {});
   }
 
   @override
@@ -319,7 +362,7 @@ class _NotificationViewState extends State<NotificationView>
                                 onRefresh: () async {
                                   // Show temporary loading state
                                   setState(() {});
-                                  await _handlePullToRefresh();
+                                  await _handlePullToRefreshUnread();
                                   setState(() {});
                                 },
                                 child: SingleChildScrollView(
@@ -357,7 +400,7 @@ class _NotificationViewState extends State<NotificationView>
                                 ),
                               )
                             : RefreshIndicator(
-                                onRefresh: _handlePullToRefresh,
+                                onRefresh: _handlePullToRefreshUnread,
                                 child: SingleChildScrollView(
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),
@@ -398,12 +441,7 @@ class _NotificationViewState extends State<NotificationView>
                               ),
                         // All tab
                         RefreshIndicator(
-                          onRefresh: () async {
-                            // Show temporary loading state
-                            setState(() {});
-                            await _handlePullToRefresh();
-                            setState(() {});
-                          },
+                          onRefresh: _handlePullToRefreshAll,
                           child: SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: EdgeInsets.symmetric(horizontal: 24.w),
