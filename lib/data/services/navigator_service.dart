@@ -1,68 +1,130 @@
 import 'package:flutter/material.dart';
+import '../../app/routes/app_routes.dart';
+import '../../app/routes/page_transitions.dart';
+import '../../ui/views/dashboard_view.dart';
+import '../../ui/views/notification_view.dart';
+import '../../ui/views/appointment_view.dart';
 
-extension NavigatorStateX on NavigatorState {
+// Extension to get the current route name
+extension NavigatorStateExtension on NavigatorState {
   String? get currentRouteName {
-    String? name;
+    String? currentPath;
     popUntil((route) {
-      name = route.settings.name;
+      currentPath = route.settings.name;
       return true;
     });
-    return name;
+    return currentPath;
   }
 }
 
 class NavigationService {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-  static final RouteObserver<ModalRoute<dynamic>> routeObserver = RouteObserver<ModalRoute<dynamic>>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+  static final RouteObserver<ModalRoute<dynamic>> routeObserver =
+      RouteObserver<ModalRoute<dynamic>>();
 
-  static Future<dynamic> removeUntill(String routeName) async {
-    return navigatorKey.currentState
-        ?.popUntil((route) => route.settings.name == routeName);
-  }
+  static NavigatorState? get _navigatorState => navigatorKey.currentState;
 
+  /// Navigate to a named route
   static Future<dynamic> pushNamed(String routeName,
-      {dynamic arguments}) async {
-    return navigatorKey.currentState
-        ?.pushNamed(routeName, arguments: arguments);
+      {Object? arguments, bool replace = false}) {
+    // Optimize transitions for bottom nav tab routes
+    final currentRoute = _navigatorState?.currentRouteName;
+
+    // If we're already on the route and it's a bottom tab route, don't navigate
+    if (currentRoute == routeName && _isBottomTabRoute(routeName)) {
+      // Return a completed future with null
+      return Future.value(null);
+    }
+
+    // For tab routes, use fade transition
+    if (_isBottomTabRoute(routeName)) {
+      final Widget page = _buildPageForRoute(routeName, arguments);
+      final PageRouteBuilder route = AppPageTransitions.fadeTransition(
+        page,
+        settings: RouteSettings(name: routeName, arguments: arguments),
+      );
+
+      if (replace) {
+        return _navigatorState!.pushReplacement(route);
+      } else {
+        return _navigatorState!.push(route);
+      }
+    }
+
+    // For other routes, use normal navigation
+    if (replace) {
+      return _navigatorState!
+          .pushReplacementNamed(routeName, arguments: arguments);
+    } else {
+      return _navigatorState!.pushNamed(routeName, arguments: arguments);
+    }
   }
 
+  /// Navigate to route and remove all previous routes
   static Future<dynamic> pushReplacementNamed(String routeName,
-      {Object? arguments}) async {
-    return navigatorKey.currentState
-        ?.pushReplacementNamed(routeName, arguments: arguments);
+      {Object? arguments}) {
+    return pushNamed(routeName, arguments: arguments, replace: true);
   }
 
-  static bool canPop() {
-    return navigatorKey.currentState?.canPop() ?? false;
-  }
-
-  static String? currentRoute() {
-    return NavigationService.navigatorKey.currentState?.currentRouteName;
-  }
-
-  static void goBack() {
-    return navigatorKey.currentState?.pop();
-  }
-
+  /// Navigate to route and remove all previous routes
   static Future<dynamic> pushNamedAndRemoveUntil(String routeName,
-      {bool routePredicate = false, dynamic arguments}) async {
-    return navigatorKey.currentState?.pushNamedAndRemoveUntil(
-        routeName, (route) => routePredicate,
-        arguments: arguments);
-  }
+      {Object? arguments}) {
+    // For dashboard, use fade transition
+    if (routeName == AppRoutes.dashboardView) {
+      final Widget page =
+          Dashboard(recentTimesheet: arguments as Map<String, dynamic>?);
+      final PageRouteBuilder route = AppPageTransitions.fadeTransition(
+        page,
+        settings: RouteSettings(name: routeName, arguments: arguments),
+      );
 
-  static Future<dynamic> closeAllAndPushNamed(String routeName,
-      {bool routePredicate = false, dynamic arguments}) async {
-    return navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      return _navigatorState!.pushAndRemoveUntil(
+        route,
+        (Route<dynamic> route) => false,
+      );
+    }
+
+    return _navigatorState!.pushNamedAndRemoveUntil(
       routeName,
-      (route) => false,
+      (Route<dynamic> route) => false,
       arguments: arguments,
     );
   }
 
-  static Future<dynamic> popAndPushNamed(String routeName,
-      {dynamic arguments}) async {
-    return navigatorKey.currentState
-        ?.popAndPushNamed(routeName, arguments: arguments);
+  /// Go back to previous route
+  static void pop({Object? result}) {
+    return _navigatorState!.pop(result);
   }
-} 
+
+  /// Check if we can go back
+  static bool canPop() {
+    return _navigatorState!.canPop();
+  }
+
+  /// Helper to check if a route is a bottom tab route
+  static bool _isBottomTabRoute(String routeName) {
+    return routeName == AppRoutes.dashboardView ||
+        routeName == AppRoutes.notificationView ||
+        routeName == AppRoutes.appointmentView;
+  }
+
+  /// Helper to build the appropriate page widget for a route
+  static Widget _buildPageForRoute(String routeName, Object? arguments) {
+    switch (routeName) {
+      case AppRoutes.dashboardView:
+        return Dashboard(recentTimesheet: arguments as Map<String, dynamic>?);
+      case AppRoutes.notificationView:
+        return const NotificationView();
+      case AppRoutes.appointmentView:
+        return const AppointmentView();
+      default:
+        throw Exception('Unknown route: $routeName');
+    }
+  }
+
+  // For backwards compatibility
+  static void goBack() {
+    pop();
+  }
+}
