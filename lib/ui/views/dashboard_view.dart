@@ -48,6 +48,7 @@ class _DashboardState extends State<Dashboard> {
   bool _timesheetsLoaded = false;
   List<Map<String, dynamic>> _cachedTimesheets = [];
   DateTime? _lastTimesheetsRefresh;
+  bool _noTimesheetsFound = false;
 
   @override
   void initState() {
@@ -127,6 +128,15 @@ class _DashboardState extends State<Dashboard> {
           final timesheets = response.data['timesheets'] as List;
           _cachedTimesheets = [];
 
+          // Check if there are no timesheets
+          if (timesheets.isEmpty) {
+            _noTimesheetsFound = true;
+            _timesheetsLoaded = true;
+            _lastTimesheetsRefresh = DateTime.now();
+            return;
+          }
+
+          _noTimesheetsFound = false;
           for (final timesheet in timesheets) {
             final clientData = timesheet['client'];
             String clientName = 'Unknown Client';
@@ -157,8 +167,18 @@ class _DashboardState extends State<Dashboard> {
           _lastTimesheetsRefresh = DateTime.now();
         });
       } else {
-        AppToast.showError(
-            context, response.message ?? 'Failed to fetch timesheets');
+        // Check if this is specifically a "No timesheets found" message
+        if (response.message?.contains("No timesheets found") == true) {
+          setState(() {
+            _noTimesheetsFound = true;
+            _timesheetsLoaded = true;
+            _lastTimesheetsRefresh = DateTime.now();
+          });
+        } else {
+          // Show toast only for other errors
+          AppToast.showError(
+              context, response.message ?? 'Failed to fetch timesheets');
+        }
       }
     }
   }
@@ -169,6 +189,7 @@ class _DashboardState extends State<Dashboard> {
       _timesheetService.clearTimesheets();
       _timesheetsLoaded = false;
       _lastTimesheetsRefresh = null;
+      _noTimesheetsFound = false;
     });
 
     // Fetch new data with force refresh
@@ -356,7 +377,8 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildTimesheetSection() {
-    if (_isInitialLoading || _timesheetService.recentTimesheets.isEmpty) {
+    // Initial loading state, show skeleton
+    if (_isInitialLoading && !_noTimesheetsFound) {
       return Column(
         children: [
           AppSpacing.v16(),
@@ -369,6 +391,67 @@ class _DashboardState extends State<Dashboard> {
       );
     }
 
+    // No timesheets found message
+    if (_noTimesheetsFound ||
+        (_timesheetsLoaded && _timesheetService.recentTimesheets.isEmpty)) {
+      return Container(
+        margin: EdgeInsets.symmetric(vertical: AppDimension.getHeight(16)),
+        padding: EdgeInsets.all(AppDimension.getWidth(16)),
+        decoration: BoxDecoration(
+          color: AppColors.grey100,
+          borderRadius: BorderRadius.circular(AppDimension.getWidth(12)),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy_rounded,
+              size: AppDimension.getWidth(48),
+              color: AppColors.grey300,
+            ),
+            AppSpacing.v16(),
+            Text(
+              'No timesheets found',
+              style: AppTextStyle.medium16.copyWith(
+                color: AppColors.grey300,
+              ),
+            ),
+            AppSpacing.v8(),
+            Text(
+              'Clock in an appointment to create a timesheet',
+              textAlign: TextAlign.center,
+              style: AppTextStyle.regular14.copyWith(
+                color: AppColors.grey300,
+              ),
+            ),
+            AppSpacing.v24(),
+            ElevatedButton(
+              onPressed: _refreshDashboard,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppDimension.getWidth(24),
+                  vertical: AppDimension.getHeight(12),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimension.getWidth(8)),
+                ),
+              ),
+              child: Text(
+                'Refresh',
+                style: AppTextStyle.medium14.copyWith(
+                  color: AppColors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show actual timesheet data
     return Column(
       children: [
         ..._timesheetService.recentTimesheets.map((timesheet) {
