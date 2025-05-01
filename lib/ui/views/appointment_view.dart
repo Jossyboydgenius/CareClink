@@ -324,7 +324,9 @@ class _AppointmentViewState extends State<AppointmentView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Today Appointment',
+                          _filteredAppointments.length > 1
+                              ? 'Today Appointments'
+                              : 'Today Appointment',
                           style: AppTextStyle.semibold24,
                         ),
                         AppSpacing.v8(),
