@@ -44,7 +44,9 @@ android {
 
 dependencies {
     // Add desugaring dependency
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    // Add windowmanager library to fix potential crash issues
+    implementation 'androidx.window:window:1.0.0'
 }
 
 flutter {

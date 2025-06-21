@@ -4,7 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.ViewTreeObserver
+import android.view.SurfaceView
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -19,16 +19,15 @@ class MainActivity: FlutterActivity() {
             Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
             
             Handler(Looper.getMainLooper()).postDelayed({
-                flutterEngine?.renderer?.let { renderer ->
-                    renderer.surfaceHolder?.surface?.let { surface ->
-                        if (surface.isValid) {
-                            // This forces the surface to redraw
-                            val surfaceView = flutterView.findViewById<android.view.View>(
-                                io.flutter.R.id.flutter_surface_view
-                            )
-                            surfaceView?.requestLayout()
-                        }
-                    }
+                try {
+                    // Try to find the Flutter surface view and request a layout
+                    val flutterView = findViewById<SurfaceView>(
+                        resources.getIdentifier("flutter_surface_view", "id", "io.flutter")
+                    )
+                    flutterView?.requestLayout()
+                } catch (e: Exception) {
+                    // Log error but allow app to continue
+                    println("Error refreshing Flutter surface: ${e.message}")
                 }
             }, 100)
         }

@@ -34,15 +34,15 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   http: ^1.2.0
   equatable: ^2.0.5
-  flutter_bloc: ^9.0.0
-  bloc: ^9.0.0
+  flutter_bloc: ^7.0.0
+  bloc: ^7.0.0
   flutter_dotenv: ^5.1.0
-  fluttertoast: ^8.2.4
+  # fluttertoast: ^8.2.2  # Temporarily commenting out due to compilation issues
   skeletonizer: ^1.0.1
   shimmer: ^3.0.0
   connectivity_plus: ^5.0.2
-  firebase_core: ^2.27.1
-  firebase_messaging: ^14.8.15
+  firebase_core: ^3.13.1
+  firebase_messaging: ^15.2.6  # Updated for compatibility
   # flutter_local_notifications: ^16.3.3
 
   # The following adds the Cupertino Icons font to your application.
@@ -53,7 +53,7 @@ dependencies:
   time_picker_spinner_pop_up: ^1.3.0
   flutter_svg: ^2.0.9
   badges: ^3.1.2
-  flutter_local_notifications: ^19.0.0
+  # flutter_local_notifications: ^16.3.3  # Temporarily commented out due to compilation issues
   pending_button: ^0.0.8
 
 dev_dependencies:
