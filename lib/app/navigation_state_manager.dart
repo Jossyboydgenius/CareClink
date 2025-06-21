@@ -158,7 +158,7 @@ class NavigationStateManager {
   Future<List<AppointmentModel>> _refreshAppointments() async {
     _isLoadingAppointments = true;
     try {
-      final appointments = await _appointmentService.getAppointments();
+      final appointments = await _appointmentService.getTodayAppointments();
       _cachedAppointments = appointments;
       _lastAppointmentRefresh = DateTime.now();
       return appointments;
@@ -180,5 +180,18 @@ class NavigationStateManager {
   /// Mark appointments as refreshed (called after a manual refresh)
   void markAppointmentsRefreshed() {
     _lastAppointmentRefresh = DateTime.now();
+  }
+
+  /// Force refresh appointments
+  Future<List<AppointmentModel>> forceRefreshAppointments() async {
+    _isLoadingAppointments = true;
+    try {
+      final appointments = await _appointmentService.getTodayAppointments();
+      _cachedAppointments = appointments;
+      _lastAppointmentRefresh = DateTime.now();
+      return appointments;
+    } finally {
+      _isLoadingAppointments = false;
+    }
   }
 }
