@@ -1,3 +1,5 @@
+import 'sign_in_state.dart';
+
 abstract class SignInEvent {
   const SignInEvent();
 }
@@ -27,4 +29,9 @@ class SignInUser extends SignInEvent {
 
 class SignInCheckSavedCredentials extends SignInEvent {
   const SignInCheckSavedCredentials();
-} 
+}
+
+class SignInRoleChange extends SignInEvent {
+  const SignInRoleChange(this.role);
+  final UserRole role;
+}
