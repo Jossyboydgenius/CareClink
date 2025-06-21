@@ -1,5 +1,7 @@
 enum SignInStatus { initial, loading, success, failure }
 
+enum UserRole { interpreter, staff }
+
 class SignInState {
   const SignInState({
     this.status = SignInStatus.initial,
@@ -12,6 +14,7 @@ class SignInState {
     this.isFormValid = false,
     this.errorMessage,
     this.data,
+    this.selectedRole = UserRole.interpreter,
   });
 
   final SignInStatus status;
@@ -24,9 +27,13 @@ class SignInState {
   final bool isFormValid;
   final String? errorMessage;
   final Map<String, dynamic>? data;
+  final UserRole selectedRole;
 
   bool get isButtonEnabled =>
-      isFormValid && status != SignInStatus.loading && email != null && password != null;
+      isFormValid &&
+      status != SignInStatus.loading &&
+      email != null &&
+      password != null;
 
   SignInState copyWith({
     SignInStatus? status,
@@ -39,6 +46,7 @@ class SignInState {
     bool? isFormValid,
     String? errorMessage,
     Map<String, dynamic>? data,
+    UserRole? selectedRole,
   }) {
     return SignInState(
       status: status ?? this.status,
@@ -51,6 +59,7 @@ class SignInState {
       isFormValid: isFormValid ?? this.isFormValid,
       errorMessage: errorMessage ?? this.errorMessage,
       data: data ?? this.data,
+      selectedRole: selectedRole ?? this.selectedRole,
     );
   }
-} 
+}
