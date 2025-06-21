@@ -14,19 +14,22 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInUser>(_onSignInUser);
     on<SignInCheckSavedCredentials>(_onCheckSavedCredentials);
     on<SignInTogglePasswordVisibility>(_onTogglePasswordVisibility);
+    on<SignInRoleChange>(_onRoleChanged);
     _init();
   }
 
-  final UserService _userService = locator<UserService>();
-  final LocalStorageService _localStorageService = locator<LocalStorageService>();
+  final LocalStorageService _localStorageService =
+      locator<LocalStorageService>();
 
   Future<void> _init() async {
     try {
       final rememberMe = await _localStorageService.getRememberMe();
       if (rememberMe) {
-        final savedEmail = await _localStorageService.getStorageValue(LocalStorageKeys.debugEmail);
-        final savedPassword = await _localStorageService.getStorageValue(LocalStorageKeys.debugPassword);
-        
+        final savedEmail = await _localStorageService
+            .getStorageValue(LocalStorageKeys.debugEmail);
+        final savedPassword = await _localStorageService
+            .getStorageValue(LocalStorageKeys.debugPassword);
+
         if (savedEmail != null && savedPassword != null) {
           add(SignInEmailChange(savedEmail));
           add(SignInPasswordChange(savedPassword));
@@ -44,30 +47,37 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     ));
   }
 
-  void _onPasswordChanged(SignInPasswordChange event, Emitter<SignInState> emit) {
+  void _onPasswordChanged(
+      SignInPasswordChange event, Emitter<SignInState> emit) {
     emit(state.copyWith(
       password: event.password,
     ));
   }
 
-  void _onTogglePasswordVisibility(SignInTogglePasswordVisibility event, Emitter<SignInState> emit) {
+  void _onTogglePasswordVisibility(
+      SignInTogglePasswordVisibility event, Emitter<SignInState> emit) {
     emit(state.copyWith(obscurePassword: !state.obscurePassword));
   }
 
-  void _onRememberMeChanged(SignInRememberMeChange event, Emitter<SignInState> emit) async {
+  void _onRememberMeChanged(
+      SignInRememberMeChange event, Emitter<SignInState> emit) async {
     await _localStorageService.setRememberMe(event.rememberMe);
     if (!event.rememberMe) {
       await _localStorageService.clearAuthAll();
-      await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'false');
+      await _localStorageService.saveStorageValue(
+          LocalStorageKeys.rememberMe, 'false');
     }
     emit(state.copyWith(rememberMe: event.rememberMe));
   }
 
-  Future<void> _onCheckSavedCredentials(SignInCheckSavedCredentials event, Emitter<SignInState> emit) async {
-    final savedEmail = await _localStorageService.getStorageValue(LocalStorageKeys.debugEmail);
-    final savedPassword = await _localStorageService.getStorageValue(LocalStorageKeys.debugPassword);
+  Future<void> _onCheckSavedCredentials(
+      SignInCheckSavedCredentials event, Emitter<SignInState> emit) async {
+    final savedEmail =
+        await _localStorageService.getStorageValue(LocalStorageKeys.debugEmail);
+    final savedPassword = await _localStorageService
+        .getStorageValue(LocalStorageKeys.debugPassword);
     final rememberMe = await _localStorageService.getRememberMe();
-    
+
     if (savedEmail != null && savedPassword != null && rememberMe) {
       emit(state.copyWith(
         email: savedEmail,
@@ -77,13 +87,27 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     }
   }
 
-  Future<void> _onSignInUser(SignInUser event, Emitter<SignInState> emit) async {
+  Future<void> _onSignInUser(
+    SignInUser event,
+    Emitter<SignInState> emit,
+  ) async {
+    if (state.email == null || state.password == null) {
+      emit(state.copyWith(
+        status: SignInStatus.failure,
+        errorMessage: 'Please enter email and password',
+      ));
+      return;
+    }
+
     emit(state.copyWith(status: SignInStatus.loading));
 
     try {
-      final response = await _userService.login(
+      final userService = locator<UserService>();
+      final response = await userService.login(
         email: state.email!,
         password: state.password!,
+        rememberMe: state.rememberMe,
+        role: state.selectedRole == UserRole.staff ? 'staff' : 'interpreter',
       );
 
       if (response.isSuccessful) {
@@ -97,19 +121,24 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
           email: user['email'],
           role: user['role'],
           fullname: user['fullname'],
-          profileImage: user['profileImage'], // This is optional, so it's okay if it's null
+          profileImage: user[
+              'profileImage'], // This is optional, so it's okay if it's null
         );
 
         // Handle remember me
         if (state.rememberMe) {
           await _localStorageService.setRememberMe(true);
-          await _localStorageService.saveStorageValue(LocalStorageKeys.debugEmail, state.email!);
-          await _localStorageService.saveStorageValue(LocalStorageKeys.debugPassword, state.password!);
-          await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'true');
+          await _localStorageService.saveStorageValue(
+              LocalStorageKeys.debugEmail, state.email!);
+          await _localStorageService.saveStorageValue(
+              LocalStorageKeys.debugPassword, state.password!);
+          await _localStorageService.saveStorageValue(
+              LocalStorageKeys.rememberMe, 'true');
         } else {
           await _localStorageService.setRememberMe(false);
           await _localStorageService.clearAuthAll();
-          await _localStorageService.saveStorageValue(LocalStorageKeys.rememberMe, 'false');
+          await _localStorageService.saveStorageValue(
+              LocalStorageKeys.rememberMe, 'false');
         }
 
         emit(state.copyWith(
@@ -120,15 +149,20 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         debugPrint('Error ${response.message}');
         emit(state.copyWith(
           status: SignInStatus.failure,
-          errorMessage: response.message ?? 'Login failed',
+          errorMessage: response.message ?? 'Failed to sign in',
         ));
       }
-    } on Exception catch (e) {
-      debugPrint(e.toString());
+    } catch (e) {
       emit(state.copyWith(
         status: SignInStatus.failure,
         errorMessage: e.toString(),
       ));
     }
   }
-} 
+
+  void _onRoleChanged(SignInRoleChange event, Emitter<SignInState> emit) {
+    emit(state.copyWith(
+      selectedRole: event.role,
+    ));
+  }
+}
