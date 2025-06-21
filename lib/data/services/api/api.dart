@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -16,7 +15,8 @@ class Api {
   static const bool useStaging = false;
   String get baseUrl => _config.apiBaseUrl;
   String? _token;
-  final LocalStorageService localStorageService = locator<LocalStorageService>();
+  final LocalStorageService localStorageService =
+      locator<LocalStorageService>();
 
   void updateToken(String? token) {
     _token = token;
@@ -84,7 +84,8 @@ class Api {
     try {
       Request request = Request('PATCH', Uri.parse(_config.apiBaseUrl + url));
 
-      debugPrint('PATCH request to ${_config.apiBaseUrl + url} with body: $body');
+      debugPrint(
+          'PATCH request to ${_config.apiBaseUrl + url} with body: $body');
       return await _sendRequest(
         request,
         hasHeader,
@@ -193,28 +194,44 @@ class Api {
   }) async {
     try {
       final request = Request('PUT', Uri.parse(_config.apiBaseUrl + url));
-      
-      if (hasHeader) {
-        final userValue = await localStorageService.getStorageValue(LocalStorageKeys.accessToken);
-        if (userValue != null) {
+
+      // Always try in-memory token first - most reliable for both remember me and non-remember me cases
+      if (_token != null && _token!.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $_token';
+        debugPrint('Using in-memory token for PUT request: $_token');
+      }
+      // Only try storage if in-memory token is not available and auth is needed
+      else if (hasHeader) {
+        final userValue = await localStorageService
+            .getStorageValue(LocalStorageKeys.accessToken);
+        if (userValue != null && userValue.isNotEmpty) {
           request.headers['Authorization'] = 'Bearer $userValue';
+          debugPrint('Using stored token for PUT request: $userValue');
+
+          // Update in-memory token for consistency
+          updateToken(userValue);
+        } else {
+          debugPrint(
+              'No token available for PUT request - this may cause auth errors');
         }
       }
-      
+
       request.headers['Content-Type'] = 'application/json';
       request.body = json.encode(body);
-      
+
       debugPrint('PUT request to ${_config.apiBaseUrl + url} with body: $body');
-      
+
       final streamedResponse = await request.send();
       final response = await Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final responseData = response.body.isNotEmpty ? json.decode(response.body) : null;
+        final responseData =
+            response.body.isNotEmpty ? json.decode(response.body) : null;
         return ApiResponse(
           isSuccessful: true,
           data: responseData,
-          message: responseData?['message'] ?? 'Clock-out time successfully updated',
+          message:
+              responseData?['message'] ?? 'Clock-out time successfully updated',
         );
       } else {
         return ApiResponse(
@@ -243,79 +260,92 @@ class Api {
   }
 
   Future<ApiResponse> _sendRequest(
-    request,
+    Request request,
     bool hasHeader, {
-    Map<String, dynamic>? body,
-    bool isMultiPart = false,
+    dynamic body,
   }) async {
-    if (body != null && !isMultiPart) {
-      request.body = json.encode(body);
-    }
-    log('body: $body');
-    Map<String, String> networkHeaders;
+    try {
+      // Always add authorization header if in-memory token exists
+      // This is critical for non-remember me sessions to work properly
+      if (_token != null && _token!.isNotEmpty) {
+        request.headers.addAll({
+          'Authorization': 'Bearer $_token',
+        });
+        debugPrint('Using in-memory token for request: $_token');
+      }
+      // Only fall back to storage if we need to and don't have a token in memory
+      else if (hasHeader) {
+        // Try to get from local storage
+        final storedToken = await localStorageService
+            .getStorageValue(LocalStorageKeys.accessToken);
+        if (storedToken != null && storedToken.isNotEmpty) {
+          request.headers.addAll({
+            'Authorization': 'Bearer $storedToken',
+          });
+          debugPrint('Using stored token for request: $storedToken');
 
-    networkHeaders = _headers;
-
-    if (hasHeader) {
-      final userValue = await localStorageService
-          .getStorageValue(LocalStorageKeys.accessToken);
-
-      networkHeaders['Authorization'] = 'Bearer $userValue';
-    }
-    if (hasHeader) {
-      debugPrint(
-          '${request.method.toUpperCase()} request to ${request.url} with header $networkHeaders ==> body: $body ');
-    } else {
-      debugPrint(
-          '${request.method.toUpperCase()} request to ${request.url}  ==> body: $body ');
-    }
-    request.headers.addAll(networkHeaders);
-    final response = await request.send();
-
-    return await _response(response);
-  }
-
-  Future<ApiResponse> _response(StreamedResponse response) async {
-    final responseBody = await response.stream.bytesToString();
-    debugPrint('Response body: $responseBody');
-    
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      dynamic decodedJson;
-      String? message;
-      
-      if (responseBody.isNotEmpty &&
-          (responseBody.startsWith('{') || responseBody.startsWith('['))) {
-        decodedJson = jsonDecode(responseBody);
-        if (decodedJson is Map) {
-          message = decodedJson['message'];
+          // Update the in-memory token to keep consistency
+          updateToken(storedToken);
+        } else {
+          debugPrint(
+              'No token available for request - this may cause auth errors');
         }
+      } else {
+        debugPrint('Request made without authentication header');
       }
 
-      return ApiResponse(
-        isSuccessful: true,
-        data: decodedJson,
-        message: message ?? 'success',
-      );
-    } else if (response.statusCode == 204) {
-      return ApiResponse(
-        isSuccessful: true,
-        message: 'success',
-      );
-    } else if (response.statusCode >= 400 && response.statusCode <= 499) {
-      if (responseBody.isNotEmpty) {
-        final responseBodyDecoded = jsonDecode(responseBody);
-        final responseModel = ApiResponse.fromJson(responseBodyDecoded);
-        responseModel.code = response.statusCode;
-        return responseModel;
+      // Add other headers
+      if (hasHeader) {
+        request.headers.addAll(_headers);
+      } else {
+        // Add minimal headers without authentication
+        request.headers.addAll({
+          'accept': 'application/json',
+          'Content-Type': 'application/json; charset=UTF-8',
+        });
       }
-      return ApiResponse.unknownError(response.statusCode);
-    } else {
-      return ApiResponse(
-        isSuccessful: false,
-        message: kReleaseMode
-            ? 'Error occurred'
-            : 'Error occurred: ${response.statusCode}',
+
+      // Add body if provided
+      if (body != null) {
+        request.body = jsonEncode(body);
+      }
+
+      debugPrint('Sending ${request.method} request to ${request.url}');
+
+      // Get the response
+      final streamedResponse = await Client().send(request).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException('Request timed out');
+        },
       );
+      final response = await Response.fromStream(streamedResponse);
+
+      debugPrint('Got response with status: ${response.statusCode}');
+
+      // Handle different status codes
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        // Success
+        return ApiResponse.fromHttpResponse(response);
+      } else if (response.statusCode == 401) {
+        // Unauthorized - possibly token expired
+        debugPrint('401 Unauthorized response: ${response.body}');
+
+        // Check if this is "Remember Me" state issue
+        final rememberMe = await localStorageService.getRememberMe();
+        if (!rememberMe) {
+          // This is expected, user didn't want to be remembered but token expired
+          debugPrint('Token expired - Remember Me was not checked');
+        }
+
+        return ApiResponse.fromHttpResponse(response);
+      } else {
+        // Other errors
+        return ApiResponse.fromHttpResponse(response);
+      }
+    } catch (e) {
+      debugPrint('Error in _sendRequest: $e');
+      rethrow;
     }
   }
-} 
+}
