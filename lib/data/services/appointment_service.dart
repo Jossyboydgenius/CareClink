@@ -7,10 +7,11 @@ import 'api/api_response.dart';
 class AppointmentService {
   final Api _api = locator<Api>();
 
-  Future<List<AppointmentModel>> getAppointments() async {
+  // Method to get today's appointments
+  Future<List<AppointmentModel>> getTodayAppointments() async {
     try {
       final response = await _api.getData(
-        '/user-appointment/appointments',
+        '/user-appointment/today',
         hasHeader: true,
       );
 
@@ -21,12 +22,18 @@ class AppointmentService {
             .toList();
       }
 
-      debugPrint('Error getting appointments: ${response.message}');
+      debugPrint('Error getting today\'s appointments: ${response.message}');
       return [];
     } catch (e) {
-      debugPrint('Error getting appointments: $e');
+      debugPrint('Error getting today\'s appointments: $e');
       return [];
     }
+  }
+
+  // For backward compatibility - calls getTodayAppointments
+  Future<List<AppointmentModel>> getAppointments() async {
+    debugPrint('getAppointments called - using getTodayAppointments instead');
+    return getTodayAppointments();
   }
 
   Future<ApiResponse> clockIn({
@@ -35,7 +42,7 @@ class AppointmentService {
   }) async {
     try {
       final response = await _api.postData(
-        '/interpreter/check-in/$appointmentId',
+        '/user-appointment/check-in/$appointmentId',
         {
           'date': date.toIso8601String(),
         },
@@ -65,11 +72,21 @@ class AppointmentService {
     required String reason,
   }) async {
     try {
+      // Format date as YYYY-MM-DD
+      final dateStr =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+      // Format clockIn as ISO string
+      final clockInStr = clockIn.toIso8601String();
+
+      debugPrint(
+          'Manual clock in request - appointmentId: $appointmentId, date: $dateStr, clockIn: $clockInStr, reason: $reason');
+
       final response = await _api.postData(
-        '/interpreter/manual-checkin/$appointmentId',
+        '/user-appointment/manual-checkin/$appointmentId',
         {
-          'date': date.toIso8601String(),
-          'clockIn': clockIn.toIso8601String(),
+          'date': dateStr,
+          'clockIn': clockInStr,
           'reason': reason,
         },
         hasHeader: true,
