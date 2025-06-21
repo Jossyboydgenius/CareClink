@@ -61,7 +61,7 @@ class TimesheetService {
   Future<ApiResponse> getTimesheets() async {
     try {
       final response = await _api.getData(
-        '/interpreter/get-timesheets',
+        '/user-appointment/recent-timesheet',
         hasHeader: true,
       );
 
@@ -81,11 +81,66 @@ class TimesheetService {
     }
   }
 
-  Future<ApiResponse> clockOut(String timesheetId) async {
+  // Process timesheet data from API response
+  void processTimesheetsFromResponse(List<dynamic> timesheets) {
+    clearTimesheets();
+
+    for (int i = 0; i < timesheets.length; i++) {
+      final timesheet = timesheets[i];
+
+      // Get client name from nested client object
+      String clientName = 'Unknown Client';
+      final clientData = timesheet['client'];
+      if (clientData != null && clientData is Map) {
+        clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
+      }
+
+      // Determine which clock times to use - support both formats
+      String? clockIn = timesheet['clockIn']?.toString();
+      clockIn ??= timesheet['clockInStaff']?.toString();
+
+      String? clockOut = timesheet['clockOut']?.toString();
+      clockOut ??= timesheet['clockOutStaff']?.toString();
+
+      // Determine status - use the specific status for the role when available
+      String status;
+      if (timesheet['status'] != null) {
+        status = timesheet['status'].toString().toLowerCase();
+      } else if (timesheet['staffStatus'] != null) {
+        status = timesheet['staffStatus'].toString().toLowerCase();
+      } else {
+        // Fallback based on clockOut
+        status =
+            (clockOut == null || clockOut == 'null') ? 'clockin' : 'completed';
+      }
+
+      // Get duration - support both formats
+      String duration = '0';
+      if (timesheet['duration'] != null) {
+        duration = timesheet['duration'].toString();
+      } else if (timesheet['durationStaff'] != null) {
+        duration = timesheet['durationStaff'].toString();
+      }
+
+      // Build the timesheet object with correct data
+      addTimesheet({
+        'id': timesheet['_id'],
+        'clientName': clientName,
+        'clockIn': clockIn,
+        'clockOut': clockOut,
+        'duration': duration,
+        'status': status,
+      });
+    }
+  }
+
+  Future<ApiResponse> clockOut(String timesheetId, {String reason = ''}) async {
     try {
       final response = await _api.putData(
-        '/interpreter/check-out/$timesheetId',
-        <String, dynamic>{},
+        '/user-appointment/check-out/$timesheetId',
+        {
+          'reason': reason,
+        },
       );
 
       if (response.isSuccessful) {
@@ -95,40 +150,9 @@ class TimesheetService {
           final timesheetsResponse = await getTimesheets();
           if (timesheetsResponse.isSuccessful &&
               timesheetsResponse.data != null) {
-            clearTimesheets();
             final timesheets = timesheetsResponse.data['timesheets'] as List;
-
-            // Process timesheets in small batches to prevent UI freeze
-            for (int i = 0; i < timesheets.length; i++) {
-              final timesheet = timesheets[i];
-
-              // Allow UI to update every few items
-              if (i > 0 && i % 5 == 0) {
-                await Future.delayed(Duration.zero);
-              }
-
-              // Process timesheet
-              final clientData = timesheet['client'];
-              String clientName = 'Unknown Client';
-              if (clientData != null) {
-                if (clientData is Map) {
-                  clientName =
-                      clientData['fullname']?.toString() ?? 'Unknown Client';
-                } else if (clientData is String) {
-                  clientName = clientData;
-                }
-              }
-
-              addTimesheet({
-                'id': timesheet['_id'],
-                'clientName': clientName,
-                'clockIn': timesheet['clockIn'],
-                'clockOut': timesheet['clockOut'],
-                'duration': timesheet['duration']?.toString() ?? '0',
-                'status':
-                    timesheet['clockOut'] == null ? 'clockin' : 'clockout',
-              });
-            }
+            // Process timesheets using the helper method
+            processTimesheetsFromResponse(timesheets);
           }
         });
       }
@@ -142,5 +166,63 @@ class TimesheetService {
         message: 'Failed to clock out',
       );
     }
+  }
+
+  // Method for manual clock out
+  Future<ApiResponse> manualClockOut(
+      String timesheetId, DateTime clockOutTime, String reason) async {
+    try {
+      // Format clockOut as ISO string
+      final clockOutStr = clockOutTime.toIso8601String();
+
+      debugPrint(
+          'Manual clock out request - timesheetId: $timesheetId, clockOut: $clockOutStr, reason: $reason');
+
+      final response = await _api.putData(
+        '/user-appointment/manual-checkout/$timesheetId',
+        {
+          'clockOut': clockOutStr,
+          'reason': reason,
+        },
+      );
+
+      if (response.isSuccessful) {
+        debugPrint('Manual clock out successful: ${response.data}');
+
+        // Refresh the timesheet list same as regular clock out
+        Future.microtask(() async {
+          final timesheetsResponse = await getTimesheets();
+          if (timesheetsResponse.isSuccessful &&
+              timesheetsResponse.data != null) {
+            final timesheets = timesheetsResponse.data['timesheets'] as List;
+            // Process timesheets using the helper method
+            processTimesheetsFromResponse(timesheets);
+          }
+        });
+      } else {
+        debugPrint('Manual clock out failed: ${response.message}');
+      }
+
+      return response;
+    } catch (e) {
+      debugPrint('Error during manual clock out: $e');
+      return ApiResponse(
+        data: null,
+        isSuccessful: false,
+        message: 'Failed to manually clock out: $e',
+      );
+    }
+  }
+
+  // List of predefined clock-out reasons
+  List<String> getClockOutReasons() {
+    return [
+      'Appointment completed',
+      'Patient not available',
+      'Technical issues',
+      'Staff request',
+      'Emergency',
+      'Other',
+    ];
   }
 }
