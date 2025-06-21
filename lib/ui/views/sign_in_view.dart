@@ -137,6 +137,53 @@ class _SignInViewState extends State<SignInView> {
                             },
                           ),
                         ),
+                        AppSpacing.v24(),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Login as',
+                              style: AppTextStyle.medium14,
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: AppColors.grey400),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<UserRole>(
+                                  isExpanded: true,
+                                  value: state.selectedRole,
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: UserRole.interpreter,
+                                      child: Text(
+                                        'Interpreter',
+                                        style: AppTextStyle.regular14,
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: UserRole.staff,
+                                      child: Text(
+                                        'Staff',
+                                        style: AppTextStyle.regular14,
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (UserRole? value) {
+                                    if (value != null) {
+                                      context
+                                          .read<SignInBloc>()
+                                          .add(SignInRoleChange(value));
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         AppSpacing.v16(),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -168,8 +215,8 @@ class _SignInViewState extends State<SignInView> {
                             }
                           },
                           isLoading: state.status == SignInStatus.loading,
-                          enabled:
-                              state.email != null && state.password != null,
+                          enabled: state.email != null &&
+                              state.password != null,
                         ),
                       ],
                     ),
