@@ -25,6 +25,21 @@ class NavigationService {
 
   static NavigatorState? get _navigatorState => navigatorKey.currentState;
 
+  /// Handle back button/gesture for bottom navigation tabs
+  static Future<bool> handleBackPress() {
+    final currentRoute = _navigatorState?.currentRouteName;
+
+    // If we're on a tab route that's not dashboard, navigate to dashboard
+    if (currentRoute == AppRoutes.notificationView ||
+        currentRoute == AppRoutes.appointmentView) {
+      pushReplacementNamed(AppRoutes.dashboardView);
+      return Future.value(false); // Don't close the app
+    }
+
+    // Let the system handle the back press normally
+    return Future.value(true);
+  }
+
   /// Navigate to a named route
   static Future<dynamic> pushNamed(String routeName,
       {Object? arguments, bool replace = false}) {
@@ -94,7 +109,18 @@ class NavigationService {
 
   /// Go back to previous route
   static void pop({Object? result}) {
-    return _navigatorState!.pop(result);
+    // First check if we're on a bottom tab route that's not dashboard
+    final currentRoute = _navigatorState?.currentRouteName;
+
+    if ((currentRoute == AppRoutes.notificationView ||
+            currentRoute == AppRoutes.appointmentView) &&
+        _navigatorState?.canPop() == true) {
+      // If on notification or appointment view, go to dashboard instead of popping
+      pushReplacementNamed(AppRoutes.dashboardView);
+    } else if (_navigatorState?.canPop() == true) {
+      // Otherwise normal pop behavior
+      _navigatorState!.pop(result);
+    }
   }
 
   /// Check if we can go back
