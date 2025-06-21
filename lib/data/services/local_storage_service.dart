@@ -55,7 +55,8 @@ class LocalStorageService {
       fSStorage.write(key: LocalStorageKeys.userRole, value: role),
       fSStorage.write(key: LocalStorageKeys.userFullname, value: fullname),
       if (profileImage != null)
-        fSStorage.write(key: LocalStorageKeys.userProfileImage, value: profileImage),
+        fSStorage.write(
+            key: LocalStorageKeys.userProfileImage, value: profileImage),
     ]);
     debugPrint('Credentials saved successfully');
   }
@@ -70,7 +71,7 @@ class LocalStorageService {
       fSStorage.read(key: LocalStorageKeys.userFullname),
       fSStorage.read(key: LocalStorageKeys.userProfileImage),
     ]);
-    
+
     final result = {
       'token': credentials[0],
       'userId': credentials[1],
@@ -100,4 +101,26 @@ class LocalStorageService {
   }
 
   Future<void> clearAll() async => await fSStorage.deleteAll();
-} 
+
+  // Check if auth token exists in storage
+  Future<bool> hasAuthToken() async {
+    final credentials = await getUserCredentials();
+    return credentials['token'] != null && credentials['token']!.isNotEmpty;
+  }
+
+  // Clear just authentication credentials but keep other preferences
+  Future<void> clearAuthCredentials() async {
+    debugPrint('Clearing auth credentials from secure storage');
+    await Future.wait([
+      fSStorage.delete(key: LocalStorageKeys.accessToken),
+      fSStorage.delete(key: LocalStorageKeys.refreshToken),
+      fSStorage.delete(key: LocalStorageKeys.expiresIn),
+      fSStorage.delete(key: LocalStorageKeys.userId),
+      fSStorage.delete(key: LocalStorageKeys.userRole),
+      fSStorage.delete(key: LocalStorageKeys.userEmail),
+      fSStorage.delete(key: LocalStorageKeys.userFullname),
+      fSStorage.delete(key: LocalStorageKeys.userProfileImage),
+    ]);
+    debugPrint('Auth credentials cleared while preserving other preferences');
+  }
+}
