@@ -20,6 +20,7 @@ import '../../app/navigation_state_manager.dart';
 import '../../app/locator.dart';
 import 'notification_view.dart';
 import 'appointment_view.dart';
+import '../../shared/app_error_handler.dart';
 
 class Dashboard extends StatefulWidget {
   final Map<String, dynamic>? recentTimesheet;
@@ -46,7 +47,6 @@ class _DashboardState extends State<Dashboard> {
   final Set<String> _loadingTimesheets = {};
   bool _isInitialLoading = true;
   bool _timesheetsLoaded = false;
-  List<Map<String, dynamic>> _cachedTimesheets = [];
   DateTime? _lastTimesheetsRefresh;
   bool _noTimesheetsFound = false;
 
@@ -110,6 +110,7 @@ class _DashboardState extends State<Dashboard> {
   Future<void> _initialLoad() async {
     setState(() {
       _isInitialLoading = true;
+      _noTimesheetsFound = false; // Reset flag on initial load
     });
     await _fetchTimesheets();
     setState(() {
@@ -119,24 +120,17 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _fetchTimesheets() async {
-    // Only fetch if we need to refresh based on our caching logic
-    if (!_timesheetsLoaded || _shouldRefreshTimesheets()) {
+    if (!mounted) return;
+
+    try {
       final response = await _timesheetService.getTimesheets();
+
       if (response.isSuccessful && response.data != null) {
         setState(() {
-          _timesheetService.clearTimesheets();
+          _timesheetService
+              .clearTimesheets(); // Clear existing timesheets first
           final timesheets = response.data['timesheets'] as List;
-          _cachedTimesheets = [];
 
-          // Check if there are no timesheets
-          if (timesheets.isEmpty) {
-            _noTimesheetsFound = true;
-            _timesheetsLoaded = true;
-            _lastTimesheetsRefresh = DateTime.now();
-            return;
-          }
-
-          _noTimesheetsFound = false;
           for (final timesheet in timesheets) {
             final clientData = timesheet['client'];
             String clientName = 'Unknown Client';
@@ -149,35 +143,54 @@ class _DashboardState extends State<Dashboard> {
               }
             }
 
-            final timesheetData = {
+            _timesheetService.addTimesheet({
               'id': timesheet['_id'],
               'clientName': clientName,
               'clockIn': timesheet['clockIn'],
               'clockOut': timesheet['clockOut'],
               'duration': timesheet['duration']?.toString() ?? '0',
-              'status': timesheet['clockOut'] == null
-                  ? 'clockin'
-                  : 'clockout', // Set status based on clockOut
-            };
-
-            _cachedTimesheets.add(timesheetData);
-            _timesheetService.addTimesheet(timesheetData);
+              'status': timesheet['clockOut'] == null ? 'clockin' : 'clockout',
+            });
           }
-          _timesheetsLoaded = true;
+
+          _noTimesheetsFound = _timesheetService.recentTimesheets.isEmpty;
           _lastTimesheetsRefresh = DateTime.now();
         });
       } else {
-        // Check if this is specifically a "No timesheets found" message
-        if (response.message?.contains("No timesheets found") == true) {
-          setState(() {
-            _noTimesheetsFound = true;
-            _timesheetsLoaded = true;
-            _lastTimesheetsRefresh = DateTime.now();
-          });
+        // Handle case when no timesheets are found or other errors
+        setState(() {
+          _timesheetService.clearTimesheets(); // Clear any previous timesheets
+          _noTimesheetsFound = true;
+          _lastTimesheetsRefresh = DateTime.now();
+        });
+
+        if (mounted &&
+            response.message?.contains('No timesheets found') == true) {
+          // This is an expected scenario - no need to show an error toast
+          debugPrint('No timesheets found for current user');
+        } else if (mounted) {
+          // For actual errors, show error toast
+          AppErrorHandler.handleError(context, response);
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _timesheetService
+            .clearTimesheets(); // Also clear timesheets on exception
+        _noTimesheetsFound = true;
+      });
+
+      if (mounted) {
+        // Skip showing authentication error toasts during normal logout/login flow
+        String errorMsg = e.toString().toLowerCase();
+        if (!errorMsg.contains('token') &&
+            !errorMsg.contains('unauthorized') &&
+            !errorMsg.contains('session') &&
+            !errorMsg.contains('authentication')) {
+          AppErrorHandler.handleError(context, e);
         } else {
-          // Show toast only for other errors
-          AppToast.showError(
-              context, response.message ?? 'Failed to fetch timesheets');
+          // Just log auth errors during logout without showing toast
+          debugPrint('Skipping auth error during logout/login flow: $e');
         }
       }
     }
@@ -189,7 +202,7 @@ class _DashboardState extends State<Dashboard> {
       _timesheetService.clearTimesheets();
       _timesheetsLoaded = false;
       _lastTimesheetsRefresh = null;
-      _noTimesheetsFound = false;
+      _noTimesheetsFound = false; // Reset flag on refresh
     });
 
     // Fetch new data with force refresh
@@ -479,7 +492,7 @@ class _DashboardState extends State<Dashboard> {
                 AppSpacing.v16(),
             ],
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -535,6 +548,12 @@ class _DashboardState extends State<Dashboard> {
         bottomNavigationBar: BottomNavBar(
           currentIndex: _currentIndex,
           onTap: (index) {
+            // If switching to appointments tab, refresh appointments
+            if (index == 2 && _currentIndex != 2) {
+              // Force refresh appointments when navigating to appointment tab
+              _stateManager.forceRefreshAppointments();
+            }
+
             setState(() {
               _currentIndex = index;
             });
