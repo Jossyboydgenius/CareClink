@@ -8,6 +8,7 @@ import '../../data/services/user_service.dart';
 import '../../app/locator.dart';
 import '../../app/routes/app_routes.dart';
 import '../../data/services/navigator_service.dart';
+import '../../shared/app_error_handler.dart';
 
 class UserAvatar extends StatefulWidget {
   const UserAvatar({super.key});
@@ -93,7 +94,6 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
     _removeOverlay();
 
     final overlay = Overlay.of(context, rootOverlay: true);
-    if (overlay == null) return;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -201,12 +201,37 @@ class _UserAvatarState extends State<UserAvatar> with RouteAware {
     if (_isDisposed) return;
 
     try {
+      // Close any open overlay first
+      if (_isOpen) {
+        _removeOverlay();
+      }
+
+      // Show loading state
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
+
+      // Perform logout
       final userService = locator<UserService>();
       await userService.logout();
-      _removeOverlay();
+
+      // Navigate to sign in view
       NavigationService.pushReplacementNamed(AppRoutes.signInView);
     } catch (e) {
       debugPrint('Error signing out: $e');
+
+      // Ensure we stop loading state even if there's an error
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show error via the error handler if we're still mounted
+        AppErrorHandler.handleError(context, 'Failed to sign out: $e',
+            showToast: true);
+      }
     }
   }
 
