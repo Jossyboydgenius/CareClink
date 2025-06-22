@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pending_button/pending_button.dart';
+import 'package:intl/intl.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -40,8 +41,6 @@ class TimesheetCard extends StatefulWidget {
 }
 
 class _TimesheetCardState extends State<TimesheetCard> {
-  bool _isExpanded = false;
-
   DurationStatus _getStatusFromString(String status) {
     switch (status.toLowerCase()) {
       case 'clockin':
@@ -53,12 +52,33 @@ class _TimesheetCardState extends State<TimesheetCard> {
     }
   }
 
+  // Format a datetime string to show date and time separately
+  List<String> _formatDateTime(String dateTimeStr) {
+    try {
+      // Try to parse the date string
+      final DateTime parsedDate = DateTime.parse(dateTimeStr);
+      final String formattedDate = DateFormat('yyyy/MM/dd').format(parsedDate);
+      final String formattedTime = DateFormat('h:mm a').format(parsedDate);
+      return ['Date: $formattedDate', 'Time: $formattedTime'];
+    } catch (e) {
+      // If parsing fails, return the original string
+      return ['Date:', dateTimeStr];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final status = _getStatusFromString(widget.status);
-    final bool showDuration = widget.duration != null &&
-        widget.duration!.isNotEmpty &&
-        widget.duration != '0min';
+    _getStatusFromString(widget.status);
+    // Commented out as requested
+    // final bool showDuration = widget.duration != null &&
+    //     widget.duration!.isNotEmpty &&
+    //     widget.duration != '0min';
+
+    final clockInFormatted = _formatDateTime(widget.clockIn);
+    final clockOutFormatted =
+        widget.clockOut != null && widget.clockOut!.isNotEmpty
+            ? _formatDateTime(widget.clockOut!)
+            : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -133,6 +153,7 @@ class _TimesheetCardState extends State<TimesheetCard> {
                                 ),
                               ),
                       )
+                    /* Commented out as requested
                     else if (showDuration)
                       Row(
                         children: [
@@ -148,119 +169,55 @@ class _TimesheetCardState extends State<TimesheetCard> {
                           ),
                         ],
                       ),
+                    */
                   ],
                 ),
                 AppSpacing.v12(),
-                // Clock in/out times
-                Row(
+                // Clock in details
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Clock In: ',
+                      'Clock In',
                       style: AppTextStyle.regular12.copyWith(
                         color: AppColors.grey,
                       ),
                     ),
+                    AppSpacing.v4(),
                     Text(
-                      widget.clockIn,
+                      clockInFormatted[0],
                       style: AppTextStyle.semibold12,
                     ),
-                    if (widget.clockOut != null &&
-                        widget.clockOut!.isNotEmpty) ...[
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 8.w),
-                          height: 1,
-                          color: AppColors.grey200,
-                        ),
-                      ),
+                    Text(
+                      clockInFormatted[1],
+                      style: AppTextStyle.semibold12,
+                    ),
+                  ],
+                ),
+                // Clock out details if available
+                if (clockOutFormatted != null) ...[
+                  AppSpacing.v8(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        'Clock Out: ',
+                        'Clock Out',
                         style: AppTextStyle.regular12.copyWith(
                           color: AppColors.grey,
                         ),
                       ),
+                      AppSpacing.v4(),
                       Text(
-                        widget.clockOut!,
+                        clockOutFormatted[0],
+                        style: AppTextStyle.semibold12,
+                      ),
+                      Text(
+                        clockOutFormatted[1],
                         style: AppTextStyle.semibold12,
                       ),
                     ],
-                  ],
-                ),
-                AppSpacing.v12(),
-                // Appointment Details dropdown
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                    widget.onExpandDetails?.call();
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.grey100,
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppColors.grey200),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Appointment Details',
-                              style: AppTextStyle.semibold12.copyWith(
-                                color: AppColors.grey,
-                              ),
-                            ),
-                            Icon(
-                              _isExpanded
-                                  ? Icons.keyboard_arrow_up
-                                  : Icons.keyboard_arrow_down,
-                              color: AppColors.grey,
-                              size: 20.w,
-                            ),
-                          ],
-                        ),
-                        if (_isExpanded) ...[
-                          AppSpacing.v12(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Appointment ID:',
-                                style: AppTextStyle.regular12.copyWith(
-                                  color: AppColors.grey,
-                                ),
-                              ),
-                              Text(
-                                widget.clientName,
-                                style: AppTextStyle.medium12,
-                              ),
-                            ],
-                          ),
-                          AppSpacing.v12(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Date and Time:',
-                                style: AppTextStyle.regular12.copyWith(
-                                  color: AppColors.grey,
-                                ),
-                              ),
-                              Text(
-                                '2025-01-15\n10:00 - 11:00 AM',
-                                style: AppTextStyle.medium12,
-                                textAlign: TextAlign.end,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
