@@ -35,18 +35,28 @@ class AppointmentModel {
         : DateTime(timestamp.year, timestamp.month, timestamp.day,
             timestamp.hour + 1, timestamp.minute);
 
-    final hour = timestamp.hour;
-    final minute = timestamp.minute;
+    final hour = time.hour;
+    final minute = time.minute;
     final period = hour >= 12 ? 'PM' : 'AM';
     final hour12 = hour > 12
         ? hour - 12
         : hour == 0
             ? 12
             : hour;
-    final endHour12 = (hour12 + 1) > 12 ? 1 : hour12 + 1;
+
+    final endHour = endTime.hour;
+    final endMinute = endTime.minute;
+    final endPeriod = endHour >= 12 ? 'PM' : 'AM';
+    final endHour12 = endHour > 12
+        ? endHour - 12
+        : endHour == 0
+            ? 12
+            : endHour;
+
+    // Format as "YYYY-MM-DD h:mm AM - h:mm PM"
     final dateTime =
         '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')} '
-        '$hour12:${minute.toString().padLeft(2, '0')} - $endHour12:${minute.toString().padLeft(2, '0')} $period';
+        '$hour12:${minute.toString().padLeft(2, '0')} $period - $endHour12:${endMinute.toString().padLeft(2, '0')} $endPeriod';
 
     // Handle both staff and interpreter roles
     // Staff users have 'staffStatus', interpreters have 'status'
