@@ -27,7 +27,7 @@ class AppInput extends StatelessWidget {
   final TextCapitalization textCapitalization;
 
   const AppInput({
-    Key? key,
+    super.key,
     this.controller,
     this.hintText,
     this.labelText,
@@ -49,7 +49,7 @@ class AppInput extends StatelessWidget {
     this.contentPadding,
     this.autovalidateMode,
     this.textCapitalization = TextCapitalization.none,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
