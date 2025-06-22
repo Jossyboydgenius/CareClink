@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -21,8 +22,36 @@ class AppointmentCard extends StatelessWidget {
     required this.onTap,
   });
 
+  // Parse the combined dateTime string to extract date and time parts
+  List<String> _parseDateTimeString() {
+    // Expected format from API: YYYY-MM-DD HH:MM - HH:MM AM/PM
+    final parts = dateTime.split(' ');
+    if (parts.length >= 4) {
+      // Extract date part (YYYY-MM-DD)
+      final datePart = parts[0];
+
+      try {
+        // Parse the date to reformat it
+        final parsedDate = DateFormat('yyyy-MM-dd').parse(datePart);
+        final formattedDate = DateFormat('yyyy/MM/dd').format(parsedDate);
+
+        // Combine the time parts
+        final timePart = parts.sublist(1).join(' ');
+
+        return ['Date: $formattedDate', 'Time: $timePart'];
+      } catch (e) {
+        return ['Date: $datePart', 'Time: ${parts.sublist(1).join(' ')}'];
+      }
+    }
+
+    // Fallback if the format is unexpected
+    return ['Date & Time:', dateTime];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dateTimeParts = _parseDateTimeString();
+
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -88,27 +117,20 @@ class AppointmentCard extends StatelessWidget {
               ],
             ),
             AppSpacing.v8(),
-            Row(
-              children: [
-                Text(
-                  'Date & Time: ',
-                  style: AppTextStyle.regular14.copyWith(
-                    color:
-                        isSelected ? AppColors.primary : AppColors.textPrimary,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    dateTime,
-                    style: AppTextStyle.semibold14.copyWith(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            // Display date and time separately
+            Text(
+              dateTimeParts[0],
+              style: AppTextStyle.regular14.copyWith(
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+              ),
+            ),
+            AppSpacing.v4(),
+            Text(
+              dateTimeParts[1],
+              style: AppTextStyle.semibold14.copyWith(
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
