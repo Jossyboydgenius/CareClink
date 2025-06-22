@@ -28,7 +28,8 @@ class AppointmentCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.white,
+          color:
+              isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.grey200,
@@ -43,7 +44,8 @@ class AppointmentCard extends StatelessWidget {
                 Text(
                   'Appointment ID: ',
                   style: AppTextStyle.regular14.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                    color:
+                        isSelected ? AppColors.primary : AppColors.textPrimary,
                   ),
                 ),
                 Expanded(
@@ -72,7 +74,9 @@ class AppointmentCard extends StatelessWidget {
                         child: Text(
                           clientName,
                           style: AppTextStyle.semibold14.copyWith(
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
@@ -89,14 +93,17 @@ class AppointmentCard extends StatelessWidget {
                 Text(
                   'Date & Time: ',
                   style: AppTextStyle.regular14.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                    color:
+                        isSelected ? AppColors.primary : AppColors.textPrimary,
                   ),
                 ),
                 Expanded(
                   child: Text(
                     dateTime,
                     style: AppTextStyle.semibold14.copyWith(
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -119,6 +126,8 @@ class AppointmentCard extends StatelessWidget {
         return AppColors.orange;
       case AppointmentStatus.reschedule:
         return AppColors.red;
+      case AppointmentStatus.inProgress:
+        return AppColors.purple;
       default:
         return AppColors.textPrimary;
     }
@@ -134,6 +143,8 @@ class AppointmentCard extends StatelessWidget {
         return 'Pending';
       case AppointmentStatus.reschedule:
         return 'Reschedule';
+      case AppointmentStatus.inProgress:
+        return 'In Progress';
       default:
         return '';
     }
