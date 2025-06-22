@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -87,6 +88,16 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
     }
   }
 
+  String _formatDate(DateTime date) {
+    return DateFormat('yyyy/MM/dd').format(date);
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final now = DateTime.now();
+    final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+    return DateFormat('h:mm a').format(dt);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -162,19 +173,17 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
               ],
             ),
             AppSpacing.v12(),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Date & Time:',
-                  style: AppTextStyle.regular12,
+                  'Date: ${_formatDate(widget.dateTime)}',
+                  style: AppTextStyle.semibold14,
                 ),
-                AppSpacing.h8(),
-                Expanded(
-                  child: Text(
-                    widget.dateTime.toString(),
-                    style: AppTextStyle.semibold14,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                AppSpacing.v4(),
+                Text(
+                  'Time: ${_formatTime(TimeOfDay.fromDateTime(widget.dateTime))}',
+                  style: AppTextStyle.semibold14,
                 ),
               ],
             ),
