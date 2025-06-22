@@ -1,127 +1,126 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 abstract class AppTextStyle {
   /// Base text style
-  static const TextStyle _baseTextStyle = TextStyle(
-    fontFamily: 'Inter',
-  );
+  static TextStyle get _baseTextStyle => GoogleFonts.outfit();
 
-  ///Inter 10
+  ///Outfit 10
   static TextStyle get regular10 => _baseTextStyle.copyWith(fontSize: 10);
 
-  ///Inter medium 10
+  ///Outfit medium 10
   static TextStyle get medium10 =>
       regular10.copyWith(fontWeight: AppFontWeight.medium);
 
-  ///Inter 12
+  ///Outfit 12
   static TextStyle get regular12 => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: FontWeight.w400,
       );
 
-  ///Inter medium 12
+  ///Outfit medium 12
   static TextStyle get medium12 => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: FontWeight.w500,
       );
 
-  ///Inter semibold 12
+  ///Outfit semibold 12
   static TextStyle get semibold12 => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        height: 16/12, // line height 16px
+        height: 16 / 12, // line height 16px
       );
 
-  ///Inter medium 14
+  ///Outfit medium 14
   static TextStyle get medium14 => regular10.copyWith(
         fontWeight: AppFontWeight.medium,
         fontSize: 14.spMin,
       );
 
-  ///Inter medium 16
+  ///Outfit medium 16
   static TextStyle get medium16 => regular10.copyWith(
         fontWeight: AppFontWeight.medium,
         fontSize: 16.spMin,
       );
 
-  ///Inter 14
+  ///Outfit 14
   static TextStyle get regular14 => _baseTextStyle.copyWith(fontSize: 14);
 
-  ///Inter light 14
+  ///Outfit light 14
   static TextStyle get light14 =>
       regular14.copyWith(fontWeight: AppFontWeight.light);
 
-  ///Inter semibold 14
+  ///Outfit semibold 14
   static TextStyle get semibold14 =>
       regular14.copyWith(fontWeight: AppFontWeight.semiBold);
 
-  ///Inter bold 14
+  ///Outfit bold 14
   static TextStyle get bold14 =>
       regular14.copyWith(fontWeight: AppFontWeight.bold);
 
-  ///Inter 15
+  ///Outfit 15
   static TextStyle get regular15 => _baseTextStyle.copyWith(fontSize: 15);
 
-  ///Inter medium 15
+  ///Outfit medium 15
   static TextStyle get medium15 =>
       regular15.copyWith(fontWeight: AppFontWeight.medium);
 
-  ///Inter semibold 15
+  ///Outfit semibold 15
   static TextStyle get semibold15 =>
       regular15.copyWith(fontWeight: AppFontWeight.semiBold);
 
-  ///Inter 16
+  ///Outfit 16
   static TextStyle get regular16 => _baseTextStyle.copyWith(fontSize: 16);
 
-  ///Inter light 16
+  ///Outfit light 16
   static TextStyle get light16 =>
       regular16.copyWith(fontWeight: AppFontWeight.light);
 
-  ///Inter semibold 16
+  ///Outfit semibold 16
   static TextStyle get semibold16 =>
       regular16.copyWith(fontWeight: AppFontWeight.semiBold);
 
-  ///Inter bold 16
+  ///Outfit bold 16
   static TextStyle get bold16 =>
       regular16.copyWith(fontWeight: AppFontWeight.bold);
 
-  ///Inter 18
+  ///Outfit 18
   static TextStyle get regular18 => _baseTextStyle.copyWith(fontSize: 18);
 
-  ///Inter semibold 18
+  ///Outfit semibold 18
   static TextStyle get semibold18 =>
       regular18.copyWith(fontWeight: AppFontWeight.semiBold);
 
-  ///Inter bold 18
+  ///Outfit bold 18
   static TextStyle get bold18 =>
       regular18.copyWith(fontWeight: AppFontWeight.bold);
 
-  ///Inter 20
+  ///Outfit 20
   static TextStyle get regular20 => _baseTextStyle.copyWith(fontSize: 20);
 
-  ///Inter medium 20
+  ///Outfit medium 20
   static TextStyle get medium20 =>
       regular20.copyWith(fontWeight: AppFontWeight.medium);
 
-  ///Inter semibold 20
+  ///Outfit semibold 20
   static TextStyle get semibold20 =>
       regular20.copyWith(fontWeight: AppFontWeight.semiBold);
 
-  ///Inter bold 20
+  ///Outfit bold 20
   static TextStyle get bold20 =>
       regular20.copyWith(fontWeight: AppFontWeight.bold);
 
-  ///Inter 24
+  ///Outfit 24
   static TextStyle get regular24 => _baseTextStyle.copyWith(fontSize: 24);
 
-  ///Inter semibold 24
+  ///Outfit semibold 24
   static TextStyle get semibold24 => regular24.copyWith(
         fontWeight: AppFontWeight.semiBold,
       );
 
-  ///Inter bold 24
+  ///Outfit bold 24
   static TextStyle get bold24 => regular24.copyWith(
         fontWeight: AppFontWeight.bold,
       );
@@ -130,7 +129,7 @@ abstract class AppTextStyle {
   static TextStyle get welcomeBack => _baseTextStyle.copyWith(
         fontSize: 14,
         fontWeight: AppFontWeight.medium,
-        height: 20/14, // line-height: 20px
+        height: 20 / 14, // line-height: 20px
         letterSpacing: 0.005,
         color: Color(0xFF667085),
       );
@@ -139,14 +138,14 @@ abstract class AppTextStyle {
   static TextStyle get activitiesSummary => _baseTextStyle.copyWith(
         fontSize: 20,
         fontWeight: AppFontWeight.semiBold,
-        height: 24/20, // line-height: 24px
+        height: 24 / 20, // line-height: 24px
       );
 
   // Activity hours text style
   static TextStyle get activityHours => _baseTextStyle.copyWith(
         fontSize: 24,
         fontWeight: AppFontWeight.semiBold,
-        height: 28/24, // line-height: 28px
+        height: 28 / 24, // line-height: 28px
         letterSpacing: 0.005,
       );
 
@@ -154,7 +153,7 @@ abstract class AppTextStyle {
   static TextStyle get activityCompleted => _baseTextStyle.copyWith(
         fontSize: 8,
         fontWeight: AppFontWeight.medium,
-        height: 12/8, // line-height: 12px
+        height: 12 / 8, // line-height: 12px
         letterSpacing: 0.005,
       );
 
@@ -162,7 +161,7 @@ abstract class AppTextStyle {
   static TextStyle get activityTitle => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.medium,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
         color: Colors.grey,
       );
@@ -171,32 +170,32 @@ abstract class AppTextStyle {
   static TextStyle get timesheetTitle => _baseTextStyle.copyWith(
         fontSize: 20,
         fontWeight: AppFontWeight.semiBold,
-        height: 24/20, // line-height: 24px
+        height: 24 / 20, // line-height: 24px
       );
 
   static TextStyle get visitId => _baseTextStyle.copyWith(
         fontSize: 14,
         fontWeight: AppFontWeight.semiBold,
-        height: 20/14, // line-height: 20px
+        height: 20 / 14, // line-height: 20px
       );
 
   static TextStyle get timesheetLabel => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.regular,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
       );
 
   static TextStyle get timesheetTime => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.semiBold,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
       );
 
   static TextStyle get clockOutButton => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.medium,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
         color: AppColors.primary,
       );
@@ -204,7 +203,7 @@ abstract class AppTextStyle {
   static TextStyle get appointmentDetails => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.medium,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
         color: AppColors.grey300,
       );
@@ -212,14 +211,14 @@ abstract class AppTextStyle {
   static TextStyle get durationLabel => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.medium,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
       );
 
   static TextStyle get durationValue => _baseTextStyle.copyWith(
         fontSize: 12,
         fontWeight: AppFontWeight.semiBold,
-        height: 16/12, // line-height: 16px
+        height: 16 / 12, // line-height: 16px
         letterSpacing: 0.005,
       );
 }
@@ -251,4 +250,4 @@ abstract class AppFontWeight {
 
   /// FontWeight value of `w100`
   static const FontWeight thin = FontWeight.w100;
-} 
+}
