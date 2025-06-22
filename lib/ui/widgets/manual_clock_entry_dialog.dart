@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
-import '../../shared/app_toast.dart';
 import '../../data/services/navigator_service.dart';
 import '../../data/models/appointment_model.dart';
 import 'app_button.dart';
@@ -20,13 +19,13 @@ class ManualClockEntryDialog extends StatefulWidget {
       onSave;
 
   const ManualClockEntryDialog({
-    Key? key,
+    super.key,
     required this.appointmentId,
     required this.clientName,
     required this.dateTime,
     required this.status,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ManualClockEntryDialog> createState() => _ManualClockEntryDialogState();
@@ -37,8 +36,6 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
   late TimeOfDay _clockInTime;
   late TimeOfDay _clockOutTime;
   String? _selectedReason;
-  String? _clockInError;
-  String? _clockOutError;
   String? _reasonError;
 
   final List<String> _reasons = [
@@ -300,11 +297,6 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
   }
 
   bool _validateTimes() {
-    if (_clockInTime == null || _clockOutTime == null) {
-      AppToast.showError(
-          context, 'Please select both clock in and clock out times');
-      return false;
-    }
     return true;
   }
 }
