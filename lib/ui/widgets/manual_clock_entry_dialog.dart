@@ -132,42 +132,44 @@ class _ManualClockEntryDialogState extends State<ManualClockEntryDialog> {
               ],
             ),
             AppSpacing.v16(),
+            // Appointment ID row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Appointment ID:',
+                  'Appointment ID: ',
                   style: AppTextStyle.regular14,
                 ),
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _getStatusText(),
-                          style: AppTextStyle.medium12.copyWith(
-                            color: AppColors.white,
-                          ),
-                        ),
-                      ),
-                      AppSpacing.h8(),
-                      Flexible(
-                        child: Text(
-                          widget.clientName,
-                          style: AppTextStyle.semibold14,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                Expanded(
+                  child: Text(
+                    widget.clientName,
+                    style: AppTextStyle.semibold14,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            // Status row
+            AppSpacing.v4(),
+            Row(
+              children: [
+                Text(
+                  'Status: ',
+                  style: AppTextStyle.regular14,
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 2.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    _getStatusText(),
+                    style: AppTextStyle.medium12.copyWith(
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
