@@ -67,8 +67,8 @@ class AppointmentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Appointment ID row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Appointment ID: ',
@@ -78,44 +78,51 @@ class AppointmentCard extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (status != AppointmentStatus.none)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 2.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            _getStatusText(),
-                            style: AppTextStyle.medium12.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                        ),
-                      AppSpacing.h8(),
-                      Flexible(
-                        child: Text(
-                          clientName,
-                          style: AppTextStyle.semibold14.copyWith(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    clientName,
+                    style: AppTextStyle.semibold14.copyWith(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
             ),
+            // Status row
+            if (status != AppointmentStatus.none) ...[
+              AppSpacing.v4(),
+              Row(
+                children: [
+                  Text(
+                    'Status: ',
+                    style: AppTextStyle.regular14.copyWith(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 2.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _getStatusText(),
+                      style: AppTextStyle.medium12.copyWith(
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             AppSpacing.v8(),
             // Display date and time separately
             Text(
