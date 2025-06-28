@@ -1,6 +1,6 @@
 class AppointmentSummary {
   final int completed;
-  final int hours;
+  final String hours; // Changed to String to handle "0h 49m" format
 
   AppointmentSummary({
     required this.completed,
@@ -10,7 +10,8 @@ class AppointmentSummary {
   factory AppointmentSummary.fromJson(Map<String, dynamic> json) {
     return AppointmentSummary(
       completed: json['completed'] ?? 0,
-      hours: json['hours'] ?? 0,
+      hours: json['hours']?.toString() ??
+          '0 hr', // Convert to String and provide default
     );
   }
 }
@@ -30,4 +31,4 @@ class AppointmentStatusSummary {
       completed: json['completed'] ?? '0 / 0',
     );
   }
-} 
+}
