@@ -26,7 +26,8 @@ class AppointmentModel {
     required this.endTime,
   });
 
-  factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+  factory AppointmentModel.fromJson(Map<String, dynamic> json,
+      {String? userRole}) {
     final timestamp = DateTime.parse(json['date']);
     final time =
         json['time'] != null ? DateTime.parse(json['time']) : timestamp;
@@ -58,14 +59,26 @@ class AppointmentModel {
         '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')} '
         '$hour12:${minute.toString().padLeft(2, '0')} $period - $endHour12:${endMinute.toString().padLeft(2, '0')} $endPeriod';
 
-    // Handle both staff and interpreter roles
-    // Staff users have 'staffStatus', interpreters have 'status'
-    String? statusValue = json['status'];
+    // Determine status based on user role
+    String? statusValue;
 
-    // If staffStatus exists, use it instead (for staff users)
-    if (json['staffStatus'] != null) {
+    if (userRole == 'staff') {
+      // For staff users, use staffStatus field
       statusValue = json['staffStatus'];
+      print('Staff user - using staffStatus: $statusValue');
+    } else {
+      // For interpreter users, use interpreterStatus field
+      statusValue = json['interpreterStatus'];
+      print('Interpreter user - using interpreterStatus: $statusValue');
     }
+
+    // Fallback to general status if role-specific status is not available
+    if (statusValue == null || statusValue.isEmpty) {
+      statusValue = json['status'];
+      print('Using fallback status: $statusValue');
+    }
+
+    print('Final status value for parsing: $statusValue');
 
     return AppointmentModel(
       id: json['_id'] ?? '',
