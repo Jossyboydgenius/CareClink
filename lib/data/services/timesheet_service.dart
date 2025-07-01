@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../../app/locator.dart';
+import '../utils/timesheet_helper.dart';
 import 'api/api.dart';
 import 'api/api_response.dart';
+import 'user_service.dart';
 
 class TimesheetService {
   static final TimesheetService _instance = TimesheetService._internal();
@@ -10,6 +12,7 @@ class TimesheetService {
 
   final List<Map<String, dynamic>> _recentTimesheets = [];
   final Api _api = locator<Api>();
+  final UserService _userService = locator<UserService>();
 
   List<Map<String, dynamic>> get recentTimesheets => _recentTimesheets;
 
@@ -33,11 +36,36 @@ class TimesheetService {
   }
 
   void addTimesheet(Map<String, dynamic> timesheet) {
+    // Debug the incoming data
+    debugPrint('=== addTimesheet called ===');
+    debugPrint('Incoming timesheet data: $timesheet');
+
+    // Format clock times
+    final String formattedClockIn = formatTimeFromISO(timesheet['clockIn']);
+    final String? rawClockOut = timesheet['clockOut']?.toString();
+    final String formattedClockOut = formatTimeFromISO(rawClockOut);
+
+    // Log the timesheet data for debugging
+    debugPrint(
+        'Adding timesheet: ${timesheet['id']}, rawClockOut=$rawClockOut, formatted=$formattedClockOut');
+    debugPrint('Incoming status: ${timesheet['status']}');
+
+    // Use TimesheetHelper to ensure status is consistent and correct
+    // Pass the raw clockOut value for proper validation, not the formatted time
+    String status = TimesheetHelper.determineTimesheetStatus(
+        rawStatus: timesheet['status'],
+        clockOut: rawClockOut, // Use raw value here for proper detection
+        defaultStatus: 'clockin');
+
     final formattedTimesheet = {
       ...timesheet,
-      'clockIn': formatTimeFromISO(timesheet['clockIn']),
-      'clockOut': formatTimeFromISO(timesheet['clockOut']),
+      'clockIn': formattedClockIn,
+      'clockOut': formattedClockOut,
+      'status': status, // Use our corrected status
+      'rawClockOut': rawClockOut, // Keep raw value for helper functions
     };
+
+    debugPrint('Final timesheet data: $formattedTimesheet');
     _recentTimesheets.insert(0, formattedTimesheet);
   }
 
@@ -82,8 +110,22 @@ class TimesheetService {
   }
 
   // Process timesheet data from API response
-  void processTimesheetsFromResponse(List<dynamic> timesheets) {
+  Future<void> processTimesheetsFromResponse(List<dynamic> timesheets) async {
     clearTimesheets();
+
+    // Get current user role to determine which fields to use
+    final currentUser = await _userService.getCurrentUser();
+    final userRole = currentUser['role'] ?? 'interpreter';
+
+    debugPrint('Processing timesheets for user role: $userRole');
+    debugPrint('Current user data: $currentUser');
+    debugPrint('Total timesheets to process: ${timesheets.length}');
+
+    // Log the raw API response data for debugging
+    for (int i = 0; i < timesheets.length; i++) {
+      debugPrint('=== RAW TIMESHEET $i ===');
+      debugPrint('Raw timesheet data: ${timesheets[i]}');
+    }
 
     for (int i = 0; i < timesheets.length; i++) {
       final timesheet = timesheets[i];
@@ -95,55 +137,125 @@ class TimesheetService {
         clientName = clientData['fullname']?.toString() ?? 'Unknown Client';
       }
 
-      // Determine which clock times to use - support both formats
-      String? clockIn = timesheet['clockIn']?.toString();
-      clockIn ??= timesheet['clockInStaff']?.toString();
+      // Determine which clock times and status to use based on user role
+      String? clockIn;
+      String? clockOut;
+      String? status;
 
-      String? clockOut = timesheet['clockOut']?.toString();
-      clockOut ??= timesheet['clockOutStaff']?.toString();
+      // Debug: Print the raw timesheet data for this specific timesheet
+      debugPrint('Processing timesheet ${timesheet['_id']}:');
+      debugPrint('  clockInInterpreter: ${timesheet['clockInInterpreter']}');
+      debugPrint('  clockOutInterpreter: ${timesheet['clockOutInterpreter']}');
+      debugPrint('  interpreterStatus: ${timesheet['interpreterStatus']}');
+      debugPrint('  clockInStaff: ${timesheet['clockInStaff']}');
+      debugPrint('  clockOutStaff: ${timesheet['clockOutStaff']}');
+      debugPrint('  staffStatus: ${timesheet['staffStatus']}');
 
-      // Determine status - use the specific status for the role when available
-      String status;
-      if (timesheet['status'] != null) {
-        status = timesheet['status'].toString().toLowerCase();
-      } else if (timesheet['staffStatus'] != null) {
-        status = timesheet['staffStatus'].toString().toLowerCase();
+      if (userRole == 'staff') {
+        // For staff users, use staff-specific fields
+        clockIn = timesheet['clockInStaff']?.toString();
+        clockOut = timesheet['clockOutStaff']?.toString();
+        status = timesheet['staffStatus']?.toString();
+        debugPrint(
+            '  Using STAFF fields: clockIn=$clockIn, clockOut=$clockOut, status=$status');
       } else {
-        // Fallback based on clockOut
-        status =
-            (clockOut == null || clockOut == 'null') ? 'clockin' : 'completed';
+        // For interpreter users, use interpreter-specific fields
+        clockIn = timesheet['clockInInterpreter']?.toString();
+        clockOut = timesheet['clockOutInterpreter']?.toString();
+        status = timesheet['interpreterStatus']?.toString();
+        debugPrint(
+            '  Using INTERPRETER fields: clockIn=$clockIn, clockOut=$clockOut, status=$status');
       }
 
-      // Get duration - support both formats
+      // Fallback to generic fields if role-specific fields are not available
+      clockIn ??= timesheet['clockIn']?.toString();
+      clockOut ??= timesheet['clockOut']?.toString();
+      status ??= timesheet['status']?.toString();
+
+      debugPrint(
+          '  Final values after fallback: clockIn=$clockIn, clockOut=$clockOut, status=$status');
+
+      // Determine final status using our helper class for consistency
+      final String finalStatus = TimesheetHelper.determineTimesheetStatus(
+        rawStatus: status,
+        clockOut: clockOut,
+      );
+
+      debugPrint('  Computed finalStatus: $finalStatus');
+
+      // Get duration - use role-specific duration
       String duration = '0';
-      if (timesheet['duration'] != null) {
-        duration = timesheet['duration'].toString();
-      } else if (timesheet['durationStaff'] != null) {
-        duration = timesheet['durationStaff'].toString();
+      if (userRole == 'staff') {
+        duration = timesheet['durationStaff']?.toString() ?? '0';
+      } else {
+        duration = timesheet['durationInterpreter']?.toString() ?? '0';
+      }
+
+      // Fallback to generic duration
+      if (duration == '0') {
+        duration = timesheet['duration']?.toString() ?? '0';
       }
 
       // Build the timesheet object with correct data
+      debugPrint('  About to call addTimesheet with clockOut: $clockOut');
       addTimesheet({
         'id': timesheet['_id'],
         'clientName': clientName,
         'clockIn': clockIn,
         'clockOut': clockOut,
         'duration': duration,
-        'status': status,
+        'status':
+            status, // Pass raw status, let addTimesheet compute final status
       });
     }
   }
 
   Future<ApiResponse> clockOut(String timesheetId, {String reason = ''}) async {
     try {
+      debugPrint('Clocking out timesheet: $timesheetId');
+
+      // Add timestamp to ensure the API has the current time
+      final now = DateTime.now();
+      final clockOutTime = now.toIso8601String();
+
+      // Log the exact API call for debugging
+      debugPrint('API call: PUT /user-appointment/check-out/$timesheetId');
+      debugPrint(
+          'Request body: {"reason": "$reason", "clockOut": "$clockOutTime"}');
+
       final response = await _api.putData(
         '/user-appointment/check-out/$timesheetId',
         {
           'reason': reason,
+          'clockOut': clockOutTime, // Add the current time explicitly
         },
       );
 
+      // Log the response for debugging
+      debugPrint(
+          'API response: isSuccessful=${response.isSuccessful}, message=${response.message}');
+
       if (response.isSuccessful) {
+        // Log the successful clock out
+        debugPrint(
+            'Successfully clocked out timesheet: $timesheetId, server response: ${response.data}');
+
+        // Update timesheet status locally before API refresh
+        final int index =
+            _recentTimesheets.indexWhere((ts) => ts['id'] == timesheetId);
+        if (index != -1) {
+          // Get current timestamp to use consistently
+          final String timestamp = DateTime.now().toIso8601String();
+          debugPrint(
+              'Updating local timesheet data: index=$index, new status=clockout, clockOut=$timestamp');
+
+          _recentTimesheets[index]['status'] = 'clockout';
+          _recentTimesheets[index]['clockOut'] = timestamp;
+        } else {
+          debugPrint(
+              'Warning: Could not find timesheet with ID $timesheetId in local cache');
+        }
+
         // Use a microtask to allow UI to update before fetching timesheets
         Future.microtask(() async {
           // Fetch updated timesheets from backend
@@ -152,7 +264,7 @@ class TimesheetService {
               timesheetsResponse.data != null) {
             final timesheets = timesheetsResponse.data['timesheets'] as List;
             // Process timesheets using the helper method
-            processTimesheetsFromResponse(timesheets);
+            await processTimesheetsFromResponse(timesheets);
           }
         });
       }
@@ -196,7 +308,7 @@ class TimesheetService {
               timesheetsResponse.data != null) {
             final timesheets = timesheetsResponse.data['timesheets'] as List;
             // Process timesheets using the helper method
-            processTimesheetsFromResponse(timesheets);
+            await processTimesheetsFromResponse(timesheets);
           }
         });
       } else {
