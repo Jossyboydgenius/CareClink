@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
+import '../../data/utils/timesheet_helper.dart';
 
 enum DurationStatus {
   none,
@@ -17,6 +18,7 @@ class TimesheetCard extends StatefulWidget {
   final String clientName;
   final String clockIn;
   final String? clockOut;
+  final String? rawClockOut; // Add raw clock out for proper validation
   final String? duration;
   final String status;
   final VoidCallback? onClockOut;
@@ -29,6 +31,7 @@ class TimesheetCard extends StatefulWidget {
     required this.clientName,
     required this.clockIn,
     this.clockOut,
+    this.rawClockOut,
     this.duration,
     required this.status,
     this.onClockOut,
@@ -43,6 +46,7 @@ class TimesheetCard extends StatefulWidget {
 class _TimesheetCardState extends State<TimesheetCard> {
   bool _isExpanded = false;
 
+  // ignore: unused_element
   DurationStatus _getStatusFromString(String status) {
     switch (status.toLowerCase()) {
       case 'clockin':
@@ -112,16 +116,46 @@ class _TimesheetCardState extends State<TimesheetCard> {
 
   @override
   Widget build(BuildContext context) {
-    final status = _getStatusFromString(widget.status);
-    final bool showDuration = widget.duration != null &&
-        widget.duration!.isNotEmpty &&
-        widget.duration != '0min';
+    // Status is now determined using the helper class
+    // Duration detection is not needed since we're not showing duration
 
     final clockInFormatted = _formatTimeWithAMPM(widget.clockIn);
+    // Only format clockOut if it exists and isn't empty
     final clockOutFormatted =
         widget.clockOut != null && widget.clockOut!.isNotEmpty
             ? _formatTimeWithAMPM(widget.clockOut!)
             : null;
+
+    // Debug info using the helper class
+    TimesheetHelper.logTimesheetData('TimesheetCard', {
+      'id': 'widget-${widget.clientName}',
+      'status': widget.status,
+      'clockIn': widget.clockIn,
+      'clockOut': widget.clockOut,
+    });
+
+    // Log additional context data
+    debugPrint(
+        'TimesheetCard context: hasOnClockOut=${widget.onClockOut != null}, '
+        'isClockingOut=${widget.isClockingOut}');
+
+    // Determine if we should show the clock out button using our helper
+    // Use rawClockOut for proper validation, fallback to clockOut if not available
+    final clockOutForValidation = widget.rawClockOut ?? widget.clockOut;
+    final bool shouldShowClockOutButton = widget.onClockOut != null &&
+        TimesheetHelper.canClockOut(
+            status: widget.status,
+            clockOut: clockOutForValidation,
+            isLoading: false // Widget has its own isClockingOut property
+            );
+
+    // Add more detailed debug output to diagnose issues
+    debugPrint('TimesheetCard button logic: client=${widget.clientName}, '
+        'status=${widget.status}, clockOut=${widget.clockOut}, '
+        'rawClockOut=${widget.rawClockOut}, clockOutForValidation=$clockOutForValidation, '
+        'hasOnClockOut=${widget.onClockOut != null}, '
+        'isClockingOut=${widget.isClockingOut}, '
+        'shouldShowClockOutButton=$shouldShowClockOutButton');
 
     return Container(
       decoration: BoxDecoration(
@@ -149,7 +183,8 @@ class _TimesheetCardState extends State<TimesheetCard> {
                         maxLines: 1,
                       ),
                     ),
-                    if (widget.onClockOut != null || widget.isClockingOut)
+                    // Only show the clock out button if conditions are met
+                    if (shouldShowClockOutButton || widget.isClockingOut)
                       Container(
                         height: 32.h,
                         decoration: BoxDecoration(
