@@ -113,6 +113,23 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
       if (response.isSuccessful) {
         final token = response.data['token'];
         final user = response.data['user'];
+        final userRole = user['role'] as String;
+
+        // Check for role mismatch
+        final selectedRoleString =
+            state.selectedRole == UserRole.staff ? 'staff' : 'interpreter';
+
+        if (userRole != selectedRoleString) {
+          // Role mismatch - emit failure with role mismatch error
+          emit(state.copyWith(
+            status: SignInStatus.roleMismatch,
+            errorMessage:
+                'Role mismatch: You selected "$selectedRoleString" but your account is registered as "$userRole". Please select the correct role and try again.',
+            actualRole: userRole,
+            selectedRole: state.selectedRole,
+          ));
+          return;
+        }
 
         // Save auth credentials with new required fields
         await _localStorageService.saveUserCredentials(
