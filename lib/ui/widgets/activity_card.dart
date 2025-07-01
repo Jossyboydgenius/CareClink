@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../shared/app_colors.dart';
+import '../../shared/app_text_style.dart';
 
 class ActivityCard extends StatelessWidget {
   final String title;
@@ -17,6 +18,48 @@ class ActivityCard extends StatelessWidget {
     required this.cardColor,
     required this.borderColor,
   });
+
+  // Parse hours string to create styled text with smaller minute text
+  Widget _buildStyledHours() {
+    // Handle formats like "0h 49m", "1h 2m", "0 hr", etc.
+    final hoursText = hours.trim();
+
+    // Check if it contains both h and m (like "0h 49m")
+    if (hoursText.contains('h') && hoursText.contains('m')) {
+      final parts = hoursText.split(' ');
+      if (parts.length >= 2) {
+        final hourPart = parts[0]; // "0h"
+        final minutePart = parts[1]; // "49m"
+
+        return RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: hourPart,
+                style: AppTextStyle.semibold24.copyWith(
+                  color: Colors.black,
+                ),
+              ),
+              TextSpan(
+                text: ' $minutePart',
+                style: AppTextStyle.regular16.copyWith(
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    // Fallback to regular styling for other formats
+    return Text(
+      hoursText,
+      style: AppTextStyle.semibold24.copyWith(
+        color: Colors.black,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,24 +80,14 @@ class ActivityCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              height: 12/10,
+            style: AppTextStyle.medium10.copyWith(
               color: AppColors.grey,
             ),
           ),
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                hours,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
+              child: _buildStyledHours(),
             ),
           ),
           Row(
@@ -74,18 +107,13 @@ class ActivityCard extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: 'Completed: ',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w500,
-                        height: 12/8,
+                      style: AppTextStyle.activityCompleted.copyWith(
                         color: borderColor,
                       ),
                     ),
                     TextSpan(
                       text: completedText,
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w500,
+                      style: AppTextStyle.activityCompleted.copyWith(
                         color: Colors.black,
                       ),
                     ),
@@ -98,4 +126,4 @@ class ActivityCard extends StatelessWidget {
       ),
     );
   }
-} 
+}
