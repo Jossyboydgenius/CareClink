@@ -141,6 +141,9 @@ class ApiResponse {
           if (response.statusCode == 403 ||
               responseBody.toLowerCase().contains("role") ||
               responseBody.toLowerCase().contains("permission") ||
+              responseBody.toLowerCase().contains("access denied") ||
+              responseBody.toLowerCase().contains("interpreters only") ||
+              responseBody.toLowerCase().contains("interpreter only") ||
               (responseBodyDecoded is Map &&
                   (responseBodyDecoded['message']
                               ?.toString()
@@ -151,6 +154,11 @@ class ApiResponse {
                               ?.toString()
                               .toLowerCase()
                               .contains("permission") ==
+                          true ||
+                      responseBodyDecoded['message']
+                              ?.toString()
+                              .toLowerCase()
+                              .contains("access denied") ==
                           true))) {
             debugPrint('Detected role-based access restriction');
             return ApiResponse(
@@ -179,9 +187,14 @@ class ApiResponse {
         } catch (e) {
           debugPrint('Error decoding error response: $e');
 
-          // Check raw response for role/permission-related terms
+          // Check raw response for role/permission-related terms and specific messages
           if (responseBody.toLowerCase().contains('role') ||
-              responseBody.toLowerCase().contains('permission')) {
+              responseBody.toLowerCase().contains('permission') ||
+              responseBody.toLowerCase().contains('access denied') ||
+              responseBody.toLowerCase().contains('interpreters only') ||
+              responseBody.toLowerCase().contains('interpreter only')) {
+            debugPrint(
+                'Detected role-based access restriction in raw response');
             return ApiResponse(
               isSuccessful: false,
               code: 403,
