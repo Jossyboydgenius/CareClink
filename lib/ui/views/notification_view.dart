@@ -289,7 +289,7 @@ class _NotificationViewState extends State<NotificationView>
                               _notificationsEnabled = value;
                             });
                           },
-                          activeThumbColor: AppColors.white,
+                          // activeThumbColor: AppColors.white,
                           activeTrackColor: AppColors.primary,
                           inactiveThumbColor: AppColors.white,
                           inactiveTrackColor: AppColors.grey200,
