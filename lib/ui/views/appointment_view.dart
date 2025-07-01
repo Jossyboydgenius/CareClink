@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:typed_data';
 import '../../shared/app_colors.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_spacing.dart';
@@ -8,31 +9,33 @@ import '../../data/services/navigator_service.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/app_button.dart';
-import '../widgets/manual_clock_entry_dialog.dart';
 import '../widgets/user_avatar.dart';
 import '../widgets/appointment_skeleton.dart';
+import '../widgets/signature_pad_dialog.dart';
 import '../../shared/app_images.dart';
 import '../../shared/app_toast.dart';
 import '../../app/locator.dart';
 import '../../data/models/appointment_model.dart';
 import '../../data/services/appointment_service.dart';
+import '../../data/services/signature_service.dart';
 import '../../app/navigation_state_manager.dart';
 import '../../shared/app_error_handler.dart';
 
 /// The AppointmentView handles showing and managing appointments.
 ///
-/// Status handling:
-/// - For staff users, we track staffStatus
-/// - For interpreter users, we track interpreterStatus
+/// Role-based status tracking:
+/// - For staff users, we track 'staffStatus' from the API response
+/// - For interpreter users, we track 'interpreterStatus' from the API response
+/// - Fallback to general 'status' if role-specific status is not available
 ///
-/// Supported appointment statuses for clock-in:
-/// - scheduled: Regular scheduled appointments
-/// - pending: Pending appointments
-/// - reschedule: Rescheduled appointments
+/// Clock-in button behavior:
+/// - ENABLED for: pending, reschedule, scheduled statuses
+/// - DISABLED for: in progress, completed statuses
 ///
-/// Non-clockable appointment statuses:
-/// - completed: Already completed appointments
-/// - inProgress: Appointments currently in progress
+/// Status flow:
+/// 1. Initial: pending/reschedule/scheduled → User can clock in
+/// 2. After clock-in: in progress → User cannot clock in (already working)
+/// 3. After clock-out: completed → User cannot clock in (appointment done)
 
 class AppointmentView extends StatefulWidget {
   const AppointmentView({super.key});
@@ -107,58 +110,34 @@ class _AppointmentViewState extends State<AppointmentView> {
     });
   }
 
-  bool _isAppointmentElapsed(DateTime timestamp) {
-    // Find the appointment in our list
-    final selectedAppointment = _appointments.firstWhere(
-      (appointment) => appointment.timestamp == timestamp,
-      orElse: () => AppointmentModel(
-        id: '',
-        clientName: '',
-        dateTime: '',
-        timestamp: DateTime.now(),
-        time: DateTime.now(),
-        endTime: DateTime.now(),
-        status: AppointmentStatus.none,
-      ),
-    );
-
-    // The appointment is considered "elapsed" if:
-    // 1. Current time is more than the appointment start time + 20 minutes grace period
-    // 2. The appointment status is either scheduled, pending, or rescheduled (can be clocked in)
-
-    final now = DateTime.now();
-    final appointmentTime = selectedAppointment.time;
-    final gracePeriod = const Duration(minutes: 20);
-    final isTimeElapsed = now.isAfter(appointmentTime.add(gracePeriod));
-
-    final canBeClocked =
-        selectedAppointment.status == AppointmentStatus.scheduled ||
-            selectedAppointment.status == AppointmentStatus.pending ||
-            selectedAppointment.status == AppointmentStatus.reschedule;
-
-    debugPrint(
-        'Appointment time: $appointmentTime, Now: $now, Is time elapsed: $isTimeElapsed');
-    debugPrint(
-        'Appointment status: ${selectedAppointment.status}, Can be clocked: $canBeClocked');
-
-    // If time has elapsed and the appointment can be clocked in, we need manual clock in
-    return isTimeElapsed && canBeClocked;
-  }
-
   bool _canInteractWithAppointment(AppointmentStatus status) {
-    // Scheduled, pending, and rescheduled appointments can be interacted with
+    // Clock-in button should only be enabled for appointments that haven't been started yet
+    // Once an appointment is "in progress" or "completed", clock-in should be disabled
+    bool canInteract;
+
     switch (status) {
-      case AppointmentStatus.scheduled:
-        return true;
       case AppointmentStatus.pending:
-        return true;
+        canInteract = true; // Can clock in from pending status
+        break;
       case AppointmentStatus.reschedule:
-        return true; // Added support for rescheduled appointments
-      case AppointmentStatus.completed:
+        canInteract = true; // Can clock in from rescheduled status
+        break;
+      case AppointmentStatus.scheduled:
+        canInteract = true; // Can clock in from scheduled status
+        break;
       case AppointmentStatus.inProgress:
-      default:
-        return false;
+        canInteract = false; // Cannot clock in when already in progress
+        break;
+      case AppointmentStatus.completed:
+        canInteract = false; // Cannot clock in when already completed
+        break;
+      case AppointmentStatus.none:
+        canInteract = false; // Cannot clock in for unknown status
+        break;
     }
+
+    debugPrint('Can interact with appointment status $status: $canInteract');
+    return canInteract;
   }
 
   void _handleClockIn() async {
@@ -182,100 +161,79 @@ class _AppointmentViewState extends State<AppointmentView> {
       return;
     }
 
-    final isElapsed = _isAppointmentElapsed(selectedAppointment.timestamp);
-    debugPrint('Is appointment elapsed? $isElapsed');
+    // Show signature pad dialog first
+    _showSignaturePadForClockIn(selectedAppointment);
+  }
 
-    if (isElapsed) {
-      debugPrint('Showing manual clock entry dialog');
-      // Show manual clock entry dialog for pending appointments
-      showDialog(
-        context: context,
-        barrierDismissible: false, // Prevent dismissing by tapping outside
-        builder: (context) => ManualClockEntryDialog(
-          appointmentId: selectedAppointment.id,
-          clientName: selectedAppointment.clientName,
-          dateTime: selectedAppointment.timestamp,
-          status: selectedAppointment.status,
-          onSave: (date, clockIn, clockOut, reason) async {
-            try {
-              debugPrint(
-                  'Manual clock entry: date=$date, clockIn=$clockIn, clockOut=$clockOut, reason=$reason');
+  void _showSignaturePadForClockIn(AppointmentModel appointment) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SignaturePadDialog(
+        title: 'Clock In Confirmation',
+        subtitle:
+            'Please sign to confirm clocking in for ${appointment.clientName}',
+        actionButtonText: 'Clock In',
+        onCancel: () {
+          Navigator.of(context).pop();
+        },
+        onConfirm: (signatureBytes) async {
+          Navigator.of(context).pop();
+          await _performClockIn(appointment, signatureBytes);
+        },
+      ),
+    );
+  }
 
-              // Create full DateTime objects for clockIn
-              final clockInDateTime = DateTime(
-                date.year,
-                date.month,
-                date.day,
-                clockIn.hour,
-                clockIn.minute,
-              );
+  Future<void> _performClockIn(
+      AppointmentModel appointment, Uint8List signatureBytes) async {
+    try {
+      setState(() => _isLoading = true);
 
-              debugPrint(
-                  'Formatted clockInDateTime: ${clockInDateTime.toIso8601String()}');
-
-              final response = await _appointmentService.manualClockIn(
-                appointmentId: selectedAppointment.id,
-                date: date,
-                clockIn: clockInDateTime,
-                reason: reason,
-              );
-
-              if (!mounted) return;
-
-              if (response.isSuccessful) {
-                final timesheet = response.data['timesheet'];
-                _moveToRecentTimesheet(selectedAppointment,
-                    clockInTime: clockIn, timesheetData: timesheet);
-                NavigationService.pop();
-                AppToast.showSuccess(
-                    context, response.message ?? 'Successfully clocked in');
-              } else {
-                // Use error handler instead of direct toast
-                await AppErrorHandler.handleError(
-                    context, response.message ?? 'Failed to clock in');
-              }
-            } catch (e) {
-              debugPrint('Error during manual clock in: $e');
-              if (!mounted) return;
-              // Use error handler to parse and display meaningful message
-              await AppErrorHandler.handleError(context, e);
-            }
-          },
-        ),
+      // Save signature first
+      final signaturePath = await SignatureService.saveSignatureAsImage(
+        signatureBytes,
+        fileName:
+            'clock_in_${appointment.id}_${DateTime.now().millisecondsSinceEpoch}.png',
       );
-    } else {
-      // Direct clock in for scheduled appointments
-      try {
-        setState(() => _isLoading = true);
 
-        final response = await _appointmentService.clockIn(
-          appointmentId: selectedAppointment.id,
-          date: DateTime.now(),
-        );
+      if (signaturePath == null) {
+        AppToast.showError(
+            context, 'Failed to save signature. Please try again.');
+        return;
+      }
 
-        if (!mounted) return;
+      debugPrint('Signature saved at: $signaturePath');
 
-        if (response.isSuccessful) {
-          final timesheet = response.data['timesheet'];
-          final now = TimeOfDay.now();
-          _moveToRecentTimesheet(selectedAppointment,
-              clockInTime: now, timesheetData: timesheet);
-          AppToast.showSuccess(
-              context, response.message ?? 'Successfully clocked in');
-        } else {
-          // Use error handler instead of direct toast
-          await AppErrorHandler.handleError(
-              context, response.message ?? 'Failed to clock in');
-        }
-      } catch (e) {
-        debugPrint('Error during clock in: $e');
-        if (!mounted) return;
-        // Use error handler to parse and display meaningful message
-        await AppErrorHandler.handleError(context, e);
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+      final response = await _appointmentService.clockIn(
+        appointmentId: appointment.id,
+        date: DateTime.now(),
+      );
+
+      if (!mounted) return;
+
+      if (response.isSuccessful) {
+        final timesheet = response.data['timesheet'];
+        final now = TimeOfDay.now();
+        _moveToRecentTimesheet(appointment,
+            clockInTime: now, timesheetData: timesheet);
+        AppToast.showSuccess(
+            context, response.message ?? 'Successfully clocked in');
+      } else {
+        // Delete the signature if clock in failed
+        await SignatureService.deleteSignature(signaturePath);
+        // Use error handler instead of direct toast
+        await AppErrorHandler.handleError(
+            context, response.message ?? 'Failed to clock in');
+      }
+    } catch (e) {
+      debugPrint('Error during clock in: $e');
+      if (!mounted) return;
+      // Use error handler to parse and display meaningful message
+      await AppErrorHandler.handleError(context, e);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -339,13 +297,12 @@ class _AppointmentViewState extends State<AppointmentView> {
         ? _appointments.firstWhere((a) => a.id == _selectedAppointmentId)
         : null;
 
-    final isElapsed = selectedAppointment != null
-        ? _isAppointmentElapsed(selectedAppointment.timestamp)
-        : false;
-
     final canInteract = selectedAppointment != null
         ? _canInteractWithAppointment(selectedAppointment.status)
         : false;
+
+    debugPrint(
+        'Selected appointment: ${selectedAppointment?.id}, Status: ${selectedAppointment?.status}, Can interact: $canInteract');
 
     return PopScope(
       canPop: false,
@@ -514,7 +471,7 @@ class _AppointmentViewState extends State<AppointmentView> {
                 ),
                 padding: EdgeInsets.all(16.w),
                 child: AppButton(
-                  text: isElapsed ? 'Manual Clock In' : 'Clock In',
+                  text: 'Clock In',
                   onPressed: canInteract ? _handleClockIn : null,
                   isLoading: _isLoading,
                   enabled: _selectedAppointmentId != null && canInteract,
