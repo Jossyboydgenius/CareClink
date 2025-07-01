@@ -21,8 +21,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<LoadDashboardSummaries>(_onLoadDashboardSummaries);
   }
 
-  String _formatHours(int hours) {
-    return '$hours ${hours <= 1 ? 'hr' : 'hrs'}';
+  String _formatHours(String hours) {
+    // The hours field is now a String from the backend (e.g., "0h 49m")
+    // Return it as-is since the backend now handles the formatting
+    return hours;
   }
 
   String _formatAppointments(int count) {
