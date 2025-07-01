@@ -3,13 +3,34 @@ import '../../app/locator.dart';
 import '../models/appointment_model.dart';
 import 'api/api.dart';
 import 'api/api_response.dart';
+import 'user_service.dart';
+import 'signature_service.dart';
 
 class AppointmentService {
   final Api _api = locator<Api>();
+  final UserService _userService = locator<UserService>();
+  final SignatureService _signatureService = locator<SignatureService>();
+
+  /// Upload signature for appointment
+  Future<ApiResponse> uploadSignature({
+    required String appointmentId,
+    required Uint8List signatureBytes,
+  }) async {
+    return await _signatureService.uploadSignatureToAppointment(
+      appointmentId: appointmentId,
+      signatureBytes: signatureBytes,
+    );
+  }
 
   // Method to get today's appointments
   Future<List<AppointmentModel>> getTodayAppointments() async {
     try {
+      // Get current user role to properly parse status
+      final currentUser = await _userService.getCurrentUser();
+      final userRole = currentUser['role'] ?? 'interpreter';
+
+      debugPrint('Getting appointments for user role: $userRole');
+
       final response = await _api.getData(
         '/user-appointment/today',
         hasHeader: true,
@@ -18,7 +39,8 @@ class AppointmentService {
       if (response.isSuccessful && response.data != null) {
         final List<dynamic> appointments = response.data['appointments'];
         return appointments
-            .map((appointment) => AppointmentModel.fromJson(appointment))
+            .map((appointment) =>
+                AppointmentModel.fromJson(appointment, userRole: userRole))
             .toList();
       }
 
