@@ -2,6 +2,7 @@ import 'package:careclink/shared/app_spacing.dart';
 import 'package:careclink/ui/widgets/skeleton_timesheet_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:typed_data';
 import 'dashboard/dashboard_bloc/dashboard_bloc.dart';
 import 'dashboard/dashboard_bloc/dashboard_event.dart';
 import 'dashboard/dashboard_bloc/dashboard_state.dart';
@@ -10,17 +11,20 @@ import '../widgets/skeleton_activity_card.dart';
 import '../widgets/timesheet_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/user_avatar.dart';
+import '../widgets/signature_pad_dialog.dart';
 import '../../shared/app_sizer.dart';
 import '../../shared/app_text_style.dart';
 import '../../shared/app_colors.dart';
 import '../../shared/app_images.dart';
 import '../../shared/app_toast.dart';
 import '../../data/services/timesheet_service.dart';
+import '../../data/services/signature_service.dart';
 import '../../app/navigation_state_manager.dart';
 import '../../app/locator.dart';
 import 'notification_view.dart';
 import 'appointment_view.dart';
 import '../../shared/app_error_handler.dart';
+import '../../data/utils/timesheet_helper.dart';
 
 class Dashboard extends StatefulWidget {
   final Map<String, dynamic>? recentTimesheet;
@@ -126,33 +130,12 @@ class _DashboardState extends State<Dashboard> {
       final response = await _timesheetService.getTimesheets();
 
       if (response.isSuccessful && response.data != null) {
+        final timesheets = response.data['timesheets'] as List;
+
+        // Use the correct processing method that handles role-specific fields
+        await _timesheetService.processTimesheetsFromResponse(timesheets);
+
         setState(() {
-          _timesheetService
-              .clearTimesheets(); // Clear existing timesheets first
-          final timesheets = response.data['timesheets'] as List;
-
-          for (final timesheet in timesheets) {
-            final clientData = timesheet['client'];
-            String clientName = 'Unknown Client';
-            if (clientData != null) {
-              if (clientData is Map) {
-                clientName =
-                    clientData['fullname']?.toString() ?? 'Unknown Client';
-              } else if (clientData is String) {
-                clientName = clientData;
-              }
-            }
-
-            _timesheetService.addTimesheet({
-              'id': timesheet['_id'],
-              'clientName': clientName,
-              'clockIn': timesheet['clockIn'],
-              'clockOut': timesheet['clockOut'],
-              'duration': timesheet['duration']?.toString() ?? '0',
-              'status': timesheet['clockOut'] == null ? 'clockin' : 'clockout',
-            });
-          }
-
           _noTimesheetsFound = _timesheetService.recentTimesheets.isEmpty;
           _lastTimesheetsRefresh = DateTime.now();
         });
@@ -197,23 +180,57 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _refreshDashboard() async {
-    // Clear existing timesheets first
+    if (!mounted) return;
+
+    // Always fetch fresh data, ignoring any cache
     setState(() {
-      _timesheetService.clearTimesheets();
-      _timesheetsLoaded = false;
-      _lastTimesheetsRefresh = null;
-      _noTimesheetsFound = false; // Reset flag on refresh
+      _isInitialLoading = true;
     });
 
-    // Fetch new data with force refresh
-    await Future.wait([
-      _fetchTimesheets(),
-      Future(() =>
-          _dashboardBloc.add(const LoadDashboardSummaries(forceRefresh: true))),
-    ]);
+    try {
+      // Reset the dashboard block for latest data
+      _dashboardBloc.add(const LoadDashboardSummaries());
 
-    // Mark in our state manager that we've refreshed
-    _stateManager.markDashboardRefreshed();
+      // Force fetch new timesheets from API
+      final response = await _timesheetService.getTimesheets();
+
+      if (response.isSuccessful && response.data != null) {
+        final timesheets = response.data['timesheets'] as List;
+        // Process the timesheets directly using the enhanced method
+        await _timesheetService.processTimesheetsFromResponse(timesheets);
+
+        // Add debug logging for all timesheets
+        debugPrint(
+            'Refreshed timesheets (${_timesheetService.recentTimesheets.length}):');
+        for (var ts in _timesheetService.recentTimesheets) {
+          debugPrint(
+              '  ID: ${ts['id']}, status: ${ts['status']}, clockOut: ${ts['clockOut']}');
+          debugPrint(
+              '  canClockOut: ${TimesheetHelper.canClockOut(status: ts['status'], clockOut: ts['clockOut'])}');
+        }
+
+        setState(() {
+          _noTimesheetsFound = _timesheetService.recentTimesheets.isEmpty;
+          _lastTimesheetsRefresh = DateTime.now();
+          _timesheetsLoaded = true;
+        });
+      } else {
+        setState(() {
+          _noTimesheetsFound = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing dashboard: $e');
+      if (mounted) {
+        AppErrorHandler.handleError(context, e);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitialLoading = false;
+        });
+      }
+    }
   }
 
   Widget _buildActivityCards(BuildContext context, DashboardState state) {
@@ -284,8 +301,7 @@ class _DashboardState extends State<Dashboard> {
             ),
             ActivityCard(
               title: 'Pending Appointment',
-              hours:
-                  '${state.statusSummary?.pending ?? 0} ${(state.statusSummary?.pending ?? 0) <= 1 ? 'hr' : 'hrs'}',
+              hours: '${state.statusSummary?.pending ?? 0}',
               completedText: state.statusSummary?.completed ?? '0 / 0',
               cardColor: AppColors.activityPink,
               borderColor: AppColors.activityPinkBorder,
@@ -470,9 +486,23 @@ class _DashboardState extends State<Dashboard> {
         ..._timesheetService.recentTimesheets.map((timesheet) {
           final String timesheetId = timesheet['id'];
           final bool isLoading = _loadingTimesheets.contains(timesheetId);
-          final bool canClockOut = !isLoading &&
-              (timesheet['status'] == 'clockin' ||
-                  timesheet['clockOut'] == null);
+
+          // Log timesheet data for debugging
+          TimesheetHelper.logTimesheetData('Timesheet', timesheet);
+
+          // Use the helper method to determine if the timesheet can be clocked out
+          // Use rawClockOut for proper validation, fallback to clockOut if not available
+          final rawClockOutValue =
+              timesheet['rawClockOut'] ?? timesheet['clockOut'];
+          final bool canClockOut = TimesheetHelper.canClockOut(
+              status: timesheet['status']?.toString() ?? '',
+              clockOut: rawClockOutValue,
+              isLoading: isLoading);
+
+          // Add debug logging to help diagnose issues
+          debugPrint(
+              'Timesheet visibility check: ID=${timesheet['id']}, status=${timesheet['status']}, '
+              'clockOut=${timesheet['clockOut']}, canClockOut=$canClockOut');
 
           return Column(
             children: [
@@ -481,6 +511,7 @@ class _DashboardState extends State<Dashboard> {
                 staffName: timesheet['clientName'],
                 clockIn: timesheet['clockIn'],
                 clockOut: timesheet['clockOut'],
+                rawClockOut: timesheet['rawClockOut'],
                 duration: timesheet['duration'],
                 status: timesheet['status'],
                 onClockOut:
@@ -498,12 +529,90 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Future<void> _handleClockOut(String timesheetId) async {
+    // Find the timesheet to get client name for the signature dialog
+    final timesheet = _timesheetService.recentTimesheets.firstWhere(
+      (ts) => ts['id'] == timesheetId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    final clientName = timesheet['clientName'] ?? 'Unknown Client';
+
+    // Show signature pad dialog first
+    _showSignaturePadForClockOut(timesheetId, clientName);
+  }
+
+  void _showSignaturePadForClockOut(String timesheetId, String clientName) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SignaturePadDialog(
+        title: 'Clock Out Confirmation',
+        subtitle: 'Please sign to confirm clocking out for $clientName',
+        actionButtonText: 'Clock Out',
+        onCancel: () {
+          Navigator.of(context).pop();
+        },
+        onConfirm: (signatureBytes) async {
+          Navigator.of(context).pop();
+          await _performClockOut(timesheetId, signatureBytes);
+        },
+      ),
+    );
+  }
+
+  Future<void> _performClockOut(
+      String timesheetId, Uint8List signatureBytes) async {
     // Set loading state immediately
     setState(() {
       _loadingTimesheets.add(timesheetId);
     });
 
+    debugPrint('Starting clock out process for timesheet: $timesheetId');
+
     try {
+      // Save signature first
+      final signaturePath = await SignatureService.saveSignatureAsImage(
+        signatureBytes,
+        fileName:
+            'clock_out_${timesheetId}_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+
+      if (signaturePath == null) {
+        AppToast.showError(
+            context, 'Failed to save signature. Please try again.');
+        return;
+      }
+
+      debugPrint('Signature saved at: $signaturePath');
+
+      // First, update the timesheet locally right away for better UX
+      final now = DateTime.now().toIso8601String();
+
+      // Find and update the timesheet in the local list
+      bool timesheetFound = false;
+      setState(() {
+        for (int i = 0; i < _timesheetService.recentTimesheets.length; i++) {
+          final timesheet = _timesheetService.recentTimesheets[i];
+          if (timesheet['id'] == timesheetId) {
+            timesheetFound = true;
+
+            // Update status and clockOut in the local timesheet copy
+            _timesheetService.recentTimesheets[i]['status'] = 'clockout';
+            _timesheetService.recentTimesheets[i]['clockOut'] = now;
+
+            // Log that we've updated the status
+            debugPrint(
+                'IMMEDIATELY updated timesheet $timesheetId status to clockout with time $now');
+            break;
+          }
+        }
+      });
+
+      if (!timesheetFound) {
+        debugPrint(
+            'WARNING: Could not find timesheet $timesheetId to update locally');
+      }
+
       // Use a separate future to prevent UI blocking
       final response = await Future(() async {
         return await _timesheetService.clockOut(timesheetId);
@@ -513,12 +622,40 @@ class _DashboardState extends State<Dashboard> {
         AppToast.showSuccess(
             context, response.message ?? 'Successfully clocked out');
 
+        // Force reset all timesheet cache to ensure next refresh gets fresh data
+        _lastTimesheetsRefresh = null;
+
         // Schedule the dashboard refresh as a microtask to prevent UI freezing
         Future.microtask(() async {
-          await _refreshDashboard();
+          // Small delay to ensure UI updates first
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          // Then do a full refresh from API
+          if (mounted) {
+            debugPrint('Performing full refresh after successful clock out');
+            await _refreshDashboard();
+          }
         });
       } else {
+        // Revert our optimistic update if the API call failed
+        debugPrint(
+            'Clock out failed, reverting optimistic update: ${response.message}');
         AppToast.showError(context, response.message ?? 'Failed to clock out');
+
+        // Delete the signature since clock out failed
+        await SignatureService.deleteSignature(signaturePath);
+
+        setState(() {
+          for (int i = 0; i < _timesheetService.recentTimesheets.length; i++) {
+            final timesheet = _timesheetService.recentTimesheets[i];
+            if (timesheet['id'] == timesheetId) {
+              // Restore previous status (assuming it was 'clockin')
+              _timesheetService.recentTimesheets[i]['status'] = 'clockin';
+              _timesheetService.recentTimesheets[i]['clockOut'] = null;
+              break;
+            }
+          }
+        });
       }
     } catch (e) {
       debugPrint('Error during clock out: $e');
