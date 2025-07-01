@@ -1,4 +1,4 @@
-enum SignInStatus { initial, loading, success, failure }
+enum SignInStatus { initial, loading, success, failure, roleMismatch }
 
 enum UserRole { interpreter, staff }
 
@@ -15,6 +15,7 @@ class SignInState {
     this.errorMessage,
     this.data,
     this.selectedRole = UserRole.interpreter,
+    this.actualRole,
   });
 
   final SignInStatus status;
@@ -28,6 +29,7 @@ class SignInState {
   final String? errorMessage;
   final Map<String, dynamic>? data;
   final UserRole selectedRole;
+  final String? actualRole; // The actual role from the server
 
   bool get isButtonEnabled =>
       isFormValid &&
@@ -47,6 +49,7 @@ class SignInState {
     String? errorMessage,
     Map<String, dynamic>? data,
     UserRole? selectedRole,
+    String? actualRole,
   }) {
     return SignInState(
       status: status ?? this.status,
@@ -60,6 +63,7 @@ class SignInState {
       errorMessage: errorMessage ?? this.errorMessage,
       data: data ?? this.data,
       selectedRole: selectedRole ?? this.selectedRole,
+      actualRole: actualRole ?? this.actualRole,
     );
   }
 }
