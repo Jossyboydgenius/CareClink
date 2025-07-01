@@ -41,6 +41,119 @@ class _SignInViewState extends State<SignInView> {
     super.dispose();
   }
 
+  void _showRoleMismatchModal(BuildContext context, SignInState state) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: AppColors.red,
+                size: 24.w,
+              ),
+              SizedBox(width: 12.w),
+              Text(
+                'Role Mismatch',
+                style: AppTextStyle.semibold18.copyWith(
+                  color: AppColors.red,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The role you selected does not match your account role.',
+                style: AppTextStyle.regular14.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AppColors.grey100,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: AppColors.grey200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Selected Role: ',
+                          style: AppTextStyle.medium12.copyWith(
+                            color: AppColors.grey300,
+                          ),
+                        ),
+                        Text(
+                          state.selectedRole == UserRole.staff
+                              ? 'Staff'
+                              : 'Interpreter',
+                          style: AppTextStyle.semibold12.copyWith(
+                            color: AppColors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        Text(
+                          'Your Account Role: ',
+                          style: AppTextStyle.medium12.copyWith(
+                            color: AppColors.grey300,
+                          ),
+                        ),
+                        Text(
+                          state.actualRole?.toUpperCase() ?? 'Unknown',
+                          style: AppTextStyle.semibold12.copyWith(
+                            color: AppColors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Please select the correct role for your account and try again.',
+                style: AppTextStyle.regular12.copyWith(
+                  color: AppColors.grey300,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            AppButton(
+              text: 'Try Again',
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Reset the sign-in state
+                context.read<SignInBloc>().add(SignInRoleChange(
+                      state.actualRole == 'staff'
+                          ? UserRole.staff
+                          : UserRole.interpreter,
+                    ));
+              },
+              backgroundColor: AppColors.primary,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -54,6 +167,9 @@ class _SignInViewState extends State<SignInView> {
               if (state.status == SignInStatus.success) {
                 // AppToast.showSuccess(context, 'Sign in successful!');
                 NavigationService.pushReplacementNamed(AppRoutes.dashboardView);
+              } else if (state.status == SignInStatus.roleMismatch) {
+                // Show role mismatch modal
+                _showRoleMismatchModal(context, state);
               } else if (state.status == SignInStatus.failure) {
                 AppToast.showError(
                     context, state.errorMessage ?? 'Something went wrong');
@@ -215,8 +331,8 @@ class _SignInViewState extends State<SignInView> {
                             }
                           },
                           isLoading: state.status == SignInStatus.loading,
-                          enabled: state.email != null &&
-                              state.password != null,
+                          enabled:
+                              state.email != null && state.password != null,
                         ),
                       ],
                     ),
