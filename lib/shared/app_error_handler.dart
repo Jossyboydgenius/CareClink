@@ -14,24 +14,35 @@ class AppErrorHandler {
   static final LocalStorageService _storageService =
       locator<LocalStorageService>();
 
-  // Helper to check if the error is an interpreter-only restriction
+  // Helper to check if the error is an interpreter-only restriction (backwards compatibility)
   static bool _isInterpreterOnlyError(dynamic error) {
+    return _isRoleBasedError(error);
+  }
+
+  // Helper to check if the error is a role-based restriction
+  static bool _isRoleBasedError(dynamic error) {
     if (error is ApiResponse && error.code == 403) {
       final message = error.message?.toLowerCase() ?? '';
       return message.contains('interpreter only') ||
           message.contains('interpreters only') ||
-          message.contains('designed for interpreters');
+          message.contains('designed for interpreters') ||
+          message.contains('access denied') ||
+          message.contains('permission') ||
+          message.contains('role');
     }
 
     // Check for type errors that are often related to interpreter-only features
     if (error is String) {
       final errorLower = error.toLowerCase();
-      return (errorLower
-              .contains("type 'string' is not a subtype of type 'map<string") &&
-          (errorLower.contains("interpreter") ||
-              errorLower.contains("clock") ||
-              errorLower.contains("timesheet") ||
-              errorLower.contains("appointment")));
+      return (errorLower.contains(
+                  "type 'string' is not a subtype of type 'map<string") &&
+              (errorLower.contains("interpreter") ||
+                  errorLower.contains("clock") ||
+                  errorLower.contains("timesheet") ||
+                  errorLower.contains("appointment"))) ||
+          errorLower.contains('access denied') ||
+          errorLower.contains('interpreters only') ||
+          errorLower.contains('interpreter only');
     }
 
     return false;
@@ -118,6 +129,101 @@ class AppErrorHandler {
     );
   }
 
+  // Helper method to show role access restriction dialog for post-login errors
+  static void _showPostLoginRoleMismatchDialog(
+      BuildContext context, String message) {
+    // Show a dialog to inform the user about role access restrictions that occurred after login
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User must use a dialog button
+      builder: (BuildContext dialogContext) {
+        return WillPopScope(
+          // Prevent back button/gesture from dismissing, redirect to sign in
+          onWillPop: () async {
+            // Handle back button press by signing out and navigating to sign in
+            await _userService.logout();
+            NavigationService.pushNamedAndRemoveUntil(AppRoutes.signInView);
+            return false; // Prevent dialog from closing naturally
+          },
+          child: AlertDialog(
+            backgroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0.r),
+            ),
+            title: Center(
+              child: Text(
+                'Role Mismatch Detected',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18.sp,
+                  color: AppColors.red,
+                ),
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_off,
+                  size: 48.w,
+                  color: AppColors.red,
+                ),
+                SizedBox(height: 16.h),
+                Text(
+                  'Your account role does not match the selected role during login. Please log out and sign in with the correct role.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: AppColors.grey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.white,
+                      backgroundColor: AppColors.red,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 24.w, vertical: 12.h),
+                    ),
+                    onPressed: () async {
+                      // Perform sign out and navigate to sign in
+                      Navigator.of(dialogContext).pop();
+                      await _userService.logout();
+                      NavigationService.pushNamedAndRemoveUntil(
+                          AppRoutes.signInView);
+                    },
+                    child: Text(
+                      'Log Out',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // Backward compatibility method to match the signature used in existing code
   static Future<bool> handleError(BuildContext context, dynamic error,
       {bool showToast = true}) async {
@@ -149,14 +255,15 @@ class AppErrorHandler {
       return true;
     }
 
-    // Check for interpreter-only API errors based on message content
+    // Check for role-based API errors based on message content
     if (errorMessage.toLowerCase().contains("interpreter only") ||
         errorMessage.toLowerCase().contains("interpreters only") ||
         errorMessage.toLowerCase().contains("designed for interpreters") ||
-        _isInterpreterOnlyError(error)) {
+        errorMessage.toLowerCase().contains("access denied") ||
+        _isRoleBasedError(error)) {
       // Don't show toast for role access errors, just show the dialog
-      _showRoleAccessDialog(context,
-          'You do not have permission to access this feature. Please sign in with the appropriate account.');
+      // Use post-login role mismatch dialog for better user experience
+      _showPostLoginRoleMismatchDialog(context, errorMessage);
       return true;
     }
 
@@ -216,16 +323,16 @@ class AppErrorHandler {
         errorMessage.contains("Failed to fetch") ||
         errorMessage.contains("Failed to clock")) {
       // Don't show toast for role access errors, just show the dialog
-      _showRoleAccessDialog(context,
-          'You do not have permission to access this feature. Please sign in with the appropriate account.');
+      // Use post-login role mismatch dialog for better user experience
+      _showPostLoginRoleMismatchDialog(context, errorMessage);
       return;
     }
 
-    // Check for interpreter-only API errors
-    if (_isInterpreterOnlyError(error)) {
+    // Check for role-based API errors
+    if (_isRoleBasedError(error)) {
       // Don't show toast for role access errors, just show the dialog
-      _showRoleAccessDialog(context,
-          'You do not have permission to access this feature. Please sign in with the appropriate account.');
+      // Use post-login role mismatch dialog for better user experience
+      _showPostLoginRoleMismatchDialog(context, errorMessage);
       return;
     }
 
