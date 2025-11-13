@@ -12,7 +12,7 @@ CareClink is a comprehensive mobile application designed for interpreter and cli
 
 - **Appointment Management** - View, schedule, and manage interpreter appointments
 - **Time Tracking** - Clock in/out functionality with automatic timesheet generation
-- **Dual Electronic Signatures** - Capture both interpreter and client signatures for visit confirmation
+- **Dual Electronic Signatures** - Capture both interpreter and staff signatures for visit confirmation
 - **Real-time Notifications** - Stay updated with appointment changes and reminders
 - **Visit Reports** - Automatic generation of visit confirmation reports with signatures
 - **Offline Support** - Local data caching for seamless offline functionality
@@ -180,7 +180,7 @@ The dual signature feature allows both the interpreter and client to electronica
 │  │   [Signature Pad Area]      │   │
 │  └─────────────────────────────┘   │
 │                                      │
-│  Client Signature                    │
+│  staff signature                    │
 │  ┌─────────────────────────────┐   │
 │  │   [Signature Pad Area]      │   │
 │  └─────────────────────────────┘   │
