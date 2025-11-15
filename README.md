@@ -541,4 +541,3 @@ Developed by the CareClink Development Team
 
 **Last Updated**: November 2025
 **Version**: 1.0.0
-
