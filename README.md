@@ -86,8 +86,8 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Jossyboydgenius/mobo_app.git
-   cd mobo_app
+   git clone https://github.com/Jossyboydgenius/CareClink.git
+   cd Careclink
    ```
 
 2. **Install dependencies**
