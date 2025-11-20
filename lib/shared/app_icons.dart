@@ -11,6 +11,13 @@ class AppIconData {
   static const String check = '${_basePath}check.svg';
   static const String logOut = '${_basePath}log-out.svg';
   static const String roundCheck = '${_basePath}round-check.svg';
+  static const String signature = '${_basePath}signature.svg';
+  static const String digitalSignature = '${_basePath}digital-signature.svg';
+  static const String interpreter = '${_basePath}interpeter.svg';
+  static const String translator = '${_basePath}translator.svg';
+  static const String staff = '${_basePath}staff.svg';
+  static const String staffs = '${_basePath}staffs.svg';
+  static const String client = '${_basePath}client.svg';
 }
 
 class AppIcons extends StatelessWidget {
@@ -38,4 +45,4 @@ class AppIcons extends StatelessWidget {
       ),
     );
   }
-} 
+}
